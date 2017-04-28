@@ -15,7 +15,7 @@ def fibonacci(n: Int) -> Int:
 
 ## Sample 2
 
-A recursively-defined data structure.
+Algebraic data types are supported.
 
 ```viper
 recdat Tree a:
@@ -70,7 +70,8 @@ Note that argument labels in a function (`from` in the above example) are *requi
 
 ## Sample 5
 
-Argument labels do not have to be given in function definitions, though:
+Argument labels do not have to be given in function definitions, though. If they are not present, then the argument
+label is not required when calling the function:
 
 ```viper
 def greet(person: String, hometown: String) -> String:
