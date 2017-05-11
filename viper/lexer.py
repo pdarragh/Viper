@@ -79,6 +79,11 @@ class Indent(Lexeme):
         super().__init__(' ' * INDENT_SIZE, False)
 
 
+class NewLine(Lexeme):
+    def __init__(self):
+        super().__init__('\n', False)
+
+
 class OpenParen(Lexeme):
     def __init__(self):
         super().__init__('(', False)
@@ -102,6 +107,7 @@ class Operator(Lexeme):
 
 
 INDENT = Indent()
+NEWLINE = NewLine()
 OPEN_PAREN = OpenParen()
 CLOSE_PAREN = CloseParen()
 
@@ -118,6 +124,7 @@ class Lexer:
         lexemes = []
         for line in text.splitlines():
             lexemes.extend(cls.lex_line(line))
+            lexemes.append(NEWLINE)
         return lexemes
 
     @classmethod
