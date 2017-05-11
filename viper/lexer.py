@@ -10,6 +10,7 @@ __all__ = [
 
 # FIXME: Ambiguity between names with symbol endings and operators with those same symbols.
 # FIXME: Ambiguity between function call and postfix Operator `()`
+# TODO: Handle strings.
 
 
 # Regular expression patterns.
