@@ -175,6 +175,8 @@ class Lexer:
     def lex_token(cls, token: str) -> List[Lexeme]:
         matcher = RegexMatcher(token)
         lexemes = []
+        if not token:
+            return lexemes
         if matcher.fullmatch(RE_NUMBER):
             lexemes.append(Number(matcher.group(0)))
         elif matcher.fullmatch(RE_NAME):
