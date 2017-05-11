@@ -25,17 +25,13 @@ RE_NUMBER = re.compile(r'(?:\d+)'                           # 42
                        r'(?:\d+\.\d*(?:[eE][+-]?\d+)?)')    # 42.7e2 | 42.e9 | 42. | 42.3e-8
 RE_NAME = re.compile(r'_+|(?:_*[a-z][_a-zA-Z0-9]*(?:-[_a-zA-Z0-9]*)*[!@$%^&*?a-zA-Z0-9]?)')
 RE_CLASS = re.compile(r'[A-Z][-_a-zA-Z0-9]*')
-RE_OPERATOR = re.compile(r'[!@$%^&*()-=+|/?<>\[\]{}~]+')
 RE_OPERATOR = re.compile(r'[!@$%^&*()\-=+|:/?<>\[\]{}~]+')
 
-RE_PREFIX_OP = re.compile(r'(?P<op>' + RE_OPERATOR.pattern + r')(?P<val>(?:' + RE_NAME.pattern + '|' +
-                          RE_CLASS.pattern + '))')
-RE_POSTFIX_OP = re.compile(r'(?P<val>(?:' + RE_NAME.pattern + '|' + RE_CLASS.pattern + '))(?P<op>' +
-                           RE_OPERATOR.pattern + r')')
-RE_OPEN_PAREN = re.compile(r'(?P<left>' + RE_NAME.pattern + ')?\((?P<right>' + RE_NAME.pattern + ')?')
-RE_CLOSE_PAREN = re.compile(r'(?P<left>' + RE_NAME.pattern + ')?\)(?P<right>' + RE_NAME.pattern + ')?')
-RE_BOTH_PAREN = re.compile(r'(?P<left>' + RE_NAME.pattern + ')?\((?P<inside>' + RE_NAME.pattern + ')?\)(?P<right>' +
-                           RE_NAME.pattern + ')?')
+RE_BOTH_PAREN = re.compile(r'(?P<left>[^(]*)\((?P<inside>[^)]*)\)(?P<right>.*)')
+RE_OPEN_PAREN = re.compile(r'(?P<left>[^(]*)\((?P<right>.*)')
+RE_CLOSE_PAREN = re.compile(r'(?P<left>[^)]*)\)(?P<right>.*)')
+RE_PREFIX_OP = re.compile(r'(?P<op>' + RE_OPERATOR.pattern + r')(?P<val>.+)')
+RE_POSTFIX_OP = re.compile(r'(?P<val>.+)(?P<op>' + RE_OPERATOR.pattern + r')')
 
 
 # Regular expression magic class for making if/else matching simpler. Idea from:
@@ -185,12 +181,12 @@ class Lexer:
             lexemes.append(Class(matcher.group(0)))
         elif matcher.fullmatch(RE_OPERATOR):
             lexemes.append(Operator(matcher.group(0)))
-        elif matcher.fullmatch(RE_PREFIX_OP):
-            lexemes.append(Operator(matcher.group('op')))
-            lexemes.extend(cls.lex_token(matcher.group('val')))
-        elif matcher.fullmatch(RE_POSTFIX_OP):
-            lexemes.extend(cls.lex_token(matcher.group('val')))
-            lexemes.append(Operator(matcher.group('op')))
+        elif matcher.fullmatch(RE_BOTH_PAREN):
+            lexemes.extend(cls.lex_token(matcher.group('left')))
+            lexemes.append(OPEN_PAREN)
+            lexemes.extend(cls.lex_token(matcher.group('inside')))
+            lexemes.append(CLOSE_PAREN)
+            lexemes.extend(cls.lex_token(matcher.group('right')))
         elif matcher.fullmatch(RE_OPEN_PAREN):
             lexemes.extend(cls.lex_token(matcher.group('left')))
             lexemes.append(OPEN_PAREN)
@@ -199,12 +195,12 @@ class Lexer:
             lexemes.extend(cls.lex_token(matcher.group('left')))
             lexemes.append(CLOSE_PAREN)
             lexemes.extend(cls.lex_token(matcher.group('right')))
-        elif matcher.fullmatch(RE_BOTH_PAREN):
-            lexemes.extend(cls.lex_token(matcher.group('left')))
-            lexemes.append(OPEN_PAREN)
-            lexemes.extend(cls.lex_token(matcher.group('inside')))
-            lexemes.append(CLOSE_PAREN)
-            lexemes.extend(cls.lex_token(matcher.group('right')))
+        elif matcher.fullmatch(RE_PREFIX_OP):
+            lexemes.append(Operator(matcher.group('op')))
+            lexemes.extend(cls.lex_token(matcher.group('val')))
+        elif matcher.fullmatch(RE_POSTFIX_OP):
+            lexemes.extend(cls.lex_token(matcher.group('val')))
+            lexemes.append(Operator(matcher.group('op')))
         else:
             raise LexerError(f"invalid token: '{token}'")
         return lexemes
