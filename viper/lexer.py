@@ -139,7 +139,6 @@ class Lexer:
 
     @classmethod
     def lex_token(cls, token: str) -> List[Lexeme]:
-        print(f"matching: '{token}'")
         matcher = RegexMatcher(token)
         lexemes = []
         if matcher.fullmatch(RE_NAME):
