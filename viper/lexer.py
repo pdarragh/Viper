@@ -3,11 +3,12 @@ import re
 from re import _pattern_type as PatternType
 from typing import List, Union
 
-
 __all__ = [
     'Indent', 'OpenParen', 'CloseParen', 'Name', 'Class', 'Operator',
     'lex_file', 'lex_line',
 ]
+
+# FIXME: Ambiguity between names with symbol endings and operators with those same symbols.
 
 
 # Regular expression patterns.
