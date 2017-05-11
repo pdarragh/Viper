@@ -9,7 +9,7 @@ __all__ = [
 ]
 
 # FIXME: Ambiguity between names with symbol endings and operators with those same symbols.
-# FIXME: Empty function calls currently become Operator `()`.
+# FIXME: Ambiguity between function call and postfix Operator `()`
 
 
 # Regular expression patterns.
