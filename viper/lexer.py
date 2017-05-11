@@ -1,12 +1,12 @@
 import re
 
+from re import _pattern_type as PatternType
 from typing import List, Union
 
 
 __all__ = [
     'Indent', 'OpenParen', 'CloseParen', 'Name', 'Class', 'Operator',
-    'Lexer',
-    'lex',
+    'lex_file', 'lex_line',
 ]
 
 
@@ -18,11 +18,14 @@ RE_CLASS = re.compile(r'[A-Z][-_a-zA-Z0-9]*')
 RE_NAME = re.compile(r'_+|(?:_*[a-z][_a-zA-Z0-9]*(?:-[_a-zA-Z0-9]*)*[!@$%^&*?a-zA-Z0-9]?)')
 RE_OPERATOR = re.compile(r'[!@$%^&*()-=+|/?<>\[\]{}~]+')
 
-RE_PREFIX_OP = re.compile(r'(?P<op>' + RE_OPERATOR.pattern + r')(?P<val>(?:' + RE_NAME.pattern + '|' + RE_CLASS.pattern + '))')
-RE_POSTFIX_OP = re.compile(r'(?P<val>(?:' + RE_NAME.pattern + '|' + RE_CLASS.pattern + '))(?P<op>' + RE_OPERATOR.pattern + r')')
+RE_PREFIX_OP = re.compile(r'(?P<op>' + RE_OPERATOR.pattern + r')(?P<val>(?:' + RE_NAME.pattern + '|' +
+                          RE_CLASS.pattern + '))')
+RE_POSTFIX_OP = re.compile(r'(?P<val>(?:' + RE_NAME.pattern + '|' + RE_CLASS.pattern + '))(?P<op>' +
+                           RE_OPERATOR.pattern + r')')
 RE_OPEN_PAREN = re.compile(r'(?P<left>' + RE_NAME.pattern + ')?\((?P<right>' + RE_NAME.pattern + ')?')
 RE_CLOSE_PAREN = re.compile(r'(?P<left>' + RE_NAME.pattern + ')?\)(?P<right>' + RE_NAME.pattern + ')?')
-RE_BOTH_PAREN = re.compile(r'(?P<left>' + RE_NAME.pattern + ')?\((?P<inside>' + RE_NAME.pattern + ')?\)(?P<right>' + RE_NAME.pattern + ')?')
+RE_BOTH_PAREN = re.compile(r'(?P<left>' + RE_NAME.pattern + ')?\((?P<inside>' + RE_NAME.pattern + ')?\)(?P<right>' +
+                           RE_NAME.pattern + ')?')
 
 
 # Regular expression magic class for making if/else matching simpler. Idea from:
@@ -30,16 +33,17 @@ RE_BOTH_PAREN = re.compile(r'(?P<left>' + RE_NAME.pattern + ')?\((?P<inside>' + 
 class RegexMatcher:
     def __init__(self, token):
         self._token = token
+        self._match = None
 
-    def match(self, pattern: re._pattern_type):
+    def match(self, pattern: PatternType):
         self._match = pattern.match(self._token)
         return self._match
 
-    def fullmatch(self, pattern: re._pattern_type):
+    def fullmatch(self, pattern: PatternType):
         self._match = pattern.fullmatch(self._token)
         return self._match
 
-    def search(self, pattern: re._pattern_type):
+    def search(self, pattern: PatternType):
         self._match = pattern.search(self._token)
         return self._match
 
@@ -128,6 +132,15 @@ class Lexer:
         return lexemes
 
     @classmethod
+    def lex_file(cls, file: str) -> List[Lexeme]:
+        lexemes = []
+        with open(file) as f:
+            for line in f:
+                lexemes.extend(cls.lex_line(line))
+                lexemes.append(NEWLINE)
+        return lexemes
+
+    @classmethod
     def lex_line(cls, line: str) -> List[Lexeme]:
         lexemes = []
         if not line:
@@ -179,4 +192,5 @@ class Lexer:
         return lexemes
 
 
-lex = Lexer.lex
+lex_file = Lexer.lex_file
+lex_line = Lexer.lex_line
