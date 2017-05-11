@@ -15,8 +15,15 @@ __all__ = [
 INDENT_SIZE = 4
 RE_LEADING_INDENT = re.compile(fr'^((?: {{{INDENT_SIZE}}})*)(.*)$')
 
-RE_CLASS = re.compile(r'[A-Z][-_a-zA-Z0-9]*')
+RE_NUMBER = re.compile(r'(?:\d+)'                           # 42
+                       r'|'
+                       r'(?:\.\d+(?:[eE][+-]?\d+)?)'        # .42 | .42e-8
+                       r'|'
+                       r'(?:\d[eE][+-]?\d+)'                # 42e3
+                       r'|'
+                       r'(?:\d+\.\d*(?:[eE][+-]?\d+)?)')    # 42.7e2 | 42.e9 | 42. | 42.3e-8
 RE_NAME = re.compile(r'_+|(?:_*[a-z][_a-zA-Z0-9]*(?:-[_a-zA-Z0-9]*)*[!@$%^&*?a-zA-Z0-9]?)')
+RE_CLASS = re.compile(r'[A-Z][-_a-zA-Z0-9]*')
 RE_OPERATOR = re.compile(r'[!@$%^&*()-=+|/?<>\[\]{}~]+')
 
 RE_PREFIX_OP = re.compile(r'(?P<op>' + RE_OPERATOR.pattern + r')(?P<val>(?:' + RE_NAME.pattern + '|' +
@@ -99,6 +106,10 @@ class CloseParen(Lexeme):
         super().__init__(')', False)
 
 
+class Number(Lexeme):
+    pass
+
+
 class Name(Lexeme):
     pass
 
@@ -162,7 +173,9 @@ class Lexer:
     def lex_token(cls, token: str) -> List[Lexeme]:
         matcher = RegexMatcher(token)
         lexemes = []
-        if matcher.fullmatch(RE_NAME):
+        if matcher.fullmatch(RE_NUMBER):
+            lexemes.append(Number(matcher.group(0)))
+        elif matcher.fullmatch(RE_NAME):
             lexemes.append(Name(matcher.group(0)))
         elif matcher.fullmatch(RE_CLASS):
             lexemes.append(Class(matcher.group(0)))
