@@ -27,10 +27,7 @@ def _test_bad_single_token(token: str, intended_type: Type):
         assert True
 
 
-# CORRECT TOKENS
-#
-# These tests should test all types of different tokens for each form of
-# lexeme.
+# NUMBER
 
 @pytest.mark.parametrize('token', [
     '42',
@@ -42,6 +39,16 @@ def _test_bad_single_token(token: str, intended_type: Type):
 def test_number(token: str):
     _test_single_token(token, vl.Number)
 
+@pytest.mark.parametrize('token', [
+    '42e', '42E', '42e+', '42E+', '42e-', '42E-',
+    '42.e', '42.E', '42.e+', '42.E+', '42.e-', '42.E-',
+    '4.2e', '4.2E', '4.2e+', '4.2E+', '4.2e-', '4.2E-',
+])
+def test_bad_number(token: str):
+    _test_bad_single_token(token, vl.Number)
+
+
+# NAME
 
 @pytest.mark.parametrize('token', [
     '_', '__', '___',
@@ -54,11 +61,29 @@ def test_name(token: str):
 
 
 @pytest.mark.parametrize('token', [
+    'A', 'AB', '-a', 'a-', 'a-b-', 'a-?', 'a?!', '42', '42e3', '?', '?!',
+])
+def test_bad_name(token: str):
+    _test_bad_single_token(token, vl.Name)
+
+
+# CLASS
+
+@pytest.mark.parametrize('token', [
     'A', 'AB', 'AThing', 'AnotherThing', 'A-Thing', 'Another-Thing', 'Plan9', 'Plan-9-From-Outer-Space',
 ])
 def test_class(token: str):
     _test_single_token(token, vl.Class)
 
+
+@pytest.mark.parametrize('token', [
+    'a-class', 'a_class', 'aA', '9', '9a', '!?',
+])
+def test_bad_class(token: str):
+    _test_bad_single_token(token, vl.Class)
+
+
+# OPERATOR
 
 @pytest.mark.parametrize('token', [
     '!', '@', '$', '%', '^', '&', '*', '(', ')', '-', '=', '+', '|', ':', '/', '?', '<', '>',
@@ -68,33 +93,6 @@ def test_class(token: str):
 ])
 def test_operator(token: str):
     _test_single_token(token, vl.Operator)
-
-
-# INCORRECT TOKENS
-#
-# These tests should ensure that rogue tokens do not sneak through.
-
-@pytest.mark.parametrize('token', [
-    '42e', '42E', '42e+', '42E+', '42e-', '42E-',
-    '42.e', '42.E', '42.e+', '42.E+', '42.e-', '42.E-',
-    '4.2e', '4.2E', '4.2e+', '4.2E+', '4.2e-', '4.2E-',
-])
-def test_bad_number(token: str):
-    _test_bad_single_token(token, vl.Number)
-
-
-@pytest.mark.parametrize('token', [
-    'A', 'AB', '-a', 'a-', 'a-b-', 'a-?', 'a?!', '42', '42e3', '?', '?!',
-])
-def test_bad_name(token: str):
-    _test_bad_single_token(token, vl.Name)
-
-
-@pytest.mark.parametrize('token', [
-    'a-class', 'a_class', 'aA', '9', '9a', '!?',
-])
-def test_bad_class(token: str):
-    _test_bad_single_token(token, vl.Class)
 
 
 @pytest.mark.parametrize('token', [
