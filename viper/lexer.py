@@ -30,9 +30,7 @@ RE_NAME = re.compile(r'_+|(?:_*[a-z][_a-zA-Z0-9]*(?:-[_a-zA-Z0-9]*)*[!@$%^&*?]?)
 RE_CLASS = re.compile(r'[A-Z][-_a-zA-Z0-9]*')
 RE_OPERATOR = re.compile(r'[!@$%^&*()\-=+|:/?<>\[\]{}~]+')
 
-RE_PREFIX_OP = re.compile(r'(?P<op>' + RE_OPERATOR.pattern + r')(?P<val>.+)')
-RE_POSTFIX_OP = re.compile(r'(?P<val>.+)(?P<op>' + RE_OPERATOR.pattern + r')')
-RE_INFIX_OP = re.compile(r'(?P<left_val>.+)(?P<op>' + RE_OPERATOR.pattern + r')(?P<right_val>.+)')
+RE_INFIX_OP = re.compile(r'(?P<left_val>.*?)(?P<op>' + RE_OPERATOR.pattern + r')(?P<right_val>.*?)')
 
 
 # Regular expression magic class for making if/else matching simpler. Idea from:
@@ -182,12 +180,6 @@ class Lexer:
             lexemes.append(Class(matcher.group(0)))
         elif matcher.fullmatch(RE_OPERATOR):
             lexemes.append(Operator(matcher.group(0)))
-        elif matcher.fullmatch(RE_PREFIX_OP):
-            lexemes.append(Operator(matcher.group('op')))
-            lexemes.extend(cls.lex_token(matcher.group('val')))
-        elif matcher.fullmatch(RE_POSTFIX_OP):
-            lexemes.extend(cls.lex_token(matcher.group('val')))
-            lexemes.append(Operator(matcher.group('op')))
         elif matcher.fullmatch(RE_INFIX_OP):
             lexemes.extend(cls.lex_token(matcher.group('left_val')))
             lexemes.append(Operator(matcher.group('op')))
