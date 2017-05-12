@@ -40,23 +40,12 @@ class RegexMatcher:
         self._token = token
         self._match = None
 
-    def match(self, pattern: PatternType):
-        self._match = pattern.match(self._token)
-        return self._match
-
     def fullmatch(self, pattern: PatternType):
         self._match = pattern.fullmatch(self._token)
         return self._match
 
-    def search(self, pattern: PatternType):
-        self._match = pattern.search(self._token)
-        return self._match
-
     def group(self, grp: Union[int, str]):
         return self._match.group(grp)
-
-    def groups(self):
-        return self._match.groups()
 
 
 # Tokens
