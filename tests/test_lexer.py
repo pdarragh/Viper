@@ -2,7 +2,7 @@ import viper.lexer as vl
 
 import pytest
 
-from typing import Type
+from typing import List, Type
 
 
 ###############################################################################
@@ -137,3 +137,26 @@ def test_leading_indentation(line: str, indent_count: int):
         assert indent == vl.INDENT
     if rest:
         assert rest[0] != vl.INDENT
+
+
+# OPERATORS
+
+@pytest.mark.parametrize('line,correct_lexemes', [
+    ('foo+',
+     [vl.Name('foo'), vl.Operator('+')]),
+    ('+foo',
+     [vl.Operator('+'), vl.Name('foo')]),
+    ('foo+bar',
+     [vl.Name('foo'), vl.Operator('+'), vl.Name('bar')]),
+    ('foo(bar)',
+     [vl.Name('foo'), vl.Operator('('), vl.Name('bar'), vl.Operator(')')]),
+    ('foo()bar',
+     [vl.Name('foo'), vl.Operator('('), vl.Operator(')'), vl.Name('bar')]),
+    ('foo?bar',
+     [vl.Name('foo'), vl.Operator('?'), vl.Name('bar')]),
+    ('foo?!bar',
+     [vl.Name('foo?'), vl.Operator('!'), vl.Name('bar')]),
+])
+def test_infix_ops(line: str, correct_lexemes: List[vl.Lexeme]):
+    print(line)
+    assert vl.lex_line(line) == correct_lexemes
