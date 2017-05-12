@@ -158,5 +158,27 @@ def test_leading_indentation(line: str, indent_count: int):
      [vl.Name('foo?'), vl.Operator('!'), vl.Name('bar')]),
 ])
 def test_infix_ops(line: str, correct_lexemes: List[vl.Lexeme]):
-    print(line)
     assert vl.lex_line(line) == correct_lexemes
+
+
+###############################################################################
+#
+# LEXING TEXT
+#
+###############################################################################
+
+
+# MULTI-LINE LEXING
+
+@pytest.mark.parametrize('text,correct_lexemes', [
+    ('\n'.join((
+            'def foo(arg):',
+            '    return bar()')),
+     [vl.Name('def'), vl.Name('foo'), vl.Operator('('), vl.Name('arg'), vl.Operator(')'), vl.Operator(':'),
+      vl.NEWLINE,
+      vl.INDENT, vl.Name('return'), vl.Name('bar'), vl.Operator('('), vl.Operator(')'),
+      vl.NEWLINE]
+    ),
+])
+def test_multiple_lines(text: str, correct_lexemes: List[vl.Lexeme]):
+    assert vl.Lexer.lex(text) == correct_lexemes
