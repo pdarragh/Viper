@@ -130,7 +130,7 @@ class Lexer:
         return lexemes
 
     @classmethod
-    def lex_file(cls, file: str) -> List[Lexeme]:
+    def lex_file(cls, file: str) -> List[Lexeme]:  # pragma: no cover
         lexemes = []
         with open(file) as f:
             for line in f:
@@ -145,7 +145,7 @@ class Lexer:
             return lexemes
         # Remove properly-indented leading whitespace.
         match = RE_LEADING_INDENT.match(line)
-        if match is None:
+        if match is None:  # pragma: no cover
             raise LexerError(f"invalid line given: '{line}'")
         indentation, rest = match.groups()
         for indentation_level in range(len(indentation) // INDENT_SIZE):
