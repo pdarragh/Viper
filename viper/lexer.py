@@ -4,7 +4,8 @@ from re import _pattern_type as PatternType
 from typing import List, Union
 
 __all__ = [
-    'Indent', 'OpenParen', 'CloseParen', 'Name', 'Class', 'Operator',
+    'Lexeme', 'Indent', 'NewLine', 'OpenParen', 'CloseParen', 'Number', 'Name', 'Class', 'Operator',
+    'Lexer',
     'lex_file', 'lex_line',
 ]
 
