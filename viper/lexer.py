@@ -19,6 +19,7 @@ __all__ = [
 INDENT_SIZE = 4
 RE_LEADING_INDENT = re.compile(fr'^((?: {{{INDENT_SIZE}}})*)(.*)$')
 
+RE_COMMA = re.compile(r',')
 RE_NUMBER = re.compile(r'(?:\d+)'                           # 42
                        r'|'
                        r'(?:\.\d+(?:[eE][+-]?\d+)?)'        # .42 | .42e-8
@@ -30,7 +31,13 @@ RE_NAME = re.compile(r'_+|(?:_*[a-z][_a-zA-Z0-9]*(?:-[_a-zA-Z0-9]*)*[!@$%^&*?]?)
 RE_CLASS = re.compile(r'[A-Z][-_a-zA-Z0-9]*')
 RE_OPERATOR = re.compile(r'[!@$%^&*()\-=+|:/?<>\[\]{}~]+')
 
-RE_INFIX_OP = re.compile(r'(?P<left_val>.*)(?P<op>' + RE_OPERATOR.pattern + r')(?P<right_val>.*)')
+
+def make_infix_re(pattern: PatternType, group_name: str) -> PatternType:
+    return re.compile(r'(?P<left_val>.*)(?P<' + group_name + '>' + pattern + r')(?P<right_val>.*)')
+
+
+RE_INFIX_COMMA = make_infix_re(RE_COMMA.pattern, 'comma')
+RE_INFIX_OP = make_infix_re(RE_OPERATOR.pattern, 'op')
 
 
 # Regular expression magic class for making if/else matching simpler. Idea from:
@@ -82,14 +89,9 @@ class NewLine(Lexeme):
         super().__init__('\n', False)
 
 
-class OpenParen(Lexeme):
+class Comma(Lexeme):
     def __init__(self):
-        super().__init__('(', False)
-
-
-class CloseParen(Lexeme):
-    def __init__(self):
-        super().__init__(')', False)
+        super().__init__(',', False)
 
 
 class Number(Lexeme):
@@ -110,8 +112,7 @@ class Operator(Lexeme):
 
 INDENT = Indent()
 NEWLINE = NewLine()
-OPEN_PAREN = OpenParen()
-CLOSE_PAREN = CloseParen()
+COMMA = Comma()
 
 
 # Lexer errors.
@@ -161,7 +162,9 @@ class Lexer:
         lexemes = []
         if not token:
             return lexemes
-        if matcher.fullmatch(RE_NUMBER):
+        elif matcher.fullmatch(RE_COMMA):
+            lexemes.append(COMMA)
+        elif matcher.fullmatch(RE_NUMBER):
             lexemes.append(Number(matcher.group(0)))
         elif matcher.fullmatch(RE_NAME):
             lexemes.append(Name(matcher.group(0)))
@@ -169,6 +172,10 @@ class Lexer:
             lexemes.append(Class(matcher.group(0)))
         elif matcher.fullmatch(RE_OPERATOR):
             lexemes.append(Operator(matcher.group(0)))
+        elif matcher.fullmatch(RE_INFIX_COMMA):
+            lexemes.extend(cls.lex_token(matcher.group('left_val')))
+            lexemes.append(COMMA)
+            lexemes.extend(cls.lex_token(matcher.group('right_val')))
         elif matcher.fullmatch(RE_INFIX_OP):
             lexemes.extend(cls.lex_token(matcher.group('left_val')))
             lexemes.append(Operator(matcher.group('op')))
