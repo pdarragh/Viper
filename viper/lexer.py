@@ -34,6 +34,7 @@ RE_OPEN_PAREN = re.compile(r'(?P<left>[^(]*)\((?P<right>.*)')
 RE_CLOSE_PAREN = re.compile(r'(?P<left>[^)]*)\)(?P<right>.*)')
 RE_PREFIX_OP = re.compile(r'(?P<op>' + RE_OPERATOR.pattern + r')(?P<val>.+)')
 RE_POSTFIX_OP = re.compile(r'(?P<val>.+)(?P<op>' + RE_OPERATOR.pattern + r')')
+RE_INFIX_OP = re.compile(r'(?P<left_val>.+)(?P<op>' + RE_OPERATOR.pattern + r')(?P<right_val>.+)')
 
 
 # Regular expression magic class for making if/else matching simpler. Idea from:
@@ -203,6 +204,10 @@ class Lexer:
         elif matcher.fullmatch(RE_POSTFIX_OP):
             lexemes.extend(cls.lex_token(matcher.group('val')))
             lexemes.append(Operator(matcher.group('op')))
+        elif matcher.fullmatch(RE_INFIX_OP):
+            lexemes.extend(cls.lex_token(matcher.group('left_val')))
+            lexemes.append(Operator(matcher.group('op')))
+            lexemes.extend(cls.lex_token(matcher.group('right_val')))
         else:
             raise LexerError(f"invalid token: '{token}'")
         return lexemes
