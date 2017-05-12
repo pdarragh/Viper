@@ -182,3 +182,20 @@ def test_infix_ops(line: str, correct_lexemes: List[vl.Lexeme]):
 ])
 def test_multiple_lines(text: str, correct_lexemes: List[vl.Lexeme]):
     assert vl.Lexer.lex(text) == correct_lexemes
+
+
+###############################################################################
+#
+# MISCELLANY
+#
+###############################################################################
+
+
+# LEXEMES
+
+def test_lexemes():
+    assert vl.Name('foo') == vl.Name('foo')
+    assert vl.Indent() == vl.INDENT
+    assert str(vl.Name('foo')) == 'foo'
+    assert repr(vl.Name('foo')) == 'Name(foo)'
+    assert repr(vl.INDENT) == 'Indent'
