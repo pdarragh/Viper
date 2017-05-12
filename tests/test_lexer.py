@@ -1,4 +1,4 @@
-from viper.lexer import *
+import viper.lexer as vl
 
 import pytest
 
@@ -13,7 +13,7 @@ from typing import Type
 
 
 def _test_single_token(token: str, lexeme_type: Type):
-    lexemes = Lexer.lex_token(token)
+    lexemes = vl.Lexer.lex_token(token)
     assert len(lexemes) == 1
     assert lexemes[0] == lexeme_type(token)
 
@@ -23,7 +23,7 @@ def _test_bad_single_token(token: str, intended_type: Type):
         _test_single_token(token, intended_type)
     except AssertionError:
         assert True
-    except LexerError:
+    except vl.LexerError:
         assert True
 
 
@@ -40,7 +40,7 @@ def _test_bad_single_token(token: str, intended_type: Type):
     '4.2', '4.2e8', '4.2E8', '4.2e+8', '4.2E+8', '4.2e-8', '4.2E-8',
 ])
 def test_number(token: str):
-    _test_single_token(token, Number)
+    _test_single_token(token, vl.Number)
 
 
 @pytest.mark.parametrize('token', [
@@ -50,14 +50,14 @@ def test_number(token: str):
     'a!', 'a@', 'a$', 'a%', 'a^', 'a&', 'a*', 'a?',
 ])
 def test_name(token: str):
-    _test_single_token(token, Name)
+    _test_single_token(token, vl.Name)
 
 
 @pytest.mark.parametrize('token', [
     'A', 'AB', 'AThing', 'AnotherThing', 'A-Thing', 'Another-Thing', 'Plan9', 'Plan-9-From-Outer-Space',
 ])
 def test_class(token: str):
-    _test_single_token(token, Class)
+    _test_single_token(token, vl.Class)
 
 
 @pytest.mark.parametrize('token', [
@@ -67,7 +67,7 @@ def test_class(token: str):
     '()', '(()', '()()', '())', '(())',
 ])
 def test_operator(token: str):
-    _test_single_token(token, Operator)
+    _test_single_token(token, vl.Operator)
 
 
 # INCORRECT TOKENS
@@ -80,25 +80,25 @@ def test_operator(token: str):
     '4.2e', '4.2E', '4.2e+', '4.2E+', '4.2e-', '4.2E-',
 ])
 def test_bad_number(token: str):
-    _test_bad_single_token(token, Number)
+    _test_bad_single_token(token, vl.Number)
 
 
 @pytest.mark.parametrize('token', [
     'A', 'AB', '-a', 'a-', 'a-b-', 'a-?', 'a?!', '42', '42e3', '?', '?!',
 ])
 def test_bad_name(token: str):
-    _test_bad_single_token(token, Name)
+    _test_bad_single_token(token, vl.Name)
 
 
 @pytest.mark.parametrize('token', [
     'a-class', 'a_class', 'aA', '9', '9a', '!?',
 ])
 def test_bad_class(token: str):
-    _test_bad_single_token(token, Class)
+    _test_bad_single_token(token, vl.Class)
 
 
 @pytest.mark.parametrize('token', [
     'a', 'A', 'aA', 'AA', 'Aa', 'aa', '(42)',
 ])
 def test_bad_operator(token: str):
-    _test_bad_single_token(token, Operator)
+    _test_bad_single_token(token, vl.Operator)
