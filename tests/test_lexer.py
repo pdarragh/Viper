@@ -102,3 +102,38 @@ def test_bad_class(token: str):
 ])
 def test_bad_operator(token: str):
     _test_bad_single_token(token, vl.Operator)
+
+
+###############################################################################
+#
+# LEXING LINES
+#
+###############################################################################
+
+
+# INDENTATION
+
+@pytest.mark.parametrize('levels', [
+    0, 1, 2, 3, 4,
+])
+def test_indentation(levels: int):
+    line = ''.join(' ' * vl.INDENT_SIZE for _ in range(levels))
+    correct = [vl.INDENT for _ in range(levels)]
+    assert vl.lex_line(line) == correct
+
+
+@pytest.mark.parametrize('line,indent_count', [
+    ('none', 0),
+    ('    one', 1),
+    ('        two', 2),
+    ('     one plus space', 1),
+])
+def test_leading_indentation(line, indent_count):
+    lexemes = vl.lex_line(line)
+    assert len(lexemes) >= indent_count
+    indents = lexemes[:indent_count]
+    rest = lexemes[indent_count:]
+    for indent in indents:
+        assert indent == vl.INDENT
+    if rest:
+        assert rest[0] != vl.INDENT
