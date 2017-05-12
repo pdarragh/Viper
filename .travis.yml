@@ -3,12 +3,16 @@ language: python
 python:
   - 3.6
 
+# Cache packages
 cache:
   - pip
 
+# Ensure everything is installed
 install:
   - pip install -r requirements.txt
 
+# Run with coverage
 script: pytest --cov=viper
 
+# Wear Coveralls!
 after_script: coveralls
