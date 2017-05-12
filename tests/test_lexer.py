@@ -128,7 +128,7 @@ def test_indentation(levels: int):
     ('        two', 2),
     ('     one plus space', 1),
 ])
-def test_leading_indentation(line, indent_count):
+def test_leading_indentation(line: str, indent_count: int):
     lexemes = vl.lex_line(line)
     assert len(lexemes) >= indent_count
     indents = lexemes[:indent_count]
