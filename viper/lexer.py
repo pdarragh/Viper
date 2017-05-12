@@ -30,7 +30,7 @@ RE_NAME = re.compile(r'_+|(?:_*[a-z][_a-zA-Z0-9]*(?:-[_a-zA-Z0-9]*)*[!@$%^&*?]?)
 RE_CLASS = re.compile(r'[A-Z][-_a-zA-Z0-9]*')
 RE_OPERATOR = re.compile(r'[!@$%^&*()\-=+|:/?<>\[\]{}~]+')
 
-RE_INFIX_OP = re.compile(r'(?P<left_val>.*?)(?P<op>' + RE_OPERATOR.pattern + r')(?P<right_val>.*?)')
+RE_INFIX_OP = re.compile(r'(?P<left_val>.*)(?P<op>' + RE_OPERATOR.pattern + r')(?P<right_val>.*)')
 
 
 # Regular expression magic class for making if/else matching simpler. Idea from:
