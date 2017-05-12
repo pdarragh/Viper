@@ -5,7 +5,7 @@ from typing import List, Union
 
 __all__ = [
     'Lexeme', 'Indent', 'NewLine', 'OpenParen', 'CloseParen', 'Number', 'Name', 'Class', 'Operator',
-    'Lexer',
+    'LexerError', 'Lexer',
     'lex_file', 'lex_line',
 ]
 
