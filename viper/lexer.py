@@ -12,6 +12,7 @@ __all__ = [
 # FIXME: Ambiguity between names with symbol endings and operators with those same symbols.
 # FIXME: Ambiguity between function call and postfix Operator `()`
 # TODO: Handle strings.
+# TODO: Determine whether parentheses should be special or should be considered individual operators.
 
 
 # Regular expression patterns.
@@ -29,9 +30,6 @@ RE_NAME = re.compile(r'_+|(?:_*[a-z][_a-zA-Z0-9]*(?:-[_a-zA-Z0-9]*)*[!@$%^&*?]?)
 RE_CLASS = re.compile(r'[A-Z][-_a-zA-Z0-9]*')
 RE_OPERATOR = re.compile(r'[!@$%^&*()\-=+|:/?<>\[\]{}~]+')
 
-RE_BOTH_PAREN = re.compile(r'(?P<left>[^(]*)\((?P<inside>[^)]*)\)(?P<right>.*)')
-RE_OPEN_PAREN = re.compile(r'(?P<left>[^(]*)\((?P<right>.*)')
-RE_CLOSE_PAREN = re.compile(r'(?P<left>[^)]*)\)(?P<right>.*)')
 RE_PREFIX_OP = re.compile(r'(?P<op>' + RE_OPERATOR.pattern + r')(?P<val>.+)')
 RE_POSTFIX_OP = re.compile(r'(?P<val>.+)(?P<op>' + RE_OPERATOR.pattern + r')')
 RE_INFIX_OP = re.compile(r'(?P<left_val>.+)(?P<op>' + RE_OPERATOR.pattern + r')(?P<right_val>.+)')
@@ -184,20 +182,6 @@ class Lexer:
             lexemes.append(Class(matcher.group(0)))
         elif matcher.fullmatch(RE_OPERATOR):
             lexemes.append(Operator(matcher.group(0)))
-        elif matcher.fullmatch(RE_BOTH_PAREN):
-            lexemes.extend(cls.lex_token(matcher.group('left')))
-            lexemes.append(OPEN_PAREN)
-            lexemes.extend(cls.lex_token(matcher.group('inside')))
-            lexemes.append(CLOSE_PAREN)
-            lexemes.extend(cls.lex_token(matcher.group('right')))
-        elif matcher.fullmatch(RE_OPEN_PAREN):
-            lexemes.extend(cls.lex_token(matcher.group('left')))
-            lexemes.append(OPEN_PAREN)
-            lexemes.extend(cls.lex_token(matcher.group('right')))
-        elif matcher.fullmatch(RE_CLOSE_PAREN):
-            lexemes.extend(cls.lex_token(matcher.group('left')))
-            lexemes.append(CLOSE_PAREN)
-            lexemes.extend(cls.lex_token(matcher.group('right')))
         elif matcher.fullmatch(RE_PREFIX_OP):
             lexemes.append(Operator(matcher.group('op')))
             lexemes.extend(cls.lex_token(matcher.group('val')))
