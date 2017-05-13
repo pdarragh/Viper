@@ -47,6 +47,7 @@ def test_comma():
 def test_number(token: str):
     _test_single_token(token, vl.Number)
 
+
 @pytest.mark.parametrize('token', [
     '42e', '42E', '42e+', '42E+', '42e-', '42E-',
     '42.e', '42.E', '42.e+', '42.E+', '42.e-', '42.E-',
@@ -203,16 +204,14 @@ def test_commas(line: str, correct_lexemes: List[vl.Lexeme]):
      [vl.Name('def'), vl.Name('foo'), vl.Operator('('), vl.Name('arg'), vl.Operator(')'), vl.Operator(':'),
       vl.NEWLINE,
       vl.INDENT, vl.Name('return'), vl.Name('bar'), vl.Operator('('), vl.Operator(')'),
-      vl.NEWLINE]
-    ),
+      vl.NEWLINE]),
     ('\n'.join((
             'def foo(arg1, arg2):',
             '    return bar(arg1, arg2,)')),
      [vl.Name('def'), vl.Name('foo'), vl.Operator('('), vl.Name('arg1'), vl.COMMA, vl.Name('arg2'), vl.Operator(')'),
       vl.Operator(':'), vl.NEWLINE,
       vl.INDENT, vl.Name('return'), vl.Name('bar'), vl.Operator('('), vl.Name('arg1'), vl.COMMA, vl.Name('arg2'),
-      vl.COMMA, vl.Operator(')'), vl.NEWLINE]
-    ),
+      vl.COMMA, vl.Operator(')'), vl.NEWLINE]),
 ])
 def test_multiple_lines(text: str, correct_lexemes: List[vl.Lexeme]):
     assert vl.Lexer.lex(text) == correct_lexemes
