@@ -96,8 +96,8 @@ def test_bad_class(token: str):
 
 @pytest.mark.parametrize('token', [
     '!', '@', '$', '%', '^', '&', '*', '(', ')', '-', '=', '+', '|', ':', '/', '?', '<', '>',
-    '[', ']', '{', '}', '~',
-    '!@', '<>', '::',
+    '[', ']', '{', '}', '~', '.',
+    '!@', '<>', '::', '.&',
     '()', '(()', '()()', '())', '(())',
 ])
 def test_operator(token: str):
@@ -163,6 +163,8 @@ def test_leading_indentation(line: str, indent_count: int):
      [vl.Name('foo'), vl.Operator('?'), vl.Name('bar')]),
     ('foo?!bar',
      [vl.Name('foo?'), vl.Operator('!'), vl.Name('bar')]),
+    ('foo.bar',
+     [vl.Name('foo'), vl.Operator('.'), vl.Name('bar')]),
 ])
 def test_infix_ops(line: str, correct_lexemes: List[vl.Lexeme]):
     assert vl.lex_line(line) == correct_lexemes
