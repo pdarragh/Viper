@@ -131,7 +131,7 @@ class Lexer:
         return lexemes
 
     @classmethod
-    def lex_file(cls, file: str) -> List[Lexeme]:  # pragma: no cover
+    def lex_file(cls, file: str) -> List[Lexeme]:
         lexemes = []
         with open(file) as f:
             for line in f:

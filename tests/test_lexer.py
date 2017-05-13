@@ -1,5 +1,6 @@
 import viper.lexer as vl
 
+import os
 import pytest
 
 from typing import List, Type
@@ -217,6 +218,21 @@ def test_commas(line: str, correct_lexemes: List[vl.Lexeme]):
 ])
 def test_multiple_lines(text: str, correct_lexemes: List[vl.Lexeme]):
     assert vl.Lexer.lex(text) == correct_lexemes
+
+
+###############################################################################
+#
+# FILES
+#
+###############################################################################
+
+
+def test_files():
+    files_dir = os.path.join(os.path.dirname(__file__), 'files')
+    if not os.path.isdir(files_dir):
+        return
+    for filename in (os.path.join(files_dir, file) for file in os.listdir(files_dir) if file.endswith('.viper')):
+        vl.lex_file(filename)
 
 
 ###############################################################################
