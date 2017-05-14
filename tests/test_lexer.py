@@ -2,7 +2,9 @@ import viper.lexer as vl
 
 import os
 import pytest
+import sys
 
+from importlib import import_module
 from typing import List, Type
 
 
@@ -227,12 +229,28 @@ def test_multiple_lines(text: str, correct_lexemes: List[vl.Lexeme]):
 ###############################################################################
 
 
-def test_files():
-    files_dir = os.path.join(os.path.dirname(__file__), 'files')
-    if not os.path.isdir(files_dir):
-        return
-    for filename in (os.path.join(files_dir, file) for file in os.listdir(files_dir) if file.endswith('.viper')):
-        vl.lex_file(filename)
+def _generate_files_and_modules():
+    results = []
+    cur_dir = os.path.dirname(__file__)
+    viper_files_dir = os.path.join(cur_dir, 'viper_files')
+    lexeme_files_dir = os.path.join(cur_dir, 'lexeme_files')
+    if not os.path.isdir(viper_files_dir) or not os.path.isdir(lexeme_files_dir):
+        return results
+    for viper_file in (os.path.join(viper_files_dir, file) for file in os.listdir(viper_files_dir) if file.endswith('.viper')):
+        basename = os.path.splitext(os.path.basename(viper_file))[0]
+        if f'{basename}.py' not in os.listdir(lexeme_files_dir):
+            continue
+        module_name = f'.{os.path.basename(lexeme_files_dir)}.{basename}'
+        results.append((viper_file, module_name))
+    return results
+
+
+@pytest.mark.parametrize('viper_file,module_name', _generate_files_and_modules())
+def test_files(viper_file: str, module_name: str):
+    module = import_module(module_name, 'tests')
+    correct = module.lexemes
+    lexemes = vl.lex_file(viper_file)
+    assert lexemes == correct
 
 
 ###############################################################################

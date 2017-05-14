@@ -6,7 +6,7 @@ Shape Circle:
         self.radius: Int = radius
 
     def get_area() -> Float:
-        return PI * (self.radius ^ 2)
+        return pi * (self.radius ^ 2)
 
 Shape Quadrilateral:
     def init(length: Int, width: Int):
