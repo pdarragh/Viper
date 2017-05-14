@@ -19,4 +19,5 @@ Viper has:
   - But unlike Python, Viper will only allow certain styles of indentation
 * Parameter names and argument labels, like Swift
   - But argument labels are optional
-* Recursively-defined data structures
+* Algebraic data types
+  - Possibly GADTs, but we'll see about that

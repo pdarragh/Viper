@@ -1,0 +1,38 @@
+from viper.lexer import (
+    NEWLINE, INDENT, COMMA,
+    Number as Num,
+    Name as N,
+    Class as C,
+    Operator as Op,
+)
+
+
+lexemes = [
+    N('interface'), C('Shape'), Op(':'), NEWLINE,
+    INDENT, N('def'), N('get_area'), Op('('), Op(')'), Op('->'), C('Float'), NEWLINE,
+    NEWLINE,
+    C('Shape'), C('Circle'), Op(':'), NEWLINE,
+    INDENT, N('def'), N('init'), Op('('), N('radius'), Op(':'), C('Int'), Op(')'), Op(':'), NEWLINE,
+    INDENT, INDENT, N('self'), Op('.'), N('radius'), Op(':'), C('Int'), Op('='), N('radius'), NEWLINE,
+    NEWLINE,
+    INDENT, N('def'), N('get_area'), Op('('), Op(')'), Op('->'), C('Float'), Op(':'), NEWLINE,
+    INDENT, INDENT, N('return'), N('pi'), Op('*'), Op('('), N('self'), Op('.'), N('radius'), Op('^'), Num('2'), Op(')'),
+    NEWLINE,
+    NEWLINE,
+    C('Shape'), C('Quadrilateral'), Op(':'), NEWLINE,
+    INDENT, N('def'), N('init'), Op('('), N('length'), Op(':'), C('Int'), COMMA, N('width'), Op(':'), C('Int'), Op(')'),
+    Op(':'), NEWLINE,
+    INDENT, INDENT, N('self'), Op('.'), N('length'), Op(':'), C('Int'), Op('='), N('length'), NEWLINE,
+    INDENT, INDENT, N('self'), Op('.'), N('width'), Op(':'), C('Int'), Op('='), N('width'), NEWLINE,
+    NEWLINE,
+    INDENT, N('def'), N('get_area'), Op('('), Op(')'), Op('->'), C('Float'), Op(':'), NEWLINE,
+    INDENT, INDENT, N('return'), N('self'), Op('.'), N('length'), Op('*'), N('self'), Op('.'), N('width'), NEWLINE,
+    NEWLINE,
+    C('Quadrilateral'), C('Rectangle'), Op(':'), NEWLINE,
+    INDENT, N('pass'), NEWLINE,
+    NEWLINE,
+    C('Quadrilateral'), C('Square'), Op(':'), NEWLINE,
+    INDENT, N('def'), N('init'), Op('('), N('side'), Op(':'), C('Int'), Op(')'), Op(':'), NEWLINE,
+    INDENT, INDENT, N('self'), Op('.'), N('length'), Op(':'), C('Int'), Op('='), N('side'), NEWLINE,
+    INDENT, INDENT, N('self'), Op('.'), N('width'), Op(':'), C('Int'), Op('='), N('side'), NEWLINE,
+]
