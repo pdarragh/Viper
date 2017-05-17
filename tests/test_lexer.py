@@ -23,11 +23,14 @@ def _test_single_token(token: str, lexeme_type: Type):
 
 def _test_bad_single_token(token: str, intended_type: Type):
     try:
-        _test_single_token(token, intended_type)
-    except AssertionError:
-        assert True
+        lexemes = vl.Lexer.lex_token(token)
     except vl.LexerError:
         assert True
+    else:
+        if len(lexemes) == 1:
+            assert lexemes[0] != intended_type(token)
+        else:
+            assert True
 
 
 # COMMA
@@ -89,7 +92,7 @@ def test_class(token: str):
 
 
 @pytest.mark.parametrize('token', [
-    'a-class', 'a_class', 'aA', '9', '9a', '!?',
+    'a-class', 'a_class', 'aA', 'A-', 'A-?', '9', '9a', '!?',
 ])
 def test_bad_class(token: str):
     _test_bad_single_token(token, vl.Class)
