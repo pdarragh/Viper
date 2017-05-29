@@ -101,8 +101,8 @@ def test_bad_class(token: str):
 # OPERATOR
 
 @pytest.mark.parametrize('token', [
-    '!', '@', '$', '%', '^', '&', '*', '(', ')', '-', '=', '+', '|', ':', '/', '?', '<', '>',
-    '[', ']', '{', '}', '~', '.',
+    '!', '@', '$', '%', '^', '&', '*', '-', '=', '+', '|', '/', '?', '<', '>',
+    '[', ']', '{', '}', '~',
     '!@', '<>', '::', '.&',
     '()', '(()', '()()', '())', '(())',
 ])
@@ -111,7 +111,7 @@ def test_operator(token: str):
 
 
 @pytest.mark.parametrize('token', [
-    'a', 'A', 'aA', 'AA', 'Aa', 'aa', '(42)',
+    'a', 'A', 'aA', 'AA', 'Aa', 'aa', '(42)', ':', '(', ')', '->', '.',
 ])
 def test_bad_operator(token: str):
     _test_bad_single_token(token, vl.Operator)
@@ -161,16 +161,10 @@ def test_leading_indentation(line: str, indent_count: int):
      [vl.Operator('+'), vl.Name('foo')]),
     ('foo+bar',
      [vl.Name('foo'), vl.Operator('+'), vl.Name('bar')]),
-    ('foo(bar)',
-     [vl.Name('foo'), vl.Operator('('), vl.Name('bar'), vl.Operator(')')]),
-    ('foo()bar',
-     [vl.Name('foo'), vl.Operator('('), vl.Operator(')'), vl.Name('bar')]),
     ('foo?bar',
      [vl.Name('foo'), vl.Operator('?'), vl.Name('bar')]),
     ('foo?!bar',
      [vl.Name('foo?'), vl.Operator('!'), vl.Name('bar')]),
-    ('foo.bar',
-     [vl.Name('foo'), vl.Operator('.'), vl.Name('bar')]),
 ])
 def test_infix_ops(line: str, correct_lexemes: List[vl.Lexeme]):
     assert vl.lex_line(line) == correct_lexemes
@@ -188,9 +182,9 @@ def test_infix_ops(line: str, correct_lexemes: List[vl.Lexeme]):
     ('foo, bar ,baz',
      [vl.Name('foo'), vl.COMMA, vl.Name('bar'), vl.COMMA, vl.Name('baz')]),
     ('foo(bar, baz)',
-     [vl.Name('foo'), vl.Operator('('), vl.Name('bar'), vl.COMMA, vl.Name('baz'), vl.Operator(')')]),
+     [vl.Name('foo'), vl.OPEN_PAREN, vl.Name('bar'), vl.COMMA, vl.Name('baz'), vl.CLOSE_PAREN]),
     ('foo(bar,)',
-     [vl.Name('foo'), vl.Operator('('), vl.Name('bar'), vl.COMMA, vl.Operator(')')]),
+     [vl.Name('foo'), vl.OPEN_PAREN, vl.Name('bar'), vl.COMMA, vl.CLOSE_PAREN]),
 ])
 def test_commas(line: str, correct_lexemes: List[vl.Lexeme]):
     assert vl.lex_line(line) == correct_lexemes
@@ -209,17 +203,17 @@ def test_commas(line: str, correct_lexemes: List[vl.Lexeme]):
     ('\n'.join((
             'def foo(arg):',
             '    return bar()')),
-     [vl.Name('def'), vl.Name('foo'), vl.Operator('('), vl.Name('arg'), vl.Operator(')'), vl.Operator(':'),
+     [vl.Name('def'), vl.Name('foo'), vl.OPEN_PAREN, vl.Name('arg'), vl.CLOSE_PAREN, vl.COLON,
       vl.NEWLINE,
-      vl.INDENT, vl.Name('return'), vl.Name('bar'), vl.Operator('('), vl.Operator(')'),
+      vl.INDENT, vl.Name('return'), vl.Name('bar'), vl.OPEN_PAREN, vl.CLOSE_PAREN,
       vl.NEWLINE]),
     ('\n'.join((
             'def foo(arg1, arg2):',
             '    return bar(arg1, arg2,)')),
-     [vl.Name('def'), vl.Name('foo'), vl.Operator('('), vl.Name('arg1'), vl.COMMA, vl.Name('arg2'), vl.Operator(')'),
-      vl.Operator(':'), vl.NEWLINE,
-      vl.INDENT, vl.Name('return'), vl.Name('bar'), vl.Operator('('), vl.Name('arg1'), vl.COMMA, vl.Name('arg2'),
-      vl.COMMA, vl.Operator(')'), vl.NEWLINE]),
+     [vl.Name('def'), vl.Name('foo'), vl.OPEN_PAREN, vl.Name('arg1'), vl.COMMA, vl.Name('arg2'), vl.CLOSE_PAREN,
+      vl.COLON, vl.NEWLINE,
+      vl.INDENT, vl.Name('return'), vl.Name('bar'), vl.OPEN_PAREN, vl.Name('arg1'), vl.COMMA, vl.Name('arg2'),
+      vl.COMMA, vl.CLOSE_PAREN, vl.NEWLINE]),
 ])
 def test_multiple_lines(text: str, correct_lexemes: List[vl.Lexeme]):
     assert vl.Lexer.lex(text) == correct_lexemes
