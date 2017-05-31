@@ -1,4 +1,4 @@
-from viper.lexer import lex_line
+import viper.lexer as vl
 
 import cmd
 
@@ -12,7 +12,7 @@ class InteractiveLexer(cmd.Cmd):  # pragma: no cover
     prompt = 'viper_lex> '
 
     def default(self, line):
-        lexemes = lex_line(line)
+        lexemes = vl.lex_line(line)
         print(lexemes)
 
     def do_exit(self, arg):
@@ -26,6 +26,9 @@ class InteractiveLexer(cmd.Cmd):  # pragma: no cover
     def cmdloop(self, intro=None):
         try:
             super().cmdloop(intro=intro)
+        except vl.LexerError as e:
+            print(e)
+            self.cmdloop(intro=intro)
         except InteractiveLexerException:
             return
         except KeyboardInterrupt:

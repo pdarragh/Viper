@@ -89,9 +89,34 @@ class NewLine(Lexeme):
         super().__init__('\n', False)
 
 
+class Period(Lexeme):
+    def __init__(self):
+        super().__init__('.', False)
+
+
 class Comma(Lexeme):
     def __init__(self):
         super().__init__(',', False)
+
+
+class OpenParen(Lexeme):
+    def __init__(self):
+        super().__init__('(', False)
+
+
+class CloseParen(Lexeme):
+    def __init__(self):
+        super().__init__(')', False)
+
+
+class Colon(Lexeme):
+    def __init__(self):
+        super().__init__(':', False)
+
+
+class Arrow(Lexeme):
+    def __init__(self):
+        super().__init__('->', False)
 
 
 class Number(Lexeme):
@@ -112,7 +137,12 @@ class Operator(Lexeme):
 
 INDENT = Indent()
 NEWLINE = NewLine()
+PERIOD = Period()
 COMMA = Comma()
+OPEN_PAREN = OpenParen()
+CLOSE_PAREN = CloseParen()
+COLON = Colon()
+ARROW = Arrow()
 
 
 # Lexer errors.
@@ -171,14 +201,26 @@ class Lexer:
         elif matcher.fullmatch(RE_CLASS):
             lexemes.append(Class(matcher.group(0)))
         elif matcher.fullmatch(RE_OPERATOR):
-            lexemes.append(Operator(matcher.group(0)))
+            symbol = matcher.group(0)
+            if symbol == PERIOD.text:
+                lexemes.append(PERIOD)
+            elif symbol == OPEN_PAREN.text:
+                lexemes.append(OPEN_PAREN)
+            elif symbol == CLOSE_PAREN.text:
+                lexemes.append(CLOSE_PAREN)
+            elif symbol == COLON.text:
+                lexemes.append(COLON)
+            elif symbol == ARROW.text:
+                lexemes.append(ARROW)
+            else:
+                lexemes.append(Operator(symbol))
         elif matcher.fullmatch(RE_INFIX_COMMA):
             lexemes.extend(cls.lex_token(matcher.group('left_val')))
             lexemes.append(COMMA)
             lexemes.extend(cls.lex_token(matcher.group('right_val')))
         elif matcher.fullmatch(RE_INFIX_OP):
             lexemes.extend(cls.lex_token(matcher.group('left_val')))
-            lexemes.append(Operator(matcher.group('op')))
+            lexemes.extend(cls.lex_token(matcher.group('op')))
             lexemes.extend(cls.lex_token(matcher.group('right_val')))
         else:
             raise LexerError(f"invalid token: '{token}'")
