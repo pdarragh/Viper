@@ -13,6 +13,8 @@ __all__ = [
 # FIXME: Ambiguity between function call and postfix Operator `()`
 # TODO: Handle strings.
 # TODO: Determine whether parentheses should be special or should be considered individual operators.
+# TODO: Investigate using built-in regex magic parser:
+#         http://code.activestate.com/recipes/457664-hidden-scanner-functionality-in-re-module/
 
 
 # Regular expression patterns.
