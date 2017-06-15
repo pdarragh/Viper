@@ -1,0 +1,37 @@
+<type_expr>     ::= CLASS
+
+<func_def>      ::= def <func_name> <parameters> -> <func_type> : <suite>
+<func_name>     ::= NAME
+<func_type>     ::= <type_expr>
+
+<parameters>    ::= ( <params_list>? )
+<params_list>   ::= <parameter> | <parameter> , <params_list>
+<parameter>     ::= <ext_label>? <local_label> <param_type>
+<ext_label>     ::= NAME
+<local_label>   ::= NAME
+<param_type>    ::= <type_expr>
+
+<suite>         ::= <simple_stmt> | NEWLINE INDENT <stmt> <stmt>* DEDENT
+
+<stmt>          ::= <simple_stmt> | <compound_stmt>
+
+<simple_stmt>   ::= <expr_stmt> NEWLINE
+<expr_stmt>     ::= <expr_list> | pass | return <expr_list>?
+<expr_list>     ::= <expr> | <expr> , <expr_list>
+
+<expr>          ::= <atom> <trailer_list>
+<atom>          ::= ( <expr_list>? ) | NAME | NUMBER | ... | Zilch | True | False
+<trailer_list>  ::= <trailer> | <trailer> <trailer_list>
+<trailer>       ::= ( <arg_list>? ) | . NAME
+
+<compound_stmt> ::= <func_def> | <object_def> | <data_def>
+
+<object_def>    ::= <class_def> | <interface_def> | <implementation_def>
+
+<class_def>     ::= class <common_def>
+<interface_def> ::= interface <common_def>
+<data_def>      ::= data <common_def>
+<common_def>    ::= NAME <arguments>? : <suite>
+<arguments>     ::= ( <arg_list>? )
+<arg_list>      ::= <argument> | <argument> , <arg_list>
+<argument>      ::= <expr>
