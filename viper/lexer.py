@@ -4,7 +4,10 @@ from re import _pattern_type as PatternType
 from typing import List, Union
 
 __all__ = [
-    'Lexeme', 'Indent', 'NewLine', 'Number', 'Name', 'Class', 'Operator',
+    'Lexeme', 'GenericLexeme',
+    'Indent', 'Dedent', 'NewLine', 'Period', 'Comma', 'OpenParen', 'CloseParen', 'Colon', 'Arrow',
+    'Number', 'Name', 'Class', 'Operator',
+    'INDENT', 'DEDENT', 'NEWLINE', 'PERIOD', 'COMMA', 'OPEN_PAREN', 'CLOSE_PAREN', 'COLON', 'ARROW',
     'LexerError', 'Lexer',
     'lex_file', 'lex_line',
 ]
@@ -86,6 +89,11 @@ class Indent(Lexeme):
         super().__init__(' ' * INDENT_SIZE, False)
 
 
+class Dedent(Lexeme):
+    def __init__(self):
+        super().__init__('', False)
+
+
 class NewLine(Lexeme):
     def __init__(self):
         super().__init__('\n', False)
@@ -138,6 +146,7 @@ class Operator(Lexeme):
 
 
 INDENT = Indent()
+DEDENT = Dedent()
 NEWLINE = NewLine()
 PERIOD = Period()
 COMMA = Comma()
