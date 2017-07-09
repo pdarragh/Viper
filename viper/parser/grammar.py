@@ -12,6 +12,8 @@ class GrammarToken:
     def __eq__(self, other):
         if isinstance(other, GrammarToken):
             return self._lexeme_class == other._lexeme_class
+        elif isinstance(other, Literal):
+            return other.lit == self
         return isinstance(other, self._lexeme_class)
 
 
