@@ -3,7 +3,9 @@ from viper.parser.languages import *
 import viper.lexer as vl
 
 from os.path import dirname, join
-from typing import ClassVar
+from typing import ClassVar, List
+
+__all__ = ['GRAMMAR']
 
 
 class GrammarToken:
@@ -86,11 +88,21 @@ class GrammarParseError(Exception):
         super().__init__(message)
 
 
+class ParseError(ValueError):
+    pass
+
+
 class Grammar:
     def __init__(self, grammar_file: str):
         self._grammar_dict = {}
         self._parse_file(grammar_file)
         self.grammar = Union(*self._grammar_dict.values())
+
+    def partial_parse(self, lexemes: List[vl.Lexeme]):
+        lang = self.grammar
+        for lexeme in lexemes:
+            lang = derive(lang, lexeme)
+        return lang
 
     def _parse_file(self, grammar_file: str):
         raw_rules = {}
