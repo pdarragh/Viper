@@ -4,7 +4,7 @@ from re import _pattern_type as PatternType
 from typing import List, Union
 
 __all__ = [
-    'Lexeme', 'GenericLexeme',
+    'Lexeme',
     'Indent', 'Dedent', 'NewLine', 'Period', 'Comma', 'OpenParen', 'CloseParen', 'Colon', 'Arrow',
     'Number', 'Name', 'Class', 'Operator',
     'INDENT', 'DEDENT', 'NEWLINE', 'PERIOD', 'COMMA', 'OPEN_PAREN', 'CLOSE_PAREN', 'COLON', 'ARROW',
