@@ -16,6 +16,12 @@ class GrammarToken:
             return other.lit == self
         return isinstance(other, self._lexeme_class)
 
+    def __str__(self):
+        return f'{self._lexeme_class.__name__}Token'
+
+    def __repr__(self):
+        return str(self)
+
 
 class GrammarLiteral:
     def __init__(self, val: str):
@@ -27,6 +33,12 @@ class GrammarLiteral:
         if isinstance(other, vl.Lexeme):
             return self._val == other.text
         return False
+
+    def __str__(self):
+        return f'"{self._val}"'
+
+    def __repr__(self):
+        return str(self)
 
 
 class RuleLiteral(Language):
