@@ -76,7 +76,7 @@ class Literal(Language):
         return False
 
     def __derive__(self, c):
-        return EPSILON if c == self.lit else EMPTY
+        return EPSILON if self.lit == c else EMPTY
 
 
 def linguify(x) -> Language:
