@@ -79,7 +79,7 @@ class Literal(Language):
         return EPSILON if c == self.lit else EMPTY
 
 
-def linguify(x) -> Literal:
+def linguify(x) -> Language:
     if not isinstance(x, Language):
         return Literal(x)
     return x
