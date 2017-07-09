@@ -1,4 +1,4 @@
-import viper.lexer.lexemes as lexemes
+import viper.lexer as vl
 
 from viper.grammar.languages import *
 
@@ -31,7 +31,7 @@ class GrammarLiteral:
     def __eq__(self, other):
         if isinstance(other, GrammarLiteral):
             return self._val == other._val
-        if isinstance(other, lexemes.Lexeme):
+        if isinstance(other, vl.Lexeme):
             return self._val == other.text
         return False
 
@@ -64,19 +64,19 @@ class RuleLiteral(Language):
         return derive(self.grammar[self.rule], c)
 
 
-INDENT = GrammarToken(lexemes.Indent)
-DEDENT = GrammarToken(lexemes.Dedent)
-NEWLINE = GrammarToken(lexemes.NewLine)
-PERIOD = GrammarToken(lexemes.Period)
-COMMA = GrammarToken(lexemes.Comma)
-OPEN_PAREN = GrammarToken(lexemes.OpenParen)
-CLOSE_PAREN = GrammarToken(lexemes.CloseParen)
-COLON = GrammarToken(lexemes.Colon)
-ARROW = GrammarToken(lexemes.Arrow)
-NUMBER = GrammarToken(lexemes.Number)
-NAME = GrammarToken(lexemes.Name)
-CLASS = GrammarToken(lexemes.Class)
-OPERATOR = GrammarToken(lexemes.Operator)
+INDENT = GrammarToken(vl.Indent)
+DEDENT = GrammarToken(vl.Dedent)
+NEWLINE = GrammarToken(vl.NewLine)
+PERIOD = GrammarToken(vl.Period)
+COMMA = GrammarToken(vl.Comma)
+OPEN_PAREN = GrammarToken(vl.OpenParen)
+CLOSE_PAREN = GrammarToken(vl.CloseParen)
+COLON = GrammarToken(vl.Colon)
+ARROW = GrammarToken(vl.Arrow)
+NUMBER = GrammarToken(vl.Number)
+NAME = GrammarToken(vl.Name)
+CLASS = GrammarToken(vl.Class)
+OPERATOR = GrammarToken(vl.Operator)
 
 
 class GrammarParseError(Exception):
@@ -92,7 +92,7 @@ class Grammar:
         self._parse_file(grammar_file)
         self.grammar = Union(*self._grammar_dict.values())
 
-    def partial_parse(self, lexemes: List[lexemes.Lexeme]):
+    def partial_parse(self, lexemes: List[vl.Lexeme]):
         lang = self.grammar
         for lexeme in lexemes:
             lang = derive(lang, lexeme)
