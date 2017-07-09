@@ -2,6 +2,7 @@ from viper.parser.languages import *
 
 import viper.lexer as vl
 
+from os.path import dirname, join
 from typing import ClassVar
 
 
@@ -180,3 +181,7 @@ class Grammar:
 
     def _make_rule(self, rule):
         return RuleLiteral(rule, self._grammar_dict)
+
+
+GRAMMAR_FILE = join(dirname(__file__), 'formal_grammar.bnf')
+GRAMMAR = Grammar(GRAMMAR_FILE)
