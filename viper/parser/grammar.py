@@ -54,69 +54,73 @@ class RuleLiteral(Language):
 GRAMMAR_DICT = {}
 
 
+def lit(val):
+    return Literal(val)
+
+
 def gl(val):
-    return Literal(GrammarLiteral(val))
+    return lit(GrammarLiteral(val))
 
 
 def r(rule):
     return RuleLiteral(rule, GRAMMAR_DICT)
 
 
-INDENT = Literal(GrammarToken(vl.Indent))
-DEDENT = Literal(GrammarToken(vl.Dedent))
-NEWLINE = Literal(GrammarToken(vl.NewLine))
-PERIOD = Literal(GrammarToken(vl.Period))
-COMMA = Literal(GrammarToken(vl.Comma))
-OPEN_PAREN = Literal(GrammarToken(vl.OpenParen))
-CLOSE_PAREN = Literal(GrammarToken(vl.CloseParen))
-COLON = Literal(GrammarToken(vl.Colon))
-ARROW = Literal(GrammarToken(vl.Arrow))
-NUMBER = Literal(GrammarToken(vl.Number))
-NAME = Literal(GrammarToken(vl.Name))
-CLASS = Literal(GrammarToken(vl.Class))
-OPERATOR = Literal(GrammarToken(vl.Operator))
+INDENT = GrammarToken(vl.Indent)
+DEDENT = GrammarToken(vl.Dedent)
+NEWLINE = GrammarToken(vl.NewLine)
+PERIOD = GrammarToken(vl.Period)
+COMMA = GrammarToken(vl.Comma)
+OPEN_PAREN = GrammarToken(vl.OpenParen)
+CLOSE_PAREN = GrammarToken(vl.CloseParen)
+COLON = GrammarToken(vl.Colon)
+ARROW = GrammarToken(vl.Arrow)
+NUMBER = GrammarToken(vl.Number)
+NAME = GrammarToken(vl.Name)
+CLASS = GrammarToken(vl.Class)
+OPERATOR = GrammarToken(vl.Operator)
 
 
 GRAMMAR_DICT.update({
-    'type_expr':     CLASS,
+    'type_expr':     lit(CLASS),
 
-    'func_def':      Concat(gl('def'), r('func_name'), r('parameters'), ARROW, r('func_type'), COLON, r('suite')),
-    'func_name':     NAME,
+    'func_def':      Concat(gl('def'), r('func_name'), r('parameters'), lit(ARROW), r('func_type'), lit(COLON), r('suite')),
+    'func_name':     lit(NAME),
     'func_type':     r('type_expr'),
 
-    'parameters':    Concat(OPEN_PAREN, Optional(r('params_list')), CLOSE_PAREN),
+    'parameters':    Concat(lit(OPEN_PAREN), Optional(r('params_list')), lit(CLOSE_PAREN)),
     'params_list':   Union(r('parameter'),
                            Concat(r('parameter'), r('params_list'))),
     'parameter':     Concat(Optional(r('ext_label')), r('local_label'), r('param_type')),
-    'ext_label':     NAME,
-    'local_label':   NAME,
+    'ext_label':     lit(NAME),
+    'local_label':   lit(NAME),
     'param_type':    r('type_expr'),
 
     'suite':         Union(r('simple_stmt'),
-                           Concat(NEWLINE, INDENT, r('stmt'), Repeat(r('stmt')), DEDENT)),
+                           Concat(lit(NEWLINE), lit(INDENT), r('stmt'), Repeat(r('stmt')), lit(DEDENT))),
 
     'stmt':          Union(r('simple_stmt'),
                            r('compound_stmt')),
 
-    'simple_stmt':   Concat(r('expr_stmt'), NEWLINE),
+    'simple_stmt':   Concat(r('expr_stmt'), lit(NEWLINE)),
     'expr_stmt':     Union(r('expr_list'),
                            gl('pass'),
                            Concat(gl('return'), Optional(r('expr_list')))),
     'expr_list':     Union(r('expr'),
-                           Concat(r('expr'), COMMA, r('expr_list'))),
+                           Concat(r('expr'), lit(COMMA), r('expr_list'))),
 
     'expr':          Concat(r('atom'), r('trailer_list')),
-    'atom':          Union(Concat(OPEN_PAREN, Optional(r('expr_list')), CLOSE_PAREN),
-                           NAME,
-                           NUMBER,
+    'atom':          Union(Concat(lit(OPEN_PAREN), Optional(r('expr_list')), lit(CLOSE_PAREN)),
+                           lit(NAME),
+                           lit(NUMBER),
                            gl('...'),
                            gl('Zilch'),
                            gl('True'),
                            gl('False')),
     'trailer_list':  Union(r('trailer'),
                            Concat(r('trailer'), r('trailer_list'))),
-    'trailer':       Union(Concat(OPEN_PAREN, Optional(r('arg_list')), CLOSE_PAREN),
-                           Concat(PERIOD, NAME)),
+    'trailer':       Union(Concat(lit(OPEN_PAREN), Optional(r('arg_list')), lit(CLOSE_PAREN)),
+                           Concat(lit(PERIOD), lit(NAME))),
 
     'compound_stmt': Union(r('func_def'),
                            r('object_def'),
@@ -129,10 +133,10 @@ GRAMMAR_DICT.update({
     'class_def':     Concat(gl('class'), r('common_def')),
     'interface_def': Concat(gl('interface'), r('common_def')),
     'data_def':      Concat(gl('data'), r('common_def')),
-    'common_def':    Concat(NAME, Optional(r('arguments')), COLON, r('suite')),
-    'arguments':     Concat(OPEN_PAREN, Optional(r('arg_list')), CLOSE_PAREN),
+    'common_def':    Concat(lit(NAME), Optional(r('arguments')), lit(COLON), r('suite')),
+    'arguments':     Concat(lit(OPEN_PAREN), Optional(r('arg_list')), lit(CLOSE_PAREN)),
     'arg_list':      Union(r('argument'),
-                           Concat(r('argument'), COMMA, r('arg_list'))),
+                           Concat(r('argument'), lit(COMMA), r('arg_list'))),
     'argument':      r('expr'),
 })
 
