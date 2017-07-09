@@ -63,21 +63,6 @@ class RuleLiteral(Language):
         return derive(self.grammar[self.rule], c)
 
 
-GRAMMAR_DICT = {}
-
-
-def lit(val):
-    return Literal(val)
-
-
-def gl(val):
-    return lit(GrammarLiteral(val))
-
-
-def r(rule):
-    return RuleLiteral(rule, GRAMMAR_DICT)
-
-
 INDENT = GrammarToken(vl.Indent)
 DEDENT = GrammarToken(vl.Dedent)
 NEWLINE = GrammarToken(vl.NewLine)
@@ -93,64 +78,105 @@ CLASS = GrammarToken(vl.Class)
 OPERATOR = GrammarToken(vl.Operator)
 
 
-GRAMMAR_DICT.update({
-    'type_expr':     lit(CLASS),
-
-    'func_def':      Concat(gl('def'), r('func_name'), r('parameters'), lit(ARROW), r('func_type'), lit(COLON), r('suite')),
-    'func_name':     lit(NAME),
-    'func_type':     r('type_expr'),
-
-    'parameters':    Concat(lit(OPEN_PAREN), Optional(r('params_list')), lit(CLOSE_PAREN)),
-    'params_list':   Union(r('parameter'),
-                           Concat(r('parameter'), r('params_list'))),
-    'parameter':     Concat(Optional(r('ext_label')), r('local_label'), r('param_type')),
-    'ext_label':     lit(NAME),
-    'local_label':   lit(NAME),
-    'param_type':    r('type_expr'),
-
-    'suite':         Union(r('simple_stmt'),
-                           Concat(lit(NEWLINE), lit(INDENT), r('stmt'), Repeat(r('stmt')), lit(DEDENT))),
-
-    'stmt':          Union(r('simple_stmt'),
-                           r('compound_stmt')),
-
-    'simple_stmt':   Concat(r('expr_stmt'), lit(NEWLINE)),
-    'expr_stmt':     Union(r('expr_list'),
-                           gl('pass'),
-                           Concat(gl('return'), Optional(r('expr_list')))),
-    'expr_list':     Union(r('expr'),
-                           Concat(r('expr'), lit(COMMA), r('expr_list'))),
-
-    'expr':          Concat(r('atom'), r('trailer_list')),
-    'atom':          Union(Concat(lit(OPEN_PAREN), Optional(r('expr_list')), lit(CLOSE_PAREN)),
-                           lit(NAME),
-                           lit(NUMBER),
-                           gl('...'),
-                           gl('Zilch'),
-                           gl('True'),
-                           gl('False')),
-    'trailer_list':  Union(r('trailer'),
-                           Concat(r('trailer'), r('trailer_list'))),
-    'trailer':       Union(Concat(lit(OPEN_PAREN), Optional(r('arg_list')), lit(CLOSE_PAREN)),
-                           Concat(lit(PERIOD), lit(NAME))),
-
-    'compound_stmt': Union(r('func_def'),
-                           r('object_def'),
-                           r('data_def')),
-
-    'object_def':    Union(r('class_def'),
-                           r('interface_def'),
-                           r('data_def')),
-
-    'class_def':     Concat(gl('class'), r('common_def')),
-    'interface_def': Concat(gl('interface'), r('common_def')),
-    'data_def':      Concat(gl('data'), r('common_def')),
-    'common_def':    Concat(lit(NAME), Optional(r('arguments')), lit(COLON), r('suite')),
-    'arguments':     Concat(lit(OPEN_PAREN), Optional(r('arg_list')), lit(CLOSE_PAREN)),
-    'arg_list':      Union(r('argument'),
-                           Concat(r('argument'), lit(COMMA), r('arg_list'))),
-    'argument':      r('expr'),
-})
+class GrammarParseError(Exception):
+    def __init__(self, message='', line_no=None):
+        if line_no is not None:
+            message = f'[{line_no}]: {message}'
+        super().__init__(message)
 
 
-GRAMMAR = Union(*GRAMMAR_DICT.values())
+class Grammar:
+    def __init__(self, grammar_file: str):
+        self._grammar_dict = {}
+        self._parse_file(grammar_file)
+        self.grammar = Union(*self._grammar_dict.values())
+
+    def _parse_file(self, grammar_file: str):
+        raw_rules = {}
+        with open(grammar_file) as gf:
+            line_no = 0
+            for line in gf:
+                line = line.strip()
+                line_no += 1
+                if not line:
+                    continue
+                if line.startswith('#'):
+                    continue
+                try:
+                    name, raw_rule = self._split_line(line)
+                except Exception as e:
+                    if len(e.args) > 0:
+                        msg = e.args[0]
+                    else:
+                        msg = ''
+                    raise GrammarParseError(msg, line_no)
+                raw_rules[name] = raw_rule
+        self._parse_rules(raw_rules)
+
+    @staticmethod
+    def _split_line(line: str):
+        name, rule = line.split('::=')
+        name = name.strip()
+        if not (name.startswith('<') and name.endswith('>')):
+            raise ValueError(f"no angle brackets around production name: {name}")
+        name = name[1:-1]
+        rule = rule.strip()
+        return name, rule
+
+    def _parse_rules(self, raw_rules):
+        for name, raw_rule_list in raw_rules.items():
+            rule_tup = (self._parse_rule(raw_rule) for raw_rule in raw_rule_list.split('|'))
+            self._grammar_dict[name] = Union(*rule_tup)
+
+    def _parse_rule(self, rule: str) -> Language:
+        raw_tokens = rule.split()
+        rule_parts = []
+        for raw_token in raw_tokens:
+            token = self._parse_token(raw_token)
+            rule_parts.append(token)
+        rule = Concat(*rule_parts)
+        return rule
+
+    def _parse_token(self, token: str) -> Language:
+        if token == 'INDENT':
+            return Literal(INDENT)
+        if token == 'DEDENT':
+            return Literal(DEDENT)
+        if token == 'NEWLINE':
+            return Literal(NEWLINE)
+        if token == 'PERIOD' or token == '.':
+            return Literal(PERIOD)
+        if token == 'COMMA' or token == ',':
+            return Literal(COMMA)
+        if token == 'OPEN_PAREN' or token == '(':
+            return Literal(OPEN_PAREN)
+        if token == 'CLOSE_PAREN' or token == ')':
+            return Literal(CLOSE_PAREN)
+        if token == 'COLON' or token == ':':
+            return Literal(COLON)
+        if token == 'ARROW' or token == '->':
+            return Literal(ARROW)
+        if token == 'NAME':
+            return Literal(NAME)
+        if token == 'CLASS':
+            return Literal(CLASS)
+        if token == 'OPERATOR':
+            return Literal(OPERATOR)
+        if token.startswith('<') and token.endswith('>'):
+            return self._make_rule(token[1:-1])
+        if token.endswith('?'):
+            subtoken = self._parse_token(token[:-1])
+            if isinstance(subtoken, RuleLiteral):
+                return Optional(subtoken)
+            else:
+                raise GrammarParseError(f"optional wrapping non-rule production: {subtoken}")
+        if token.endswith('*'):
+            subtoken = self._parse_token(token[:-1])
+            if isinstance(subtoken, RuleLiteral):
+                return Repeat(subtoken)
+            else:
+                raise GrammarParseError(f"repeat-star wrapping non-rule production: {subtoken}")
+        return Literal(GrammarLiteral(token))
+
+    def _make_rule(self, rule):
+        return RuleLiteral(rule, self._grammar_dict)
