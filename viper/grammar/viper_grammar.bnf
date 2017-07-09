@@ -26,7 +26,7 @@
 
 <compound_stmt> ::= <func_def> | <object_def> | <data_def>
 
-<object_def>    ::= <class_def> | <interface_def> | <implementation_def>
+<object_def>    ::= <class_def> | <interface_def> | <data_def>
 
 <class_def>     ::= class <common_def>
 <interface_def> ::= interface <common_def>
