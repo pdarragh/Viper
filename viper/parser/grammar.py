@@ -88,10 +88,6 @@ class GrammarParseError(Exception):
         super().__init__(message)
 
 
-class ParseError(ValueError):
-    pass
-
-
 class Grammar:
     def __init__(self, grammar_file: str):
         self._grammar_dict = {}
