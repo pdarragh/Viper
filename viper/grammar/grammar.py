@@ -1,11 +1,9 @@
-from viper.parser.languages import *
-
 import viper.lexer as vl
+
+from viper.grammar.languages import *
 
 from os.path import dirname, join
 from typing import ClassVar, List
-
-__all__ = ['GRAMMAR']
 
 
 class GrammarToken:
