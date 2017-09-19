@@ -7,8 +7,9 @@ from typing import ClassVar, List
 
 
 class GrammarToken:
-    def __init__(self, lexeme_class: ClassVar):
+    def __init__(self, lexeme_class: ClassVar, text=None):
         self._lexeme_class = lexeme_class
+        self._text = text
 
     def __eq__(self, other):
         if isinstance(other, GrammarToken):
@@ -18,7 +19,10 @@ class GrammarToken:
         return isinstance(other, self._lexeme_class)
 
     def __str__(self):
-        return f'{self._lexeme_class.__name__}Token'
+        if self._text is not None:
+            return self._text
+        else:
+            return f'{self._lexeme_class.__name__}Token'
 
     def __repr__(self):
         return str(self)
@@ -67,12 +71,12 @@ class RuleLiteral(Language):
 INDENT = GrammarToken(vl.Indent)
 DEDENT = GrammarToken(vl.Dedent)
 NEWLINE = GrammarToken(vl.NewLine)
-PERIOD = GrammarToken(vl.Period)
-COMMA = GrammarToken(vl.Comma)
-OPEN_PAREN = GrammarToken(vl.OpenParen)
-CLOSE_PAREN = GrammarToken(vl.CloseParen)
-COLON = GrammarToken(vl.Colon)
-ARROW = GrammarToken(vl.Arrow)
+PERIOD = GrammarToken(vl.Period, vl.PERIOD.text)
+COMMA = GrammarToken(vl.Comma, vl.COMMA.text)
+OPEN_PAREN = GrammarToken(vl.OpenParen, vl.OPEN_PAREN.text)
+CLOSE_PAREN = GrammarToken(vl.CloseParen, vl.CLOSE_PAREN.text)
+COLON = GrammarToken(vl.Colon, vl.COLON.text)
+ARROW = GrammarToken(vl.Arrow, vl.ARROW.text)
 NUMBER = GrammarToken(vl.Number)
 NAME = GrammarToken(vl.Name)
 CLASS = GrammarToken(vl.Class)

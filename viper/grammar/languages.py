@@ -2,6 +2,7 @@
 #   https://github.com/pdarragh/Personal/blob/master/Python/PWD.py
 
 from abc import ABC, abstractmethod
+from typing import List
 
 
 class Language(ABC):
@@ -18,6 +19,9 @@ class Language(ABC):
     @abstractmethod
     def __derive__(self, c):
         return EMPTY
+
+    def pretty_print(self):
+        print(format_language(self))
 
 
 def nullable(language: Language):
@@ -208,3 +212,27 @@ class Optional(Language):
 
 EMPTY = Empty()
 EPSILON = Epsilon()
+
+
+def stringify_language(l: Language) -> List[str]:
+    from itertools import chain
+    if isinstance(l, Union):
+        result = []
+        for s in chain(stringify_language(l.head), stringify_language(l.tail)):
+            result.append(s)
+        return result
+    if isinstance(l, Concat):
+        result = []
+        for s1 in stringify_language(l.head):
+            for s2 in stringify_language(l.tail):
+                result.append(f'{s1} {s2}')
+        return result
+    return [str(l)]
+
+
+def format_language(l: Language) -> str:
+    result = []
+    strings = stringify_language(l)
+    for i, s in enumerate(strings):
+        result.append(f'{i:>{len(str(len(strings)-1))}}. {s}')
+    return '\n'.join(result)
