@@ -30,6 +30,7 @@ RE_NUMBER = re.compile(r'(?:\d+)'                           # 42
                        r'(?:\d+\.\d*(?:[eE][+-]?\d+)?)')    # 42.7e2 | 42.e9 | 42. | 42.3e-8
 RE_NAME = re.compile(r'_+|(?:_*[a-z][_a-zA-Z0-9]*(?:-[_a-zA-Z0-9]+)*[!@$%^&*?]?)')
 RE_CLASS = re.compile(r'[A-Z][_a-zA-Z0-9]*(?:-[_a-zA-Z0-9]+)*')
+RE_PARENS = re.compile(r'\(\)')
 RE_OPERATOR = re.compile(r'[!@$%^&*()\-=+|:/?<>\[\]{}~.]+')
 
 
@@ -111,6 +112,9 @@ class Lexer:
             lexemes.append(Name(matcher.group(0)))
         elif matcher.fullmatch(RE_CLASS):
             lexemes.append(Class(matcher.group(0)))
+        elif matcher.fullmatch(RE_PARENS):
+            lexemes.append(OPEN_PAREN)
+            lexemes.append(CLOSE_PAREN)
         elif matcher.fullmatch(RE_OPERATOR):
             symbol = matcher.group(0)
             if symbol == PERIOD.text:
