@@ -1,3 +1,7 @@
+<single_input>  ::= NEWLINE | <simple_stmt> | <compound_stmt> NEWLINE
+<file_input>    ::= <lines>*
+<lines>         ::= NEWLINE | <stmt>
+
 <type_expr>     ::= CLASS
 
 <func_def>      ::= def <func_name> <parameters> -> <func_type> : <suite>
