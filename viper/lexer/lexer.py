@@ -6,7 +6,7 @@ from re import _pattern_type as PatternType
 from typing import List, Union
 
 __all__ = [
-    'LexerError', 'Lexer', 'lex_file', 'lex_line',
+    'LexerError', 'Lexer', 'lex_file', 'lex_lines', 'lex_line',
 ]
 
 # FIXME: Ambiguity between names with symbol endings and operators with those same symbols.
@@ -65,20 +65,20 @@ class LexerError(Exception):
 # Lexer implementation.
 class Lexer:
     @classmethod
-    def lex(cls, text: str) -> List[Lexeme]:
-        lexemes = []
-        for line in text.splitlines():
-            lexemes.extend(cls.lex_line(line))
-            lexemes.append(NEWLINE)
-        return lexemes
-
-    @classmethod
     def lex_file(cls, file: str) -> List[Lexeme]:
         lexemes = []
         with open(file) as f:
             for line in f:
                 lexemes.extend(cls.lex_line(line))
                 lexemes.append(NEWLINE)
+        return lexemes
+
+    @classmethod
+    def lex_lines(cls, text: str) -> List[Lexeme]:
+        lexemes = []
+        for line in text.splitlines():
+            lexemes.extend(cls.lex_line(line))
+            lexemes.append(NEWLINE)
         return lexemes
 
     @classmethod
@@ -143,4 +143,5 @@ class Lexer:
 
 
 lex_file = Lexer.lex_file
+lex_lines = Lexer.lex_lines
 lex_line = Lexer.lex_line

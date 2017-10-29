@@ -216,7 +216,7 @@ def test_commas(line: str, correct_lexemes: List[vl.Lexeme]):
       vl.COMMA, vl.CLOSE_PAREN, vl.NEWLINE]),
 ])
 def test_multiple_lines(text: str, correct_lexemes: List[vl.Lexeme]):
-    assert vl.Lexer.lex(text) == correct_lexemes
+    assert vl.Lexer.lex_lines(text) == correct_lexemes
 
 
 ###############################################################################
