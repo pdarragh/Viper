@@ -1,5 +1,6 @@
-<single_input>  ::= NEWLINE | <simple_stmt> | <compound_stmt> NEWLINE
-<file_input>    ::= <lines>*
+<single_line>   ::= NEWLINE | <simple_stmt> | <compound_stmt> NEWLINE
+<many_lines>    ::= <lines>*
+
 <lines>         ::= NEWLINE | <stmt>
 
 <type_expr>     ::= CLASS
