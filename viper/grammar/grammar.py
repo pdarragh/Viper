@@ -102,6 +102,18 @@ class Grammar:
             lang = derive(lang, lexeme)
         return lang
 
+    def parse_single(self, lexemes: List[vl.Lexeme]):
+        lang = self._grammar_dict['single_line']
+        for lexeme in lexemes:
+            lang = derive(lang, lexeme)
+        return lang
+
+    def parse_multiple(self, lexemes: List[vl.Lexeme]):
+        lang = self._grammar_dict['many_lines']
+        for lexeme in lexemes:
+            lang = derive(lang, lexeme)
+        return lang
+
     def _parse_file(self, grammar_file: str):
         raw_rules = {}
         with open(grammar_file) as gf:
