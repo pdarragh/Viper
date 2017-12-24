@@ -15,7 +15,7 @@ class GrammarToken:
         if isinstance(other, GrammarToken):
             return self._lexeme_class == other._lexeme_class
         elif isinstance(other, Literal):
-            return other.lit == self
+            return other.value == self
         return isinstance(other, self._lexeme_class)
 
     def __str__(self):
@@ -46,28 +46,6 @@ class GrammarLiteral:
         return str(self)
 
 
-class RuleLiteral(Language):
-    def __init__(self, rule: str, grammar):
-        self.rule = rule
-        self.grammar = grammar
-
-    def __eq__(self, other):
-        if isinstance(other, RuleLiteral):
-            return self.rule == other.rule
-        if isinstance(other, Language):
-            return self.grammar[self.rule] == other
-        return False
-
-    def __str__(self):
-        return f'<{self.rule}>'
-
-    def __nullable__(self) -> bool:
-        return nullable(self.grammar[self.rule])
-
-    def __derive__(self, c):
-        return derive(self.grammar[self.rule], c)
-
-
 INDENT = GrammarToken(vl.Indent)
 DEDENT = GrammarToken(vl.Dedent)
 NEWLINE = GrammarToken(vl.NewLine)
@@ -94,7 +72,7 @@ class Grammar:
     def __init__(self, grammar_file: str):
         self._grammar_dict = {}
         self._parse_file(grammar_file)
-        self.grammar = Union(*self._grammar_dict.values())
+        self.grammar = alt(*self._grammar_dict.values())
 
     def partial_parse(self, lexemes: List[vl.Lexeme]):
         lang = self.grammar
@@ -149,7 +127,7 @@ class Grammar:
     def _parse_rules(self, raw_rules):
         for name, raw_rule_list in raw_rules.items():
             rule_tup = (self._parse_rule(raw_rule) for raw_rule in raw_rule_list.split('|'))
-            self._grammar_dict[name] = Union(*rule_tup)
+            self._grammar_dict[name] = alt(*rule_tup)
 
     def _parse_rule(self, rule: str) -> Language:
         raw_tokens = rule.split()
@@ -157,49 +135,49 @@ class Grammar:
         for raw_token in raw_tokens:
             token = self._parse_token(raw_token)
             rule_parts.append(token)
-        rule = Concat(*rule_parts)
+        rule = concat(*rule_parts)
         return rule
 
     def _parse_token(self, token: str) -> Language:
         if token == 'INDENT':
-            return Literal(INDENT)
+            return literal(INDENT)
         if token == 'DEDENT':
-            return Literal(DEDENT)
+            return literal(DEDENT)
         if token == 'NEWLINE':
-            return Literal(NEWLINE)
+            return literal(NEWLINE)
         if token == 'PERIOD' or token == '.':
-            return Literal(PERIOD)
+            return literal(PERIOD)
         if token == 'COMMA' or token == ',':
-            return Literal(COMMA)
+            return literal(COMMA)
         if token == 'OPEN_PAREN' or token == '(':
-            return Literal(OPEN_PAREN)
+            return literal(OPEN_PAREN)
         if token == 'CLOSE_PAREN' or token == ')':
-            return Literal(CLOSE_PAREN)
+            return literal(CLOSE_PAREN)
         if token == 'COLON' or token == ':':
-            return Literal(COLON)
+            return literal(COLON)
         if token == 'ARROW' or token == '->':
-            return Literal(ARROW)
+            return literal(ARROW)
         if token == 'NAME':
-            return Literal(NAME)
+            return literal(NAME)
         if token == 'CLASS':
-            return Literal(CLASS)
+            return literal(CLASS)
         if token == 'OPERATOR':
-            return Literal(OPERATOR)
+            return literal(OPERATOR)
         if token.startswith('<') and token.endswith('>'):
             return self._make_rule(token[1:-1])
         if token.endswith('?'):
             subtoken = self._parse_token(token[:-1])
             if isinstance(subtoken, RuleLiteral):
-                return Optional(subtoken)
+                return opt(subtoken)
             else:
                 raise GrammarParseError(f"optional wrapping non-rule production: {subtoken}")
         if token.endswith('*'):
             subtoken = self._parse_token(token[:-1])
             if isinstance(subtoken, RuleLiteral):
-                return Repeat(subtoken)
+                return rep(subtoken)
             else:
                 raise GrammarParseError(f"repeat-star wrapping non-rule production: {subtoken}")
-        return Literal(GrammarLiteral(token))
+        return literal(GrammarLiteral(token))
 
     def _make_rule(self, rule):
         return RuleLiteral(rule, self._grammar_dict)
