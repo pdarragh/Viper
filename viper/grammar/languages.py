@@ -1,4 +1,5 @@
-from abc import ABC
+from abc import ABC, abstractmethod
+from collections import defaultdict
 from typing import Any, Callable, List
 
 
@@ -36,12 +37,19 @@ class ASTRep(AST):
 
 
 class Language(ABC):
-    pass
+    def __hash__(self):
+        return hash(repr(self))
 
 
 class Empty(Language):
     def __repr__(self):
         return "∅"
+
+    def __eq__(self, other):
+        return isinstance(other, Empty)
+
+    def __hash__(self):
+        return super().__hash__()
 
 
 class Epsilon(Language):
@@ -51,6 +59,14 @@ class Epsilon(Language):
     def __repr__(self):
         return "ε"
 
+    def __eq__(self, other):
+        if not isinstance(other, Epsilon):
+            return False
+        return other.token == self.token
+
+    def __hash__(self):
+        return super().__hash__()
+
 
 class Literal(Language):
     def __init__(self, value):
@@ -58,6 +74,14 @@ class Literal(Language):
 
     def __repr__(self):
         return str(self.value)
+
+    def __eq__(self, other):
+        if not isinstance(other, Literal):
+            return False
+        return other.value == self.value
+
+    def __hash__(self):
+        return super().__hash__()
 
 
 class RuleLiteral(Language):
@@ -72,6 +96,42 @@ class RuleLiteral(Language):
     def __repr__(self):
         return "<" + self.name + ">"
 
+    def __eq__(self, other):
+        if not isinstance(other, RuleLiteral):
+            return False
+        return other.name == self.name
+
+    def __hash__(self):
+        return super().__hash__()
+
+
+class DelayRule(Language):
+    def __init__(self, rule: RuleLiteral, c):
+        self.lang = rule
+        self.c = c
+        self._derivative = None
+
+    @property
+    def derivative(self) -> Language:
+        if self._derivative is None:
+            self._derivative = derive(self.lang.lang, self.c)
+        return self._derivative
+
+    @property
+    def is_null(self) -> bool:
+        return self._derivative is None
+
+    def __repr__(self):
+        return "@D[" + repr(self.c) + "](" + repr(self.lang) + ")"
+
+    def __eq__(self, other):
+        if not isinstance(other, DelayRule):
+            return False
+        return other.lang == self.lang and other.c == self.c
+
+    def __hash__(self):
+        return super().__hash__()
+
 
 class Concat(Language):
     def __init__(self, left: Language, right: Language):
@@ -84,7 +144,7 @@ class Concat(Language):
         if self._all_chars():
             return repr(self.left) + repr(self.right)
         else:
-            return repr(self.left) + " ◦ " + repr(self.right)
+            return "{" + repr(self.left) + " ◦ " + repr(self.right) + "}"
 
     def _all_chars(self):
         if isinstance(self.left, Literal):
@@ -94,6 +154,14 @@ class Concat(Language):
                 return self.right._all_chars()
         return False
 
+    def __eq__(self, other):
+        if not isinstance(other, Concat):
+            return False
+        return other.left == self.left and other.right == self.right
+
+    def __hash__(self):
+        return super().__hash__()
+
 
 class Alt(Language):
     def __init__(self, this: Language, that: Language):
@@ -101,7 +169,15 @@ class Alt(Language):
         self.that = that
 
     def __repr__(self):
-        return repr(self.this) + " ∪ " + repr(self.that)
+        return "{" + repr(self.this) + " ∪ " + repr(self.that) + "}"
+
+    def __eq__(self, other):
+        if not isinstance(other, Alt):
+            return False
+        return other.this == self.this and other.that == self.that
+
+    def __hash__(self):
+        return super().__hash__()
 
 
 class Rep(Language):
@@ -111,6 +187,14 @@ class Rep(Language):
     def __repr__(self):
         return "{" + repr(self.lang) + "}*"
 
+    def __eq__(self, other):
+        if not isinstance(other, Rep):
+            return False
+        return other.lang == self.lang
+
+    def __hash__(self):
+        return super().__hash__()
+
 
 class Red(Language):
     def __init__(self, lang: Language, func: RedFunc):
@@ -119,6 +203,14 @@ class Red(Language):
 
     def __repr__(self):
         return "⌊" + repr(self.lang) + " --> f⌋"
+
+    def __eq__(self, other):
+        if not isinstance(other, Red):
+            return False
+        return other.lang == self.lang and other.func == self.func
+
+    def __hash__(self):
+        return super().__hash__()
 
 
 def linguify(x) -> Language:
@@ -137,6 +229,10 @@ def eps(token: Token):
 
 def literal(c):
     return Literal(c)
+
+
+def delay(rl: RuleLiteral, c):
+    return DelayRule(rl, c)
 
 
 def concat(l1: Language, *ls: Language):
@@ -203,12 +299,25 @@ def is_nullable(lang: Language) -> bool:
         return False
     if isinstance(lang, RuleLiteral):
         return is_nullable(lang.lang)
+    if isinstance(lang, DelayRule):
+        return is_nullable(lang.derivative)
     if isinstance(lang, Alt):
         return is_nullable(lang.this) or is_nullable(lang.that)
     if isinstance(lang, Concat):
         return is_nullable(lang.left) and is_nullable(lang.right)
     if isinstance(lang, Rep):
         return True
+
+
+DERIVATIVES = defaultdict(dict)
+
+
+def _derivative_exists(lang: Language, c) -> bool:
+    if lang not in DERIVATIVES:
+        return False
+    if c not in DERIVATIVES[lang]:
+        return False
+    return True
 
 
 def derive(lang: Language, c) -> Language:
@@ -219,7 +328,15 @@ def derive(lang: Language, c) -> Language:
     if isinstance(lang, Literal):
         return eps(c) if lang.value == c else empty()
     if isinstance(lang, RuleLiteral):
-        return derive(lang.lang, c)  # TODO: Is this the best way to do this?
+        if not _derivative_exists(lang, c):
+            DERIVATIVES[lang][c] = delay(lang, c)
+        thunk: DelayRule = DERIVATIVES[lang][c]
+        if thunk.is_null:
+            return thunk
+        else:
+            return thunk.derivative
+    if isinstance(lang, DelayRule):
+        return derive(lang.derivative, c)
     if isinstance(lang, Concat):
         if is_nullable(lang.left):
             return alt(concat(derive(lang.left, c), lang.right), derive(lang.right, c))
@@ -250,8 +367,16 @@ def parse_null(lang: Language) -> SemiAST:
         return []
     if isinstance(lang, RuleLiteral):
         return parse_null(lang.lang)
+    if isinstance(lang, DelayRule):
+        return parse_null(lang.derivative)
     if isinstance(lang, Concat):
-        return [ASTPair(parse_null(lang.left), parse_null(lang.right))]
+        left_parse = parse_null(lang.left)
+        if len(left_parse) == 0:
+            return []
+        right_parse = parse_null(lang.right)
+        if len(right_parse) == 0:
+            return []
+        return [ASTPair(left_parse, right_parse)]
     if isinstance(lang, Alt):
         return parse_null(lang.this) + parse_null(lang.that)
     if isinstance(lang, Rep):
