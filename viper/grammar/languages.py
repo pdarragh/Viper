@@ -307,6 +307,8 @@ def is_nullable(lang: Language) -> bool:
         return is_nullable(lang.left) and is_nullable(lang.right)
     if isinstance(lang, Rep):
         return True
+    if isinstance(lang, Red):
+        return is_nullable(lang.lang)
 
 
 DERIVATIVES = defaultdict(dict)
