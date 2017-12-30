@@ -408,4 +408,81 @@ def collapse_parse(nodes: SPPF) -> SPPF:
 def parse(lang: Language, xs: List[Token]) -> SPPF:
     from functools import reduce
     return collapse_parse(parse_null(reduce(derive, xs, lang)))
+
+
+def print_lang(lang: Language):
+    print(_make_nice_lang_string(lang, 0))
+
+
+def _make_nice_lang_string(lang: Language, start_column: int):
+    if isinstance(lang, Empty):
+        return "(empty)"
+    elif isinstance(lang, Epsilon):
+        return "(epsilon)"
+    elif isinstance(lang, Literal):
+        return "(literal " + repr(lang.value) + ")"
+    elif isinstance(lang, RuleLiteral):
+        return "(rule <" + lang.name + ">)"
+    elif isinstance(lang, DelayRule):
+        return "(delay " + ("unforced" if lang.is_null else "forced") + ")"
+    elif isinstance(lang, Concat):
+        leader = "(concat "
+        indent = start_column + len(leader)
+        return (
+            leader + _make_nice_lang_string(lang.left, indent) + "\n" +
+            (" " * indent) + _make_nice_lang_string(lang.right, indent) + ")"
+        )
+    elif isinstance(lang, Alt):
+        leader = "(union "
+        indent = start_column + len(leader)
+        return (
+            leader + _make_nice_lang_string(lang.this, indent) + "\n" +
+            (" " * indent) + _make_nice_lang_string(lang.that, indent) + ")"
+        )
+    elif isinstance(lang, Rep):
+        leader = "(repeat "
+        indent = start_column + len(leader)
+        return leader + _make_nice_lang_string(lang.lang, indent) + ")"
+    elif isinstance(lang, Red):
+        leader = "(reduce "
+        indent = start_column + len(leader)
+        return leader + _make_nice_lang_string(lang.lang, indent) + ")"
     else:
+        raise ValueError
+
+
+def print_parse(ast_set: SPPF):
+    print(_make_nice_parse_string(ast_set, 0))
+
+
+def _make_nice_parse_string(ast_set: SPPF, start_column: int):
+    if len(ast_set) == 0:
+        return "(empty)"
+    elif len(ast_set) == 1:
+        return _make_nice_ast_string(ast_set[0], start_column)
+    else:
+        leader = "(choice "
+        indent = start_column + len(leader)
+        lines = [leader + _make_nice_ast_string(ast_set[0], indent)]
+        for ast in ast_set[1:]:
+            line = (" " * indent) + _make_nice_ast_string(ast, indent)
+            lines.append(line)
+        return "\n".join(lines) + ")"
+
+
+def _make_nice_ast_string(ast: AST, start_column: int):
+    if isinstance(ast, ASTChar):
+        return "(char " + str(ast.token) + ")"
+    elif isinstance(ast, ASTPair):
+        leader = "(pair "
+        indent = start_column + len(leader)
+        return (
+            leader + _make_nice_parse_string(ast.left, indent) + "\n" +
+            (" " * indent) + _make_nice_parse_string(ast.right, indent) + ")"
+        )
+    elif isinstance(ast, ASTRep):
+        leader = "(repeat "
+        indent = start_column + len(leader)
+        return leader + _make_nice_parse_string(ast.parse, indent) + ")"
+    else:
+        raise ValueError
