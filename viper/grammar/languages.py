@@ -353,9 +353,9 @@ def derive(lang: Language, c) -> Language:
         return red(derive(lang.lang, c), lang.func)
 
 
-def parse(lang: Language, xs):
+def parse(lang: Language, xs: List[Token]) -> SPPF:
     from functools import reduce
-    return flatten_parse(collapse_parse(parse_null(reduce(derive, xs, lang))))
+    return collapse_parse(parse_null(reduce(derive, xs, lang)))
 
 
 def parse_null(lang: Language) -> SPPF:
@@ -384,30 +384,6 @@ def parse_null(lang: Language) -> SPPF:
     if isinstance(lang, Red):
         return lang.func(parse_null(lang.lang))
     raise ValueError(f"unknown language: {lang}")
-
-
-def flatten_parse(nodes: SPPF) -> Parse:
-    seq: Parse = []
-
-    def _flatten_parse(ns: SPPF):
-        if len(ns) == 0:
-            # Nothing to flatten. Easy.
-            return
-        elif len(ns) == 1:
-            node = ns[0]
-            if isinstance(node, ASTChar):
-                seq.append(node.token)
-            elif isinstance(node, ASTPair):
-                _flatten_parse(node.left)
-                _flatten_parse(node.right)
-            elif isinstance(node, ASTRep):
-                _flatten_parse(node.parse)
-        else:
-            # Cannot flatten; there are too many things!
-            raise AmbiguousParseError
-
-    _flatten_parse(nodes)
-    return seq
 
 
 def collapse_parse(nodes: SPPF) -> SPPF:
