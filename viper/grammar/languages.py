@@ -18,6 +18,7 @@ class AST(ABC):
 
 SemiAST = List[AST]
 RedFunc = Callable[[SemiAST], SemiAST]
+EpsFunc = Callable[[], SemiAST]
 
 
 class ASTChar(AST):
@@ -53,16 +54,14 @@ class Empty(Language):
 
 
 class Epsilon(Language):
-    def __init__(self, parsed_token: Token):
-        self.token = parsed_token
+    def __init__(self, func: EpsFunc):
+        self.func = func
 
     def __repr__(self):
         return "ε"
 
     def __eq__(self, other):
-        if not isinstance(other, Epsilon):
-            return False
-        return other.token == self.token
+        return other is self
 
     def __hash__(self):
         return super().__hash__()
@@ -223,8 +222,8 @@ def empty():
     return Empty()
 
 
-def eps(token: Token):
-    return Epsilon(token)
+def eps(func: EpsFunc):
+    return Epsilon(func)
 
 
 def literal(c):
@@ -277,7 +276,7 @@ def rep(lang: Language):
 
 
 def opt(lang: Language):
-    return alt(lang, eps(None))
+    return alt(lang, eps(lambda: []))
 
 
 def red(lang: Language, f: RedFunc):
@@ -328,7 +327,7 @@ def derive(lang: Language, c) -> Language:
     if isinstance(lang, Epsilon):
         return empty()
     if isinstance(lang, Literal):
-        return eps(c) if lang.value == c else empty()
+        return eps(lambda: [ASTChar(c)]) if lang.value == c else empty()
     if isinstance(lang, RuleLiteral):
         if not _derivative_exists(lang, c):
             DERIVATIVES[lang][c] = delay(lang, c)
@@ -340,10 +339,12 @@ def derive(lang: Language, c) -> Language:
     if isinstance(lang, DelayRule):
         return derive(lang.derivative, c)
     if isinstance(lang, Concat):
+        left = lang.left
+        dcl_r = concat(derive(lang.left, c), lang.right)
         if is_nullable(lang.left):
-            return alt(concat(derive(lang.left, c), lang.right), derive(lang.right, c))
+            return alt(dcl_r, concat(eps(lambda: parse_null(left)), derive(lang.right, c)))
         else:
-            return concat(derive(lang.left, c), lang.right)
+            return dcl_r
     if isinstance(lang, Alt):
         return alt(derive(lang.this, c), derive(lang.that, c))
     if isinstance(lang, Rep):
@@ -361,10 +362,7 @@ def parse_null(lang: Language) -> SemiAST:
     if isinstance(lang, Empty):
         return []
     if isinstance(lang, Epsilon):
-        if lang.token is None:
-            return []
-        else:
-            return [ASTChar(lang.token)]
+        return lang.func()
     if isinstance(lang, Literal):
         return []
     if isinstance(lang, RuleLiteral):
