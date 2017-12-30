@@ -16,9 +16,9 @@ class AST(ABC):
     pass
 
 
-SemiAST = List[AST]
-RedFunc = Callable[[SemiAST], SemiAST]
-EpsFunc = Callable[[], SemiAST]
+SPPF = List[AST]  # Semi-Packed Parse Forest
+RedFunc = Callable[[SPPF], SPPF]
+EpsFunc = Callable[[], SPPF]
 
 
 class ASTChar(AST):
@@ -27,13 +27,13 @@ class ASTChar(AST):
 
 
 class ASTPair(AST):
-    def __init__(self, left: SemiAST, right: SemiAST):
+    def __init__(self, left: SPPF, right: SPPF):
         self.left = left
         self.right = right
 
 
 class ASTRep(AST):
-    def __init__(self, partial: SemiAST):
+    def __init__(self, partial: SPPF):
         self.parse = partial
 
 
@@ -358,7 +358,7 @@ def parse(lang: Language, xs):
     return flatten_parse(collapse_parse(parse_null(reduce(derive, xs, lang))))
 
 
-def parse_null(lang: Language) -> SemiAST:
+def parse_null(lang: Language) -> SPPF:
     if isinstance(lang, Empty):
         return []
     if isinstance(lang, Epsilon):
@@ -386,10 +386,10 @@ def parse_null(lang: Language) -> SemiAST:
     raise ValueError(f"unknown language: {lang}")
 
 
-def flatten_parse(nodes: SemiAST) -> Parse:
+def flatten_parse(nodes: SPPF) -> Parse:
     seq: Parse = []
 
-    def _flatten_parse(ns: SemiAST):
+    def _flatten_parse(ns: SPPF):
         if len(ns) == 0:
             # Nothing to flatten. Easy.
             return
@@ -410,7 +410,7 @@ def flatten_parse(nodes: SemiAST) -> Parse:
     return seq
 
 
-def collapse_parse(nodes: SemiAST) -> SemiAST:
+def collapse_parse(nodes: SPPF) -> SPPF:
     if is_empty(nodes):
         return nodes
     new_nodes = []
