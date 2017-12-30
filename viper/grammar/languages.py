@@ -353,11 +353,6 @@ def derive(lang: Language, c) -> Language:
         return red(derive(lang.lang, c), lang.func)
 
 
-def parse(lang: Language, xs: List[Token]) -> SPPF:
-    from functools import reduce
-    return collapse_parse(parse_null(reduce(derive, xs, lang)))
-
-
 def parse_null(lang: Language) -> SPPF:
     if isinstance(lang, Empty):
         return []
@@ -410,27 +405,7 @@ def collapse_parse(nodes: SPPF) -> SPPF:
     return new_nodes
 
 
-def is_match(w: list, lang: Language) -> bool:
-    if not w:
-        return is_nullable(lang)
+def parse(lang: Language, xs: List[Token]) -> SPPF:
+    from functools import reduce
+    return collapse_parse(parse_null(reduce(derive, xs, lang)))
     else:
-        return is_match(w[1:], derive(lang, w[0]))
-
-
-def mkstr(s: str) -> Language:
-    return concat(*map(literal, s))
-
-
-# TODO: check for ambiguities (sets of size != 1)
-# TODO: look up Michael's OOPSLA tree automata paper
-# TODO: implement printing ASTs like:
-#   (char 'a')
-#
-#   (pair (char 'f')
-#         (pair (char 'o')
-#               (char 'o')))
-# TODO: currently not throwing ambiguitiy errors; try:
-#   l1 = cat(char('f'), alt(mkstr('oo'), mkstr('rak')))
-#   parse(l1, 'f')
-# TODO: rename things as desired
-# TODO: convert grammar.py to use this version of the languages instead
