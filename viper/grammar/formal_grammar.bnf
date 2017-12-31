@@ -29,9 +29,7 @@
 <trailer_list>  ::= <trailer> | <trailer> <trailer_list>
 <trailer>       ::= ( <arg_list>? ) | . NAME
 
-<compound_stmt> ::= <func_def> | <object_def> | <data_def>
-
-<object_def>    ::= <class_def> | <interface_def> | <data_def>
+<compound_stmt> ::= <func_def> | <class_def> | <interface_def> | <data_def>
 
 <class_def>     ::= class <common_def>
 <interface_def> ::= interface <common_def>
