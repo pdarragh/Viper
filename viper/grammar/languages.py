@@ -12,27 +12,27 @@ class AmbiguousParseError(Exception):
     pass
 
 
-class AST(ABC):
+class ParseTree(ABC):
     pass
 
 
-SPPF = List[AST]  # Semi-Packed Parse Forest
+SPPF = List[ParseTree]  # Semi-Packed Parse Forest
 RedFunc = Callable[[SPPF], SPPF]
 EpsFunc = Callable[[], SPPF]
 
 
-class ASTChar(AST):
+class ParseTreeChar(ParseTree):
     def __init__(self, token: Token):
         self.token = token
 
 
-class ASTPair(AST):
+class ParseTreePair(ParseTree):
     def __init__(self, left: SPPF, right: SPPF):
         self.left = left
         self.right = right
 
 
-class ASTRep(AST):
+class ParseTreeRep(ParseTree):
     def __init__(self, partial: SPPF):
         self.parse = partial
 
@@ -245,11 +245,11 @@ def concat(l1: Language, *ls: Language):
         if isinstance(l1, Epsilon):
             # TODO: explain this
             def f(x):
-                return [ASTPair(parse_null(l1), x)]
+                return [ParseTreePair(parse_null(l1), x)]
             return red(l2, f)
         if isinstance(l2, Epsilon):
             def f(x):
-                return [ASTPair(parse_null(l2), x)]
+                return [ParseTreePair(parse_null(l2), x)]
             return red(l1, f)
         return Concat(l1, l2)
     else:
@@ -308,6 +308,7 @@ def is_nullable(lang: Language) -> bool:
         return True
     if isinstance(lang, Red):
         return is_nullable(lang.lang)
+    raise ValueError(f"is_nullable: unknown language: {lang}")
 
 
 DERIVATIVES = defaultdict(dict)
@@ -327,7 +328,7 @@ def derive(lang: Language, c) -> Language:
     if isinstance(lang, Epsilon):
         return empty()
     if isinstance(lang, Literal):
-        return eps(lambda: [ASTChar(c)]) if lang.value == c else empty()
+        return eps(lambda: [ParseTreeChar(c)]) if lang.value == c else empty()
     if isinstance(lang, RuleLiteral):
         if not _derivative_exists(lang, c):
             DERIVATIVES[lang][c] = delay(lang, c)
@@ -351,6 +352,7 @@ def derive(lang: Language, c) -> Language:
         return concat(derive(lang.lang, c), lang)
     if isinstance(lang, Red):
         return red(derive(lang.lang, c), lang.func)
+    raise ValueError(f"derive: unknown language: {lang}")
 
 
 def parse_null(lang: Language) -> SPPF:
@@ -371,35 +373,35 @@ def parse_null(lang: Language) -> SPPF:
         right_parse = parse_null(lang.right)
         if len(right_parse) == 0:
             return []
-        return [ASTPair(left_parse, right_parse)]
+        return [ParseTreePair(left_parse, right_parse)]
     if isinstance(lang, Alt):
         return parse_null(lang.this) + parse_null(lang.that)
     if isinstance(lang, Rep):
-        return [ASTRep(parse_null(lang.lang))]
+        return [ParseTreeRep(parse_null(lang.lang))]
     if isinstance(lang, Red):
         return lang.func(parse_null(lang.lang))
-    raise ValueError(f"unknown language: {lang}")
+    raise ValueError(f"parse_null: unknown language: {lang}")
 
 
-def collapse_parse(nodes: SPPF) -> SPPF:
-    if is_empty(nodes):
-        return nodes
+def collapse_parse(forest: SPPF) -> SPPF:
+    if is_empty(forest):
+        return forest
     new_nodes = []
     # Now build a new set, eliminating any empty parses.
-    for node in nodes:
-        if isinstance(node, ASTChar):
+    for root in forest:
+        if isinstance(root, ParseTreeChar):
             # Always add terminals.
-            new_nodes.append(node)
-        elif isinstance(node, ASTPair):
-            left = collapse_parse(node.left)
-            right = collapse_parse(node.right)
+            new_nodes.append(root)
+        elif isinstance(root, ParseTreePair):
+            left = collapse_parse(root.left)
+            right = collapse_parse(root.right)
             if not (is_empty(left) or is_empty(right)):
                 # Add only if neither part of the sequence is empty.
-                new_nodes.append(ASTPair(left, right))
-        elif isinstance(node, ASTRep):
+                new_nodes.append(ParseTreePair(left, right))
+        elif isinstance(root, ParseTreeRep):
             # Always add the ASTRep, even if its interior parse comes up empty.
             # This ensures we can properly parse repeated tokens.
-            new_nodes.append(ASTRep(collapse_parse(node.parse)))
+            new_nodes.append(ParseTreeRep(collapse_parse(root.parse)))
     if len(new_nodes) > 1:  # TODO: consider making a toggle
         raise AmbiguousParseError
     return new_nodes
@@ -451,38 +453,38 @@ def _make_nice_lang_string(lang: Language, start_column: int):
         raise ValueError
 
 
-def print_parse(ast_set: SPPF):
-    print(_make_nice_parse_string(ast_set, 0))
+def print_parse(forest: SPPF):
+    print(_make_nice_parse_string(forest, 0))
 
 
-def _make_nice_parse_string(ast_set: SPPF, start_column: int):
-    if len(ast_set) == 0:
+def _make_nice_parse_string(forest: SPPF, start_column: int):
+    if len(forest) == 0:
         return "(empty)"
-    elif len(ast_set) == 1:
-        return _make_nice_ast_string(ast_set[0], start_column)
+    elif len(forest) == 1:
+        return _make_nice_ast_string(forest[0], start_column)
     else:
         leader = "(choice "
         indent = start_column + len(leader)
-        lines = [leader + _make_nice_ast_string(ast_set[0], indent)]
-        for ast in ast_set[1:]:
-            line = (" " * indent) + _make_nice_ast_string(ast, indent)
+        lines = [leader + _make_nice_ast_string(forest[0], indent)]
+        for tree in forest[1:]:
+            line = (" " * indent) + _make_nice_ast_string(tree, indent)
             lines.append(line)
         return "\n".join(lines) + ")"
 
 
-def _make_nice_ast_string(ast: AST, start_column: int):
-    if isinstance(ast, ASTChar):
-        return "(char " + str(ast.token) + ")"
-    elif isinstance(ast, ASTPair):
+def _make_nice_ast_string(root: ParseTree, start_column: int):
+    if isinstance(root, ParseTreeChar):
+        return "(char " + str(root.token) + ")"
+    elif isinstance(root, ParseTreePair):
         leader = "(pair "
         indent = start_column + len(leader)
         return (
-            leader + _make_nice_parse_string(ast.left, indent) + "\n" +
-            (" " * indent) + _make_nice_parse_string(ast.right, indent) + ")"
+                leader + _make_nice_parse_string(root.left, indent) + "\n" +
+                (" " * indent) + _make_nice_parse_string(root.right, indent) + ")"
         )
-    elif isinstance(ast, ASTRep):
+    elif isinstance(root, ParseTreeRep):
         leader = "(repeat "
         indent = start_column + len(leader)
-        return leader + _make_nice_parse_string(ast.parse, indent) + ")"
+        return leader + _make_nice_parse_string(root.parse, indent) + ")"
     else:
         raise ValueError
