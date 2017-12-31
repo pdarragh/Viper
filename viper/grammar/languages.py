@@ -212,10 +212,10 @@ class Red(Language):
         return super().__hash__()
 
 
-def linguify(x) -> Language:
-    if not isinstance(x, Language):
-        return literal(x)
-    return x
+def linguify(token: Token) -> Language:
+    if not isinstance(token, Language):
+        return literal(token)
+    return token
 
 
 def empty():
@@ -407,9 +407,9 @@ def collapse_parse(forest: SPPF) -> SPPF:
     return new_nodes
 
 
-def parse(lang: Language, xs: List[Token]) -> SPPF:
+def make_sppf(lang: Language, tokens: List[Token]) -> SPPF:
     from functools import reduce
-    return collapse_parse(parse_null(reduce(derive, xs, lang)))
+    return collapse_parse(parse_null(reduce(derive, tokens, lang)))
 
 
 def print_lang(lang: Language):
@@ -452,11 +452,11 @@ def _make_nice_lang_string(lang: Language, start_column: int):
     raise ValueError
 
 
-def print_parse(forest: SPPF):
-    print(_make_nice_parse_string(forest, 0))
+def print_sppf(forest: SPPF):
+    print(_make_nice_sppf_string(forest, 0))
 
 
-def _make_nice_parse_string(forest: SPPF, start_column: int):
+def _make_nice_sppf_string(forest: SPPF, start_column: int):
     if len(forest) == 0:
         return "(empty)"
     elif len(forest) == 1:
@@ -478,12 +478,12 @@ def _make_nice_ast_string(root: ParseTree, start_column: int):
         leader = "(pair "
         indent = start_column + len(leader)
         return (
-                leader + _make_nice_parse_string(root.left, indent) + "\n" +
-                (" " * indent) + _make_nice_parse_string(root.right, indent) + ")"
+            leader + _make_nice_sppf_string(root.left, indent) + "\n" +
+            (" " * indent) + _make_nice_sppf_string(root.right, indent) + ")"
         )
     elif isinstance(root, ParseTreeRep):
         leader = "(repeat "
         indent = start_column + len(leader)
-        return leader + _make_nice_parse_string(root.parse, indent) + ")"
+        return leader + _make_nice_sppf_string(root.parse, indent) + ")"
     else:
         raise ValueError
