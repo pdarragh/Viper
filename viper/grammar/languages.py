@@ -419,38 +419,37 @@ def print_lang(lang: Language):
 def _make_nice_lang_string(lang: Language, start_column: int):
     if isinstance(lang, Empty):
         return "(empty)"
-    elif isinstance(lang, Epsilon):
+    if isinstance(lang, Epsilon):
         return "(epsilon)"
-    elif isinstance(lang, Literal):
+    if isinstance(lang, Literal):
         return "(literal " + repr(lang.value) + ")"
-    elif isinstance(lang, RuleLiteral):
+    if isinstance(lang, RuleLiteral):
         return "(rule <" + lang.name + ">)"
-    elif isinstance(lang, DelayRule):
+    if isinstance(lang, DelayRule):
         return "(delay " + ("unforced" if lang.is_null else "forced") + ")"
-    elif isinstance(lang, Concat):
+    if isinstance(lang, Concat):
         leader = "(concat "
         indent = start_column + len(leader)
         return (
             leader + _make_nice_lang_string(lang.left, indent) + "\n" +
             (" " * indent) + _make_nice_lang_string(lang.right, indent) + ")"
         )
-    elif isinstance(lang, Alt):
+    if isinstance(lang, Alt):
         leader = "(union "
         indent = start_column + len(leader)
         return (
             leader + _make_nice_lang_string(lang.this, indent) + "\n" +
             (" " * indent) + _make_nice_lang_string(lang.that, indent) + ")"
         )
-    elif isinstance(lang, Rep):
+    if isinstance(lang, Rep):
         leader = "(repeat "
         indent = start_column + len(leader)
         return leader + _make_nice_lang_string(lang.lang, indent) + ")"
-    elif isinstance(lang, Red):
+    if isinstance(lang, Red):
         leader = "(reduce "
         indent = start_column + len(leader)
         return leader + _make_nice_lang_string(lang.lang, indent) + ")"
-    else:
-        raise ValueError
+    raise ValueError
 
 
 def print_parse(forest: SPPF):
