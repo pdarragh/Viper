@@ -2,7 +2,6 @@ import viper.lexer as vl
 
 from viper.grammar.languages import *
 
-from functools import reduce
 from os.path import dirname, join
 from typing import ClassVar, List
 
@@ -75,16 +74,16 @@ class Grammar:
         self._parse_file(grammar_file)
         self.grammar = alt(*self._grammar_dict.values())
 
-    def partial_parse(self, lexemes: List[vl.Lexeme], lang=None):
+    def partial_parse(self, lexemes: List[vl.Lexeme], lang=None) -> SPPF:
         if lang is None:
             lang = self.grammar
-        return reduce(derive, lexemes, lang)
+        return make_sppf(lang, lexemes)
 
-    def parse_single(self, lexemes: List[vl.Lexeme]):
+    def parse_single(self, lexemes: List[vl.Lexeme]) -> SPPF:
         lang = self._grammar_dict['single_line']
         return self.partial_parse(lexemes, lang)
 
-    def parse_multiple(self, lexemes: List[vl.Lexeme]):
+    def parse_multiple(self, lexemes: List[vl.Lexeme]) -> SPPF:
         lang = self._grammar_dict['many_lines']
         return self.partial_parse(lexemes, lang)
 
