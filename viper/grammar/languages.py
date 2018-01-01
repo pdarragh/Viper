@@ -426,7 +426,7 @@ def _make_nice_lang_string(lang: Language, start_column: int):
     if isinstance(lang, RuleLiteral):
         return "(rule <" + lang.name + ">)"
     if isinstance(lang, DelayRule):
-        return "(delay " + ("unforced" if lang.is_null else "forced") + ")"
+        return "(delay <" + lang.lang.name + "> [" + ("unforced" if lang.is_null else "forced") + "])"
     if isinstance(lang, Concat):
         leader = "(concat "
         indent = start_column + len(leader)
