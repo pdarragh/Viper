@@ -21,6 +21,10 @@ RedFunc = Callable[[SPPF], SPPF]
 EpsFunc = Callable[[], SPPF]
 
 
+class ParseTreeEmpty(ParseTree):
+    pass
+
+
 class ParseTreeChar(ParseTree):
     def __init__(self, token: Token):
         self.token = token
@@ -276,7 +280,7 @@ def rep(lang: Language):
 
 
 def opt(lang: Language):
-    return alt(lang, eps(lambda: []))
+    return alt(lang, eps(lambda: [ParseTreeEmpty()]))
 
 
 def red(lang: Language, f: RedFunc):
@@ -285,6 +289,12 @@ def red(lang: Language, f: RedFunc):
 
 def is_empty(s: List) -> bool:
     if len(s) == 0:
+        return True
+    return False
+
+
+def should_delete(s: List) -> bool:
+    if len(s) == 1 and s[0] is None:
         return True
     return False
 
@@ -341,8 +351,8 @@ def derive(lang: Language, c) -> Language:
         return derive(lang.derivative, c)
     if isinstance(lang, Concat):
         left = lang.left
-        dcl_r = concat(derive(lang.left, c), lang.right)
-        if is_nullable(lang.left):
+        dcl_r = concat(derive(left, c), lang.right)
+        if is_nullable(left):
             return alt(dcl_r, concat(eps(lambda: parse_null(left)), derive(lang.right, c)))
         else:
             return dcl_r
@@ -389,15 +399,33 @@ def collapse_parse(forest: SPPF) -> SPPF:
     new_nodes = []
     # Now build a new set, eliminating any empty parses.
     for root in forest:
-        if isinstance(root, ParseTreeChar):
+        if isinstance(root, ParseTreeEmpty):
+            # This should be deleted further up the tree.
+            new_nodes.append(None)
+        elif isinstance(root, ParseTreeChar):
             # Always add terminals.
             new_nodes.append(root)
         elif isinstance(root, ParseTreePair):
             left = collapse_parse(root.left)
             right = collapse_parse(root.right)
-            if not (is_empty(left) or is_empty(right)):
-                # Add only if neither part of the sequence is empty.
-                new_nodes.append(ParseTreePair(left, right))
+            if should_delete(left):
+                # Delete left.
+                if should_delete(right):
+                    # Delete both.
+                    continue
+                else:
+                    # Delete left, not right.
+                    new_nodes += right
+            else:
+                # Don't delete left.
+                if not should_delete(right):
+                    # Don't delete right.
+                    if not (is_empty(left) or is_empty(right)):
+                        # Add only if neither part of the sequence is empty.
+                        new_nodes.append(ParseTreePair(left, right))
+                else:
+                    # Delete right, not left.
+                    new_nodes += left
         elif isinstance(root, ParseTreeRep):
             # Always add the ASTRep, even if its interior parse comes up empty.
             # This ensures we can properly parse repeated tokens.
