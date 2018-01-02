@@ -500,7 +500,9 @@ def _make_nice_sppf_string(forest: SPPF, start_column: int):
 
 
 def _make_nice_ast_string(root: ParseTree, start_column: int):
-    if isinstance(root, ParseTreeChar):
+    if isinstance(root, ParseTreeEmpty):
+        return "(empty)"
+    elif isinstance(root, ParseTreeChar):
         return "(char " + repr(root.token) + ")"
     elif isinstance(root, ParseTreePair):
         leader = "(pair "
