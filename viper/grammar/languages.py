@@ -249,7 +249,7 @@ def concat(l1: Language, *ls: Language):
             return red(l2, f)
         if isinstance(l2, Epsilon):
             def f(x):
-                return [ParseTreePair(parse_null(l2), x)]
+                return [ParseTreePair(x, parse_null(l2))]
             return red(l1, f)
         return Concat(l1, l2)
     else:
