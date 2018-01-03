@@ -24,7 +24,7 @@
 <expr_stmt>     ::= <expr_list> | pass | return <expr_list>?
 <expr_list>     ::= <expr> | <expr> , <expr_list>
 
-<expr>          ::= <atom> <trailer_list>
+<expr>          ::= <atom> <trailer_list>?
 <atom>          ::= ( <expr_list>? ) | NAME | NUMBER | ... | Zilch | True | False
 <trailer_list>  ::= <trailer> | <trailer> <trailer_list>
 <trailer>       ::= ( <arg_list>? ) | . NAME
