@@ -154,6 +154,8 @@ class Grammar:
             return literal(ARROW)
         if token == 'NAME':
             return literal(NAME)
+        if token == 'NUMBER':
+            return literal(NUMBER)
         if token == 'CLASS':
             return literal(CLASS)
         if token == 'OPERATOR':
