@@ -2,7 +2,6 @@ import viper.lexer as vl
 
 import os
 import pytest
-import sys
 
 from importlib import import_module
 from typing import List, Type
@@ -15,13 +14,13 @@ from typing import List, Type
 ###############################################################################
 
 
-def _test_single_token(token: str, lexeme_type: Type):
+def _test_single_token(token: str, lexeme_type: Type[vl.Lexeme]):
     lexemes = vl.Lexer.lex_token(token)
     assert len(lexemes) == 1
     assert lexemes[0] == lexeme_type(token)
 
 
-def _test_bad_single_token(token: str, intended_type: Type):
+def _test_bad_single_token(token: str, intended_type: Type[vl.Lexeme]):
     try:
         lexemes = vl.Lexer.lex_token(token)
     except vl.LexerError:
@@ -233,7 +232,8 @@ def _generate_files_and_modules():
     lexeme_files_dir = os.path.join(cur_dir, 'lexeme_files')
     if not os.path.isdir(viper_files_dir) or not os.path.isdir(lexeme_files_dir):
         return results
-    for viper_file in (os.path.join(viper_files_dir, file) for file in os.listdir(viper_files_dir) if file.endswith('.viper')):
+    for viper_file in (os.path.join(viper_files_dir, file)
+                       for file in os.listdir(viper_files_dir) if file.endswith('.viper')):
         basename = os.path.splitext(os.path.basename(viper_file))[0]
         if f'{basename}.py' not in os.listdir(lexeme_files_dir):
             continue
