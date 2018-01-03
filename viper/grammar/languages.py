@@ -516,4 +516,4 @@ def _make_nice_ast_string(root: ParseTree, start_column: int):
         indent = start_column + len(leader)
         return leader + _make_nice_sppf_string(root.parse, indent) + ")"
     else:
-        raise ValueError
+        raise ValueError(f"unknown ParseTree: {root}")
