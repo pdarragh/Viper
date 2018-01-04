@@ -468,18 +468,18 @@ def parse_null(lang: Language) -> SPPF:
     raise ValueError(f"parse_null: unknown language: {lang}")
 
 
-def collapse_parse(forest: SPPF) -> SPPF:
-    if is_empty(forest):
-        return forest
-    new_nodes = []
+def collapse_parse(sppf: SPPF) -> SPPF:
+    if is_empty(sppf):
+        return sppf
+    new_sppf = SPPF()
     # Now build a new set, eliminating any empty parses.
-    for root in forest:
+    for root in sppf:
         if isinstance(root, ParseTreeEmpty):
             # This should be deleted further up the tree.
-            new_nodes.append(None)
+            new_sppf.append(None)
         elif isinstance(root, ParseTreeChar):
             # Always add terminals.
-            new_nodes.append(root)
+            new_sppf.append(root)
         elif isinstance(root, ParseTreePair):
             left = collapse_parse(root.left)
             right = collapse_parse(root.right)
@@ -490,24 +490,24 @@ def collapse_parse(forest: SPPF) -> SPPF:
                     continue
                 else:
                     # Delete left, not right.
-                    new_nodes += right
+                    new_sppf += right
             else:
                 # Don't delete left.
                 if not should_delete(right):
                     # Don't delete right.
                     if not (is_empty(left) or is_empty(right)):
                         # Add only if neither part of the sequence is empty.
-                        new_nodes.append(ParseTreePair(left, right))
+                        new_sppf.append(ParseTreePair(left, right))
                 else:
                     # Delete right, not left.
-                    new_nodes += left
+                    new_sppf += left
         elif isinstance(root, ParseTreeRep):
             # Always add the ASTRep, even if its interior parse comes up empty.
             # This ensures we can properly parse repeated tokens.
-            new_nodes.append(ParseTreeRep(collapse_parse(root.parse)))
-    if len(new_nodes) > 1:  # TODO: consider making a toggle
+            new_sppf.append(ParseTreeRep(collapse_parse(root.parse)))
+    if len(new_sppf) > 1:  # TODO: consider making a toggle
         raise AmbiguousParseError
-    return new_nodes
+    return new_sppf
 
 
 def make_sppf(lang: Language, tokens: List[Token]) -> SPPF:
