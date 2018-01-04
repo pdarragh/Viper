@@ -15,7 +15,7 @@ class InteractiveSPPF(cmd.Cmd):  # pragma: no cover
     def default(self, line):
         lexemes = lex_lines(line)
         sppf = GRAMMAR.parse_single(lexemes)
-        print_sppf(sppf)
+        print(sppf)
 
     def do_exit(self, arg):
         """Exit the interactive lexer."""
