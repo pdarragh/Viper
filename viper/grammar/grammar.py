@@ -87,6 +87,9 @@ class Grammar:
         lang = self._grammar_dict['many_lines']
         return self.partial_parse(lexemes, lang)
 
+    def get_rule(self, rule: str) -> Language:
+        return self._grammar_dict.get(rule, empty())
+
     def _parse_file(self, grammar_file: str):
         raw_rules = {}
         with open(grammar_file) as gf:
