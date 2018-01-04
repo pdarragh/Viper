@@ -16,14 +16,16 @@ class SPPF:
     def __init__(self, *args):
         self._sppf: List[ParseTree] = list(args)
 
+    def __eq__(self, other):
+        if not isinstance(other, SPPF):
+            return False
+        return self._sppf == other._sppf
+
     def __len__(self):
         return len(self._sppf)
 
     def __getitem__(self, item):
         return self._sppf[item]
-
-    def __setitem__(self, key, value):
-        self._sppf[key] = value
 
     def __delitem__(self, key):
         del(self._sppf[key])
@@ -36,6 +38,9 @@ class SPPF:
 
     def __contains__(self, item):
         return item in self._sppf
+
+    def append(self, item):
+        self._sppf.append(item)
 
     def __add__(self, other):
         if not isinstance(other, SPPF):
@@ -71,11 +76,18 @@ class ParseTree(ABC):
         return str(self)
 
     @abstractmethod
+    def __eq__(self, other):
+        return False
+
+    @abstractmethod
     def make_nice_string(self, start_column: int) -> str:
-        pass
+        return ""
 
 
 class ParseTreeEmpty(ParseTree):
+    def __eq__(self, other):
+        return isinstance(other, ParseTreeEmpty)
+
     def make_nice_string(self, start_column: int) -> str:
         return "(empty)"
 
@@ -83,6 +95,11 @@ class ParseTreeEmpty(ParseTree):
 class ParseTreeChar(ParseTree):
     def __init__(self, token: Token):
         self.token = token
+
+    def __eq__(self, other):
+        if not isinstance(other, ParseTreeChar):
+            return False
+        return self.token == other.token
 
     def make_nice_string(self, start_column: int) -> str:
         return "(char " + repr(self.token) + ")"
@@ -92,6 +109,11 @@ class ParseTreePair(ParseTree):
     def __init__(self, left: SPPF, right: SPPF):
         self.left = left
         self.right = right
+
+    def __eq__(self, other):
+        if not isinstance(other, ParseTreePair):
+            return False
+        return self.left == other.left and self.right == other.right
 
     def make_nice_string(self, start_column: int) -> str:
         leader = "(pair "
@@ -105,6 +127,11 @@ class ParseTreePair(ParseTree):
 class ParseTreeRep(ParseTree):
     def __init__(self, partial: SPPF):
         self.parse = partial
+
+    def __eq__(self, other):
+        if not isinstance(other, ParseTreeRep):
+            return False
+        return self.parse == other.parse
 
     def make_nice_string(self, start_column: int) -> str:
         leader = "(repeat "
