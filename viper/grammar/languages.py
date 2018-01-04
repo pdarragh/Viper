@@ -1,4 +1,4 @@
-from abc import ABC
+from abc import ABC, abstractmethod
 from collections import defaultdict
 from typing import Any, Callable, List
 
@@ -12,22 +12,80 @@ class AmbiguousParseError(Exception):
     pass
 
 
+class SPPF:
+    def __init__(self, *args):
+        self._sppf: List[ParseTree] = list(args)
+
+    def __len__(self):
+        return len(self._sppf)
+
+    def __getitem__(self, item):
+        return self._sppf[item]
+
+    def __setitem__(self, key, value):
+        self._sppf[key] = value
+
+    def __delitem__(self, key):
+        del(self._sppf[key])
+
+    def __iter__(self):
+        return iter(self._sppf)
+
+    def __reversed__(self):
+        return reversed(self._sppf)
+
+    def __contains__(self, item):
+        return item in self._sppf
+
+    def __add__(self, other):
+        if not isinstance(other, SPPF):
+            raise NotImplementedError
+        return SPPF(self._sppf + other._sppf)
+
+    def __str__(self):
+        return self.make_nice_string(0)
+
+    def __repr__(self):
+        return str(self)
+
+    def make_nice_string(self, start_column: int) -> str:
+        if len(self) == 0:
+            return "(empty)"
+        elif len(self) == 1:
+            return self[0].make_nice_string(start_column)
+        else:
+            leader = "(choice "
+            indent = start_column + len(leader)
+            lines = [leader + self[0].make_nice_string(indent)]
+            for tree in self[1:]:
+                line = (" " * indent) + tree.make_nice_string(indent)
+                lines.append(line)
+            return "\n".join(lines) + ")"
+
+
 class ParseTree(ABC):
-    pass
+    def __str__(self):
+        return self.make_nice_string(0)
 
+    def __repr__(self):
+        return str(self)
 
-SPPF = List[ParseTree]  # Semi-Packed Parse Forest
-RedFunc = Callable[[SPPF], SPPF]
-EpsFunc = Callable[[], SPPF]
+    @abstractmethod
+    def make_nice_string(self, start_column: int) -> str:
+        pass
 
 
 class ParseTreeEmpty(ParseTree):
-    pass
+    def make_nice_string(self, start_column: int) -> str:
+        return "(empty)"
 
 
 class ParseTreeChar(ParseTree):
     def __init__(self, token: Token):
         self.token = token
+
+    def make_nice_string(self, start_column: int) -> str:
+        return "(char " + repr(self.token) + ")"
 
 
 class ParseTreePair(ParseTree):
@@ -35,10 +93,27 @@ class ParseTreePair(ParseTree):
         self.left = left
         self.right = right
 
+    def make_nice_string(self, start_column: int) -> str:
+        leader = "(pair "
+        indent = start_column + len(leader)
+        return (
+            leader + self.left.make_nice_string(indent) + "\n" +
+            (" " * indent) + self.right.make_nice_string(indent) + ")"
+        )
+
 
 class ParseTreeRep(ParseTree):
     def __init__(self, partial: SPPF):
         self.parse = partial
+
+    def make_nice_string(self, start_column: int) -> str:
+        leader = "(repeat "
+        indent = start_column + len(leader)
+        return leader + self.parse.make_nice_string(indent) + ")"
+
+
+RedFunc = Callable[[SPPF], SPPF]
+EpsFunc = Callable[[], SPPF]
 
 
 class Language(ABC):
@@ -249,11 +324,11 @@ def concat(l1: Language, *ls: Language):
         if isinstance(l1, Epsilon):
             # TODO: explain this
             def f(x):
-                return [ParseTreePair(parse_null(l1), x)]
+                return SPPF(ParseTreePair(parse_null(l1), x))
             return red(l2, f)
         if isinstance(l2, Epsilon):
             def f(x):
-                return [ParseTreePair(x, parse_null(l2))]
+                return SPPF(ParseTreePair(x, parse_null(l2)))
             return red(l1, f)
         return Concat(l1, l2)
     else:
@@ -280,21 +355,21 @@ def rep(lang: Language):
 
 
 def opt(lang: Language):
-    return alt(lang, eps(lambda: [ParseTreeEmpty()]))
+    return alt(lang, eps(lambda: SPPF(ParseTreeEmpty())))
 
 
 def red(lang: Language, f: RedFunc):
     return Red(linguify(lang), f)
 
 
-def is_empty(s: List) -> bool:
-    if len(s) == 0:
+def is_empty(sppf: SPPF) -> bool:
+    if len(sppf) == 0:
         return True
     return False
 
 
-def should_delete(s: List) -> bool:
-    if len(s) == 1 and s[0] is None:
+def should_delete(sppf: SPPF) -> bool:
+    if len(sppf) == 1 and sppf[0] is None:
         return True
     return False
 
@@ -338,7 +413,7 @@ def derive(lang: Language, c) -> Language:
     if isinstance(lang, Epsilon):
         return empty()
     if isinstance(lang, Literal):
-        return eps(lambda: [ParseTreeChar(c)]) if lang.value == c else empty()
+        return eps(lambda: SPPF(ParseTreeChar(c))) if lang.value == c else empty()
     if isinstance(lang, RuleLiteral):
         if not _derivative_exists(lang, c):
             DERIVATIVES[lang][c] = delay(lang, c)
@@ -367,11 +442,11 @@ def derive(lang: Language, c) -> Language:
 
 def parse_null(lang: Language) -> SPPF:
     if isinstance(lang, Empty):
-        return []
+        return SPPF()
     if isinstance(lang, Epsilon):
         return lang.func()
     if isinstance(lang, Literal):
-        return []
+        return SPPF()
     if isinstance(lang, RuleLiteral):
         return parse_null(lang.lang)
     if isinstance(lang, DelayRule):
@@ -379,15 +454,15 @@ def parse_null(lang: Language) -> SPPF:
     if isinstance(lang, Concat):
         left_parse = parse_null(lang.left)
         if len(left_parse) == 0:
-            return []
+            return SPPF()
         right_parse = parse_null(lang.right)
         if len(right_parse) == 0:
-            return []
-        return [ParseTreePair(left_parse, right_parse)]
+            return SPPF()
+        return SPPF(ParseTreePair(left_parse, right_parse))
     if isinstance(lang, Alt):
         return parse_null(lang.this) + parse_null(lang.that)
     if isinstance(lang, Rep):
-        return [ParseTreeRep(parse_null(lang.lang))]
+        return SPPF(ParseTreeRep(parse_null(lang.lang)))
     if isinstance(lang, Red):
         return lang.func(parse_null(lang.lang))
     raise ValueError(f"parse_null: unknown language: {lang}")
@@ -478,42 +553,3 @@ def _make_nice_lang_string(lang: Language, start_column: int):
         indent = start_column + len(leader)
         return leader + _make_nice_lang_string(lang.lang, indent) + ")"
     raise ValueError
-
-
-def print_sppf(forest: SPPF):
-    print(_make_nice_sppf_string(forest, 0))
-
-
-def _make_nice_sppf_string(forest: SPPF, start_column: int):
-    if len(forest) == 0:
-        return "(empty)"
-    elif len(forest) == 1:
-        return _make_nice_ast_string(forest[0], start_column)
-    else:
-        leader = "(choice "
-        indent = start_column + len(leader)
-        lines = [leader + _make_nice_ast_string(forest[0], indent)]
-        for tree in forest[1:]:
-            line = (" " * indent) + _make_nice_ast_string(tree, indent)
-            lines.append(line)
-        return "\n".join(lines) + ")"
-
-
-def _make_nice_ast_string(root: ParseTree, start_column: int):
-    if isinstance(root, ParseTreeEmpty):
-        return "(empty)"
-    elif isinstance(root, ParseTreeChar):
-        return "(char " + repr(root.token) + ")"
-    elif isinstance(root, ParseTreePair):
-        leader = "(pair "
-        indent = start_column + len(leader)
-        return (
-            leader + _make_nice_sppf_string(root.left, indent) + "\n" +
-            (" " * indent) + _make_nice_sppf_string(root.right, indent) + ")"
-        )
-    elif isinstance(root, ParseTreeRep):
-        leader = "(repeat "
-        indent = start_column + len(leader)
-        return leader + _make_nice_sppf_string(root.parse, indent) + ")"
-    else:
-        raise ValueError(f"unknown ParseTree: {root}")
