@@ -3,7 +3,7 @@ import viper.lexer as vl
 
 from viper.grammar.languages import (
     SPPF,
-    ParseTreeEmpty as PTE, ParseTreeChar as PTC, ParseTreePair as PTP, ParseTreeRep as PTR
+    ParseTreeEmpty as Empty, ParseTreeChar as Char, ParseTreePair as Pair, ParseTreeRep as Repeat
 )
 
 import pytest
@@ -11,25 +11,25 @@ import pytest
 
 @pytest.mark.parametrize('line,sppf', [
     ('foo',
-     SPPF(PTC(vl.Name('foo')))),
+     SPPF(Char(vl.Name('foo')))),
     ('42',
-     SPPF(PTC(vl.Number('42')))),
+     SPPF(Char(vl.Number('42')))),
     ('...',
-     SPPF(PTC(vl.Operator('...')))),
+     SPPF(Char(vl.Operator('...')))),
     ('Zilch',
-     SPPF(PTC(vl.Class('Zilch')))),
+     SPPF(Char(vl.Class('Zilch')))),
     ('True',
-     SPPF(PTC(vl.Class('True')))),
+     SPPF(Char(vl.Class('True')))),
     ('False',
-     SPPF(PTC(vl.Class('False')))),
+     SPPF(Char(vl.Class('False')))),
     ('()',
-     SPPF(PTP(SPPF(PTC(vl.OpenParen())),
-              SPPF(PTC(vl.CloseParen()))))),
+     SPPF(Pair(SPPF(Char(vl.OpenParen())),
+               SPPF(Char(vl.CloseParen()))))),
     ('(foo)',
-     SPPF(PTP(SPPF(PTC(vl.OpenParen())),
-              SPPF(PTP(SPPF(PTP(SPPF(PTC(vl.Name('foo'))),
-                                SPPF(PTR(SPPF())))),
-                       SPPF(PTC(vl.CloseParen()))))))),
+     SPPF(Pair(SPPF(Char(vl.OpenParen())),
+               SPPF(Pair(SPPF(Pair(SPPF(Char(vl.Name('foo'))),
+                                   SPPF(Repeat(SPPF())))),
+                         SPPF(Char(vl.CloseParen()))))))),
 ])
 def test_atom(line: str, sppf: SPPF):
     atom = vg.GRAMMAR.get_rule('atom')
@@ -39,29 +39,29 @@ def test_atom(line: str, sppf: SPPF):
 
 @pytest.mark.parametrize('line,sppf', [
     ('foo',
-     SPPF(PTP(SPPF(PTC(vl.Name('foo'))),
-              SPPF(PTR(SPPF()))))),
+     SPPF(Pair(SPPF(Char(vl.Name('foo'))),
+               SPPF(Repeat(SPPF()))))),
     ('foo.bar',
-     SPPF(PTP(SPPF(PTC(vl.Name('foo'))),
-              SPPF(PTP(SPPF(PTP(SPPF(PTC(vl.Period())),
-                                SPPF(PTC(vl.Name('bar'))))),
-                       SPPF(PTR(SPPF()))))))),
+     SPPF(Pair(SPPF(Char(vl.Name('foo'))),
+               SPPF(Pair(SPPF(Pair(SPPF(Char(vl.Period())),
+                                   SPPF(Char(vl.Name('bar'))))),
+                         SPPF(Repeat(SPPF()))))))),
     ('foo.bar.baz',
-     SPPF(PTP(SPPF(PTC(vl.Name('foo'))),
-              SPPF(PTP(SPPF(PTP(SPPF(PTC(vl.Period())),
-                                SPPF(PTC(vl.Name('bar'))))),
-                       SPPF(PTP(SPPF(PTP(SPPF(PTC(vl.Period())),
-                                         SPPF(PTC(vl.Name('baz'))))),
-                                SPPF(PTR(SPPF()))))))))),
+     SPPF(Pair(SPPF(Char(vl.Name('foo'))),
+               SPPF(Pair(SPPF(Pair(SPPF(Char(vl.Period())),
+                                   SPPF(Char(vl.Name('bar'))))),
+                         SPPF(Pair(SPPF(Pair(SPPF(Char(vl.Period())),
+                                             SPPF(Char(vl.Name('baz'))))),
+                                   SPPF(Repeat(SPPF()))))))))),
     ('foo.bar(baz)',
-     SPPF(PTP(SPPF(PTC(vl.Name('foo'))),
-              SPPF(PTP(SPPF(PTP(SPPF(PTC(vl.Period())),
-                                SPPF(PTC(vl.Name('bar'))))),
-                       SPPF(PTP(SPPF(PTP(SPPF(PTC(vl.OpenParen())),
-                                         SPPF(PTP(SPPF(PTP(SPPF(PTC(vl.Name('baz'))),
-                                                           SPPF(PTR(SPPF())))),
-                                                  SPPF(PTC(vl.CloseParen())))))),
-                                SPPF(PTR(SPPF()))))))))),
+     SPPF(Pair(SPPF(Char(vl.Name('foo'))),
+               SPPF(Pair(SPPF(Pair(SPPF(Char(vl.Period())),
+                                   SPPF(Char(vl.Name('bar'))))),
+                         SPPF(Pair(SPPF(Pair(SPPF(Char(vl.OpenParen())),
+                                             SPPF(Pair(SPPF(Pair(SPPF(Char(vl.Name('baz'))),
+                                                                 SPPF(Repeat(SPPF())))),
+                                                       SPPF(Char(vl.CloseParen())))))),
+                                   SPPF(Repeat(SPPF()))))))))),
 ])
 def test_expr(line: str, sppf: SPPF):
     expr = vg.GRAMMAR.get_rule('expr')
