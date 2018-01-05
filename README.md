@@ -1,4 +1,4 @@
-# Viper [![Build Status](https://travis-ci.org/pdarragh/Viper.svg?branch=master)](https://travis-ci.org/pdarragh/Viper) [![Coverage Status](https://coveralls.io/repos/github/pdarragh/Viper/badge.svg?branch=master)](https://coveralls.io/github/pdarragh/Viper?branch=master)
+# Viper [![Build Status](https://travis-ci.org/pdarragh/Viper.svg?branch=master)](https://travis-ci.org/pdarragh/Viper) [![Coverage Status](https://coveralls.io/repos/github/pdarragh/Viper/badge.svg?branch=master&service=github)](https://coveralls.io/github/pdarragh/Viper?branch=master)
 
 Viper is a statically-typed language similar to (and inspired by) Python. It provides many of the same features as
 Python, and compiles to Python, but it isn't Python.
