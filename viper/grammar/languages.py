@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from collections import defaultdict
+from collections import defaultdict, OrderedDict
 from typing import Any, Callable, List
 
 
@@ -10,7 +10,10 @@ PartialParse = List[Parse]
 
 class SPPF:
     def __init__(self, *args):
-        self._sppf: List[ParseTree] = list(args)
+        self._sppf = OrderedDict()
+        # We abuse the OrderedDict to act as an ordered set. All values will be None.
+        for arg in args:
+            self._sppf[arg] = None
 
     def __eq__(self, other):
         if not isinstance(other, SPPF):
@@ -21,7 +24,7 @@ class SPPF:
         return len(self._sppf)
 
     def __getitem__(self, item):
-        return self._sppf[item]
+        return list(self._sppf.keys())[item]
 
     def __delitem__(self, key):
         del(self._sppf[key])
@@ -36,13 +39,18 @@ class SPPF:
         return item in self._sppf
 
     def append(self, item):
-        self._sppf.append(item)
+        self._sppf[item] = None
 
     def __add__(self, other):
         if not isinstance(other, SPPF):
             raise NotImplementedError
         result = SPPF()
-        result._sppf = self._sppf + other._sppf
+        new_od = OrderedDict()
+        for item in self._sppf.keys():
+            new_od[item] = None
+        for item in other._sppf.keys():
+            new_od[item] = None
+        result._sppf = new_od
         return result
 
     def __str__(self):
@@ -77,6 +85,9 @@ class ParseTree(ABC):
     def __eq__(self, other):
         return False
 
+    def __hash__(self):
+        return hash(str(self))
+
     @abstractmethod
     def make_nice_string(self, start_column: int) -> str:
         return ""
@@ -85,6 +96,9 @@ class ParseTree(ABC):
 class ParseTreeEmpty(ParseTree):
     def __eq__(self, other):
         return isinstance(other, ParseTreeEmpty)
+
+    def __hash__(self):
+        return super().__hash__()
 
     def make_nice_string(self, start_column: int) -> str:
         return "(empty)"
@@ -99,6 +113,9 @@ class ParseTreeChar(ParseTree):
             return False
         return self.token == other.token
 
+    def __hash__(self):
+        return super().__hash__()
+
     def make_nice_string(self, start_column: int) -> str:
         return "(char " + repr(self.token) + ")"
 
@@ -112,6 +129,9 @@ class ParseTreePair(ParseTree):
         if not isinstance(other, ParseTreePair):
             return False
         return self.left == other.left and self.right == other.right
+
+    def __hash__(self):
+        return super().__hash__()
 
     def make_nice_string(self, start_column: int) -> str:
         leader = "(pair "
@@ -130,6 +150,9 @@ class ParseTreeRep(ParseTree):
         if not isinstance(other, ParseTreeRep):
             return False
         return self.parse == other.parse
+
+    def __hash__(self):
+        return hash(str(self))
 
     def make_nice_string(self, start_column: int) -> str:
         leader = "(repeat "
