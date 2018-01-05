@@ -45,7 +45,9 @@ class SPPF:
     def __add__(self, other):
         if not isinstance(other, SPPF):
             raise NotImplementedError
-        return SPPF(self._sppf + other._sppf)
+        result = SPPF()
+        result._sppf = self._sppf + other._sppf
+        return result
 
     def __str__(self):
         return self.make_nice_string(0)
