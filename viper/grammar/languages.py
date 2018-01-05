@@ -8,10 +8,6 @@ Parse = List[Token]
 PartialParse = List[Parse]
 
 
-class AmbiguousParseError(Exception):
-    pass
-
-
 class SPPF:
     def __init__(self, *args):
         self._sppf: List[ParseTree] = list(args)
@@ -534,8 +530,6 @@ def collapse_parse(sppf: SPPF) -> SPPF:
             # Always add the ASTRep, even if its interior parse comes up empty.
             # This ensures we can properly parse repeated tokens.
             new_sppf.append(ParseTreeRep(collapse_parse(root.parse)))
-    if len(new_sppf) > 1:  # TODO: consider making a toggle
-        raise AmbiguousParseError
     return new_sppf
 
 
