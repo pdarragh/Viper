@@ -550,7 +550,9 @@ def collapse_parse(sppf: SPPF) -> SPPF:
                     new_sppf += left
                 else:
                     # Don't delete either, but only add if they aren't both empty.
-                    if not (is_empty(left) and is_empty(right)):
+                    if is_empty(left) or is_empty(right):
+                        continue
+                    else:
                         new_sppf.append(ParseTreePair(left, right))
         elif isinstance(root, ParseTreeRep):
             # Always add the ASTRep, even if its interior parse comes up empty.
