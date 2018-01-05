@@ -35,3 +35,35 @@ def test_atom(line: str, sppf: SPPF):
     atom = vg.GRAMMAR.get_rule('atom')
     lexemes = vl.lex_line(line)
     assert sppf == vg.make_sppf(atom, lexemes)
+
+
+@pytest.mark.parametrize('line,sppf', [
+    ('foo',
+     SPPF(PTP(SPPF(PTC(vl.Name('foo'))),
+              SPPF(PTR(SPPF()))))),
+    ('foo.bar',
+     SPPF(PTP(SPPF(PTC(vl.Name('foo'))),
+              SPPF(PTP(SPPF(PTP(SPPF(PTC(vl.Period())),
+                                SPPF(PTC(vl.Name('bar'))))),
+                       SPPF(PTR(SPPF()))))))),
+    ('foo.bar.baz',
+     SPPF(PTP(SPPF(PTC(vl.Name('foo'))),
+              SPPF(PTP(SPPF(PTP(SPPF(PTC(vl.Period())),
+                                SPPF(PTC(vl.Name('bar'))))),
+                       SPPF(PTP(SPPF(PTP(SPPF(PTC(vl.Period())),
+                                         SPPF(PTC(vl.Name('baz'))))),
+                                SPPF(PTR(SPPF()))))))))),
+    ('foo.bar(baz)',
+     SPPF(PTP(SPPF(PTC(vl.Name('foo'))),
+              SPPF(PTP(SPPF(PTP(SPPF(PTC(vl.Period())),
+                                SPPF(PTC(vl.Name('bar'))))),
+                       SPPF(PTP(SPPF(PTP(SPPF(PTC(vl.OpenParen())),
+                                         SPPF(PTP(SPPF(PTP(SPPF(PTC(vl.Name('baz'))),
+                                                           SPPF(PTR(SPPF())))),
+                                                  SPPF(PTC(vl.CloseParen())))))),
+                                SPPF(PTR(SPPF()))))))))),
+])
+def test_expr(line: str, sppf: SPPF):
+    expr = vg.GRAMMAR.get_rule('expr')
+    lexemes = vl.lex_line(line)
+    assert sppf == vg.make_sppf(expr, lexemes)
