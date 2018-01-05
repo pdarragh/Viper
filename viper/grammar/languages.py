@@ -394,8 +394,12 @@ def is_empty(sppf: SPPF) -> bool:
 
 
 def should_delete(sppf: SPPF) -> bool:
-    if len(sppf) == 1 and sppf[0] is None:
-        return True
+    if len(sppf) == 1:
+        item = sppf[0]
+        if item is None:
+            return True
+        if isinstance(item, ParseTreeRep) and is_empty(item.parse):
+            return True
     return False
 
 
@@ -518,14 +522,13 @@ def collapse_parse(sppf: SPPF) -> SPPF:
                     new_sppf += right
             else:
                 # Don't delete left.
-                if not should_delete(right):
-                    # Don't delete right.
-                    if not (is_empty(left) or is_empty(right)):
-                        # Add only if neither part of the sequence is empty.
-                        new_sppf.append(ParseTreePair(left, right))
-                else:
-                    # Delete right, not left.
+                if should_delete(right):
+                    # But delete right.
                     new_sppf += left
+                else:
+                    # Don't delete either, but only add if they aren't both empty.
+                    if not (is_empty(left) and is_empty(right)):
+                        new_sppf.append(ParseTreePair(left, right))
         elif isinstance(root, ParseTreeRep):
             # Always add the ASTRep, even if its interior parse comes up empty.
             # This ensures we can properly parse repeated tokens.
