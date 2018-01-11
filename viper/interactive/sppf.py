@@ -1,5 +1,5 @@
 from viper.grammar import *
-from viper.lexer import lex_lines, LexerError
+from viper.lexer import lex_line, LexerError, NEWLINE
 
 import cmd
 
@@ -12,9 +12,20 @@ class InteractiveSPPFException(Exception):
 class InteractiveSPPF(cmd.Cmd):  # pragma: no cover
     prompt = 'viper_sppf> '
 
+    def __init__(self, rule: str):
+        super().__init__()
+        self.rule = rule
+        self.prompt = f'viper_sppf | {rule}> '
+
     def default(self, line):
-        lexemes = lex_lines(line)
-        sppf = GRAMMAR.parse_single(lexemes)
+        lines = line.split('\\n')
+        lexeme_lines = [lex_line(line) for line in lines]
+        lexemes = []
+        for i, ln in enumerate(lexeme_lines):
+            lexemes += ln
+            if i < len(lexeme_lines) - 1:
+                lexemes.append(NEWLINE)
+        sppf = GRAMMAR.parse_rule(self.rule, lexemes)
         print(sppf)
 
     def do_exit(self, arg):
