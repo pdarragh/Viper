@@ -1,4 +1,4 @@
-<single_line>   ::= NEWLINE | <simple_stmt> | <compound_stmt> NEWLINE
+<single_line>   ::= NEWLINE | <stmt>
 <many_lines>    ::= <lines>*
 
 <lines>         ::= NEWLINE | <stmt>
