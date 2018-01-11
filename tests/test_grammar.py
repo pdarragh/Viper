@@ -31,9 +31,8 @@ import pytest
                          SPPF(Char(vl.CloseParen()))))))),
 ])
 def test_atom(line: str, sppf: SPPF):
-    atom = vg.GRAMMAR.get_rule('atom')
     lexemes = vl.lex_line(line)
-    assert sppf == vg.make_sppf(atom, lexemes)
+    assert sppf == vg.GRAMMAR.parse_rule('atom', lexemes)
 
 
 @pytest.mark.parametrize('line,sppf', [
@@ -71,9 +70,8 @@ def test_atom(line: str, sppf: SPPF):
                          SPPF(Char(vl.Name('foo')))))))),
 ])
 def test_expr(line: str, sppf: SPPF):
-    expr = vg.GRAMMAR.get_rule('expr')
     lexemes = vl.lex_line(line)
-    assert sppf == vg.make_sppf(expr, lexemes)
+    assert sppf == vg.GRAMMAR.parse_rule('expr', lexemes)
 
 
 @pytest.mark.parametrize('line,sppf', [
@@ -90,7 +88,6 @@ def test_expr(line: str, sppf: SPPF):
                                                                            SPPF(Char(vl.NEWLINE))))))))))))))))),
 ])
 def test_func_def(line: str, sppf: SPPF):
-    func_def = vg.GRAMMAR.get_rule('func_def')
     lexemes = vl.lex_line(line)
     lexemes.append(vl.NEWLINE)
-    assert sppf == vg.make_sppf(func_def, lexemes)
+    assert sppf == vg.GRAMMAR.parse_rule('func_def', lexemes)
