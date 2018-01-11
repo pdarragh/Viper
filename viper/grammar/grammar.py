@@ -79,16 +79,18 @@ class Grammar:
             lang = self.grammar
         return make_sppf(lang, lexemes)
 
-    def parse_single(self, lexemes: List[vl.Lexeme]) -> SPPF:
-        lang = self._grammar_dict['single_line']
-        return self.partial_parse(lexemes, lang)
-
-    def parse_multiple(self, lexemes: List[vl.Lexeme]) -> SPPF:
-        lang = self._grammar_dict['many_lines']
-        return self.partial_parse(lexemes, lang)
-
     def get_rule(self, rule: str) -> Language:
         return self._grammar_dict.get(rule, empty())
+
+    def parse_rule(self, rule: str, lexemes: List[vl.Lexeme]) -> SPPF:
+        lang = self.get_rule(rule)
+        return self.partial_parse(lexemes, lang)
+
+    def parse_single(self, lexemes: List[vl.Lexeme]) -> SPPF:
+        return self.parse_rule('single_line', lexemes)
+
+    def parse_multiple(self, lexemes: List[vl.Lexeme]) -> SPPF:
+        return self.parse_rule('many_lines', lexemes)
 
     def _parse_file(self, grammar_file: str):
         raw_rules = {}
