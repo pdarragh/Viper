@@ -75,6 +75,29 @@ def test_expr(line: str, sppf: SPPF):
 
 
 @pytest.mark.parametrize('line,sppf', [
+    ('()',
+     SPPF(Pair(SPPF(Char(vl.OPEN_PAREN)),
+               SPPF(Char(vl.CLOSE_PAREN))))),
+    ('(foo: Bar)',
+     SPPF(Pair(SPPF(Char(vl.OPEN_PAREN)),
+               SPPF(Pair(SPPF(Pair(SPPF(Char(vl.Name('foo'))),
+                                   SPPF(Pair(SPPF(Char(vl.COLON)),
+                                             SPPF(Char(vl.Class('Bar'))))))),
+                         SPPF(Char(vl.CLOSE_PAREN))))))),
+    ('(foo bar: Baz)',
+     SPPF(Pair(SPPF(Char(vl.OPEN_PAREN)),
+               SPPF(Pair(SPPF(Pair(SPPF(Char(vl.Name('foo'))),
+                                   SPPF(Pair(SPPF(Char(vl.Name('bar'))),
+                                             SPPF(Pair(SPPF(Char(vl.COLON)),
+                                                       SPPF(Char(vl.Class('Baz'))))))))),
+                         SPPF(Char(vl.CLOSE_PAREN))))))),
+])
+def test_parameters(line: str, sppf: SPPF):
+    lexemes = vl.lex_line(line)
+    assert sppf == vg.GRAMMAR.parse_rule('parameters', lexemes)
+
+
+@pytest.mark.parametrize('line,sppf', [
     ('def foo() -> Bar: pass',
      SPPF(Pair(SPPF(Char(vl.Name('def'))),
                SPPF(Pair(SPPF(Char(vl.Name('foo'))),
