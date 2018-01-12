@@ -1,9 +1,10 @@
 import viper.grammar as vg
-import viper.lexer as vl
+
+from viper.lexer import lex_line
+from viper.lexer.lexemes import *
 
 from viper.grammar.languages import (
-    SPPF,
-    ParseTreeEmpty as Empty, ParseTreeChar as Char, ParseTreePair as Pair, ParseTreeRep as Repeat
+    SPPF, ParseTreeChar as Char, ParseTreePair as Pair
 )
 
 import pytest
@@ -19,123 +20,123 @@ def pair(x, y):
 
 @pytest.mark.parametrize('line,sppf', [
     ('foo',
-     char(vl.Name('foo'))),
+     char(Name('foo'))),
     ('42',
-     char(vl.Number('42'))),
+     char(Number('42'))),
     ('...',
-     char(vl.Operator('...'))),
+     char(Operator('...'))),
     ('Zilch',
-     char(vl.Class('Zilch'))),
+     char(Class('Zilch'))),
     ('True',
-     char(vl.Class('True'))),
+     char(Class('True'))),
     ('False',
-     char(vl.Class('False'))),
+     char(Class('False'))),
     ('()',
-     pair(char(vl.OpenParen()),
-          char(vl.CloseParen()))),
+     pair(char(OPEN_PAREN),
+          char(CLOSE_PAREN))),
     ('(foo)',
-     pair(char(vl.OpenParen()),
-          pair(char(vl.Name('foo')),
-               char(vl.CloseParen())))),
+     pair(char(OPEN_PAREN),
+          pair(char(Name('foo')),
+               char(CLOSE_PAREN)))),
 ])
 def test_atom(line: str, sppf: SPPF):
-    lexemes = vl.lex_line(line)
+    lexemes = lex_line(line)
     assert sppf == vg.GRAMMAR.parse_rule('atom', lexemes)
 
 
 @pytest.mark.parametrize('line,sppf', [
     ('foo',
-     char(vl.Name('foo'))),
+     char(Name('foo'))),
     ('foo.bar',
-     pair(char(vl.Name('foo')),
-          pair(char(vl.Period()),
-               char(vl.Name('bar'))))),
+     pair(char(Name('foo')),
+          pair(char(Period()),
+               char(Name('bar'))))),
     ('foo.bar.baz',
-     pair(char(vl.Name('foo')),
-          pair(pair(char(vl.Period()),
-                    char(vl.Name('bar'))),
-               pair(char(vl.Period()),
-                    char(vl.Name('baz')))))),
+     pair(char(Name('foo')),
+          pair(pair(char(Period()),
+                    char(Name('bar'))),
+               pair(char(Period()),
+                    char(Name('baz')))))),
     ('foo.bar(baz)',
-     pair(char(vl.Name('foo')),
-          pair(pair(char(vl.Period()),
-                    char(vl.Name('bar'))),
-               pair(char(vl.OpenParen()),
-                    pair(char(vl.Name('baz')),
-                         char(vl.CloseParen())))))),
+     pair(char(Name('foo')),
+          pair(pair(char(Period()),
+                    char(Name('bar'))),
+               pair(char(OPEN_PAREN),
+                    pair(char(Name('baz')),
+                         char(CLOSE_PAREN)))))),
     ('foo.bar(baz, qux)',
-     pair(char(vl.Name('foo')),
-          pair(pair(char(vl.Period()),
-                    char(vl.Name('bar'))),
-               pair(char(vl.OpenParen()),
-                    pair(pair(char(vl.Name('baz')),
-                              pair(char(vl.Comma()),
-                                   char(vl.Name('qux')))),
-                         char(vl.CloseParen())))))),
+     pair(char(Name('foo')),
+          pair(pair(char(Period()),
+                    char(Name('bar'))),
+               pair(char(OPEN_PAREN),
+                    pair(pair(char(Name('baz')),
+                              pair(char(Comma()),
+                                   char(Name('qux')))),
+                         char(CLOSE_PAREN)))))),
     ('2.foo',
-     pair(char(vl.Number('2')),
-          pair(char(vl.Period()),
-               char(vl.Name('foo'))))),
+     pair(char(Number('2')),
+          pair(char(Period()),
+               char(Name('foo'))))),
 ])
 def test_expr(line: str, sppf: SPPF):
-    lexemes = vl.lex_line(line)
+    lexemes = lex_line(line)
     assert sppf == vg.GRAMMAR.parse_rule('expr', lexemes)
 
 
 @pytest.mark.parametrize('line,sppf', [
     ('()',
-     pair(char(vl.OPEN_PAREN),
-          char(vl.CLOSE_PAREN))),
+     pair(char(OPEN_PAREN),
+          char(CLOSE_PAREN))),
     ('(foo: Bar)',
-     pair(char(vl.OPEN_PAREN),
-          pair(pair(char(vl.Name('foo')),
-                    pair(char(vl.COLON),
-                         char(vl.Class('Bar')))),
-               char(vl.CLOSE_PAREN)))),
+     pair(char(OPEN_PAREN),
+          pair(pair(char(Name('foo')),
+                    pair(char(COLON),
+                         char(Class('Bar')))),
+               char(CLOSE_PAREN)))),
     ('(foo bar: Baz)',
-     pair(char(vl.OPEN_PAREN),
-          pair(pair(char(vl.Name('foo')),
-                    pair(char(vl.Name('bar')),
-                         pair(char(vl.COLON),
-                              char(vl.Class('Baz'))))),
-               char(vl.CLOSE_PAREN)))),
+     pair(char(OPEN_PAREN),
+          pair(pair(char(Name('foo')),
+                    pair(char(Name('bar')),
+                         pair(char(COLON),
+                              char(Class('Baz'))))),
+               char(CLOSE_PAREN)))),
 ])
 def test_parameters(line: str, sppf: SPPF):
-    lexemes = vl.lex_line(line)
+    lexemes = lex_line(line)
     assert sppf == vg.GRAMMAR.parse_rule('parameters', lexemes)
 
 
 @pytest.mark.parametrize('line,sppf', [
     ('def foo() -> Bar: pass',
-     pair(char(vl.Name('def')),
-          pair(char(vl.Name('foo')),
-               pair(pair(char(vl.OPEN_PAREN),
-                         char(vl.CLOSE_PAREN)),
-                    pair(char(vl.ARROW),
-                         pair(char(vl.Class('Bar')),
-                              pair(char(vl.COLON),
-                                   pair(char(vl.Name('pass')),
-                                        char(vl.NEWLINE))))))))),
+     pair(char(Name('def')),
+          pair(char(Name('foo')),
+               pair(pair(char(OPEN_PAREN),
+                         char(CLOSE_PAREN)),
+                    pair(char(ARROW),
+                         pair(char(Class('Bar')),
+                              pair(char(COLON),
+                                   pair(char(Name('pass')),
+                                        char(NEWLINE))))))))),
     ('def foo(a: B, c d: E) -> F: pass',
-     pair(char(vl.Name('def')),
-          pair(char(vl.Name('foo')),
-               pair(pair(char(vl.OPEN_PAREN),
-                         pair(pair(pair(char(vl.Name('a')),
-                                        pair(char(vl.COLON),
-                                             char(vl.Class('B')))),
-                                   pair(char(vl.COMMA),
-                                        pair(char(vl.Name('c')),
-                                             pair(char(vl.Name('d')),
-                                                  pair(char(vl.COLON),
-                                                       char(vl.Class('E'))))))),
-                              char(vl.CLOSE_PAREN))),
-                    pair(char(vl.ARROW),
-                         pair(char(vl.Class('F')),
-                              pair(char(vl.COLON),
-                                   pair(char(vl.Name('pass')),
-                                        char(vl.NEWLINE))))))))),
+     pair(char(Name('def')),
+          pair(char(Name('foo')),
+               pair(pair(char(OPEN_PAREN),
+                         pair(pair(pair(char(Name('a')),
+                                        pair(char(COLON),
+                                             char(Class('B')))),
+                                   pair(char(COMMA),
+                                        pair(char(Name('c')),
+                                             pair(char(Name('d')),
+                                                  pair(char(COLON),
+                                                       char(Class('E'))))))),
+                              char(CLOSE_PAREN))),
+                    pair(char(ARROW),
+                         pair(char(Class('F')),
+                              pair(char(COLON),
+                                   pair(char(Name('pass')),
+                                        char(NEWLINE))))))))),
 ])
 def test_func_def(line: str, sppf: SPPF):
-    lexemes = vl.lex_line(line)
-    lexemes.append(vl.NEWLINE)
+    lexemes = lex_line(line)
+    lexemes.append(NEWLINE)
     assert sppf == vg.GRAMMAR.parse_rule('func_def', lexemes)
