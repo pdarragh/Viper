@@ -11,7 +11,7 @@
 
 <parameters>    ::= ( <params_list>? )
 <params_list>   ::= <parameter> | <parameter> , <params_list>
-<parameter>     ::= <ext_label>? <local_label> <param_type>
+<parameter>     ::= <ext_label>? <local_label> : <param_type>
 <ext_label>     ::= NAME
 <local_label>   ::= NAME
 <param_type>    ::= <type_expr>
