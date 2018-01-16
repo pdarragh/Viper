@@ -1,6 +1,13 @@
 # Viper To-Do List
 
 
+## Lexer
+
+- Produce keyword lexemes (instead of relying on the parser to handle this)
+  - Produce a generic "Keyword" class analogous to "Name"
+  - Generate list of keywords from formal grammar
+
+
 ## Parser
 
 - Convert ParseTree to meaningful AST
@@ -16,3 +23,4 @@
 ## General
 
 - Document types and interesting methods
+- Convert interactive viper.py to use subcommands
