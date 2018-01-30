@@ -76,6 +76,10 @@ class Number(Lexeme):
     pass
 
 
+class Keyword(Lexeme):
+    pass
+
+
 class Name(Lexeme):
     pass
 

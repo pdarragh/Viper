@@ -28,24 +28,6 @@ class GrammarToken:
         return str(self)
 
 
-class GrammarLiteral:
-    def __init__(self, val: str):
-        self._val = val
-
-    def __eq__(self, other):
-        if isinstance(other, GrammarLiteral):
-            return self._val == other._val
-        if isinstance(other, vl.Lexeme):
-            return self._val == other.text
-        return False
-
-    def __str__(self):
-        return f'"{self._val}"'
-
-    def __repr__(self):
-        return str(self)
-
-
 INDENT = GrammarToken(vl.Indent)
 DEDENT = GrammarToken(vl.Dedent)
 NEWLINE = GrammarToken(vl.NewLine)
@@ -61,6 +43,10 @@ CLASS = GrammarToken(vl.Class)
 OPERATOR = GrammarToken(vl.Operator)
 
 
+def make_keyword(token: str):
+    return GrammarToken(vl.Keyword(token))
+
+
 class GrammarParseError(Exception):
     def __init__(self, message='', line_no=None):
         if line_no is not None:
@@ -70,6 +56,7 @@ class GrammarParseError(Exception):
 
 class Grammar:
     def __init__(self, grammar_file: str):
+        self.keywords = []
         self._grammar_dict = {}
         self._parse_file(grammar_file)
         self.grammar = alt(*self._grammar_dict.values())
@@ -179,7 +166,9 @@ class Grammar:
                 return rep(subtoken)
             else:
                 raise GrammarParseError(f"repeat-star wrapping non-rule production: {subtoken}")
-        return literal(GrammarLiteral(token))
+        # Treat the word as a keyword.
+        self.keywords.append(token)
+        return literal(make_keyword(token))
 
     def _make_rule(self, rule):
         return RuleLiteral(rule, self._grammar_dict)
