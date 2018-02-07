@@ -1,17 +1,78 @@
-from typing import Dict, List, NamedTuple, Tuple
+import viper.lexer as vl
 
-RawRule = NamedTuple('RawRule', [('name', str), ('raw_alternates', str)])
+from viper.grammar.languages import *
+
+from typing import ClassVar, Dict, List, NamedTuple
 
 ASSIGN_TOKEN = '::='
 START_RULE_TOKEN = '<'
 END_RULE_TOKEN = '>'
 
+DequotedSubalternate = NamedTuple('DequotedSubalternate', [('text', str), ('is_quoted', bool)])
+Alternate = List[DequotedSubalternate]
+RawRule = NamedTuple('RawRule', [('name', str), ('raw_alternates', str)])
+
+
+class GrammarToken:
+    def __init__(self, lexeme_class: ClassVar, text=None):
+        self._lexeme_class = lexeme_class
+        self._text = text
+
+    def __eq__(self, other):
+        if isinstance(other, GrammarToken):
+            return self._lexeme_class == other._lexeme_class
+        elif isinstance(other, Literal):
+            return other.value == self
+        return isinstance(other, self._lexeme_class)
+
+    def __str__(self):
+        if self._text is not None:
+            return self._text
+        else:
+            return f'{self._lexeme_class.__name__}Token'
+
+    def __repr__(self):
+        return str(self)
+
+
+class GrammarLiteral:
+    def __init__(self, val: str):
+        self._val = val
+
+    def __eq__(self, other):
+        if isinstance(other, GrammarLiteral):
+            return self._val == other._val
+        if isinstance(other, vl.Lexeme):
+            return self._val == other.text
+        return False
+
+    def __str__(self):
+        return f'"{self._val}"'
+
+    def __repr__(self):
+        return str(self)
+
+
+INDENT = GrammarToken(vl.Indent)
+DEDENT = GrammarToken(vl.Dedent)
+NEWLINE = GrammarToken(vl.NewLine)
+PERIOD = GrammarToken(vl.Period, vl.PERIOD.text)
+COMMA = GrammarToken(vl.Comma, vl.COMMA.text)
+OPEN_PAREN = GrammarToken(vl.OpenParen, vl.OPEN_PAREN.text)
+CLOSE_PAREN = GrammarToken(vl.CloseParen, vl.CLOSE_PAREN.text)
+COLON = GrammarToken(vl.Colon, vl.COLON.text)
+ARROW = GrammarToken(vl.Arrow, vl.ARROW.text)
+NUMBER = GrammarToken(vl.Number)
+NAME = GrammarToken(vl.Name)
+CLASS = GrammarToken(vl.Class)
+OPERATOR = GrammarToken(vl.Operator)
+
 
 def parse_grammar_file(filename: str):
     raw_rules = get_raw_rules_from_file(filename)
     unprocessed_rules = split_alternates(raw_rules)
-    rules = process_alternate_quotes(unprocessed_rules)
-    # TODO: Build a simple parser to handle the various types of rule productions.
+    quoted_rules = process_alternate_quotes(unprocessed_rules)
+    rules = build_language_from_rules(quoted_rules)
     return rules
 
 
@@ -88,39 +149,132 @@ def split_alternates(rules: List[RawRule]) -> Dict[str, List[str]]:
     return processed_rules
 
 
-def process_alternate_quotes(rules: Dict[str, List[str]]) -> Dict[str, List[str]]:
-    new_rules = {}
+def process_alternate_quotes(rules: Dict[str, List[str]]) -> Dict[str, List[Alternate]]:
+    new_rules: Dict[str, List[Alternate]] = {}
     for name, alternates in rules.items():
         new_rules[name] = []
         for alternate in alternates:
             alt_parts = split_alternate(alternate.strip())
-            alt_parts = list(map(lambda t: (t[0].strip(), t[1]), alt_parts))
             new_rules[name].append(alt_parts)
     return new_rules
 
 
-def split_alternate(alt: str) -> List[Tuple[str, bool]]:
-    parts = []
+def split_alternate(alternate: str) -> List[DequotedSubalternate]:
+    def make_tup(start: int, end: int, quoted: bool):
+        substr = alternate[start + 1:end].strip()
+        return DequotedSubalternate(substr, quoted)
+    parts: List[DequotedSubalternate] = []
     inside_quotes = False
     quote_type = None
     start_index = -1
-    for i, c in enumerate(alt):
+    for i, c in enumerate(alternate):
         if c == '"' or c == '\'':
             if inside_quotes and c == quote_type:
                 # Just finished a quoted portion.
                 inside_quotes = False
-                tup = (alt[start_index+1:i], True)
-                parts.append(tup)
+                parts.append(make_tup(start_index, i, True))
                 start_index = i
             elif not inside_quotes:
                 # Just finished an unquoted portion; starting a quoted portion.
                 quote_type = c
                 inside_quotes = True
-                tup = (alt[start_index+1:i], False)
-                parts.append(tup)
+                parts.append(make_tup(start_index, i, False))
                 start_index = i
     # Add the last portion, if there is one.
-    if start_index < len(alt) - 1:
-        tup = (alt[start_index+1:len(alt)], False)
-        parts.append(tup)
+    if start_index < len(alternate) - 1:
+        parts.append(make_tup(start_index, len(alternate), False))
     return parts
+
+
+def build_language_from_rules(rules: Dict[str, List[Alternate]]) -> Language:
+    lang = empty()
+    for name, alt_list in rules.items():
+        for alternate in alt_list:
+            lang = alt(lang, build_language_from_alternate(alternate))
+    return lang
+
+
+# TODO: Remove this eventually.
+'''
+Grammar productions
+
+<xyz>           == rule 'xyz'; nothing is processed inside angle brackets
+SpecialToken    == special token 'SpecialToken'
+CapitalWord     == name of class to create for parsing this alternate (if 'CapitalWord' is not a special token)
+'word'          == the literal token 'word' (spans spaces)
+abc:xyz         == save a parameter named 'abc' with the value of evaluating 'xyz'
+@xyz            == evaluate 'xyz' and save its parameters at this level directly (may remove this)
+abc:xyz*        == process 'xyz' >=0 times and save all results to parameter 'abc'
+&abc{x1,x2}:xyz == process 'xyz', which may return something with names 'x1' or 'x2';
+                   accumulate these into a single list 'abc'
+'''
+
+
+def build_language_from_alternate(alternate: Alternate) -> Language:
+    alt_lang = empty()
+    tokens = tokenize_alternate(alternate)
+    i = 0
+    while i < len(tokens):
+        # TODO: Iterate through the tokens and build the language. Ignore the rest for now.
+        ...
+    return alt_lang
+
+
+def tokenize_alternate(alternate: Alternate) -> List[DequotedSubalternate]:
+    tokens: List[DequotedSubalternate] = []
+    for subalt in alternate:
+        for token in tokenize_subalternate(subalt):
+            tokens.append(token)
+    return tokens
+
+
+def tokenize_subalternate(subalt: DequotedSubalternate) -> List[DequotedSubalternate]:
+    if subalt.is_quoted:
+        return [subalt]
+    text = subalt.text
+    # Create list of tokens.
+    subalts: List[DequotedSubalternate] = []
+    def add_token(start: int, end: int):
+        token = text[start+1:end]
+        if token.strip():
+            subalts.append(DequotedSubalternate(token, False))
+    start_index = -1
+    continue_until = None
+    i = 0
+    while i < len(text):
+        c = text[i]
+        if continue_until is not None and c != continue_until:
+            i += 1
+            continue
+        if c == ' ' or c == '\t':
+            # Whitespace creates tokens automatically.
+            add_token(start_index, i)
+            start_index = i
+        elif c == '<':
+            # Rule brackets prevent other tokens from being created.
+            add_token(start_index, i)
+            start_index = i - 1
+            continue_until = '>'
+        elif c == '>':
+            # Finish the rule bracket.
+            add_token(start_index, i + 1)
+            start_index = i
+            continue_until = None
+        elif c == '{':
+            # Special braces.
+            add_token(start_index, i)
+            start_index = i
+            continue_until = '}'
+        elif c == '}':
+            # Finish special braces.
+            add_token(start_index, i)
+            start_index = i
+            continue_until = None
+        elif c in ('@', '&', '*', '?', ':'):
+            # These characters can only exist independently.
+            add_token(start_index, i)
+            add_token(i - 1, i + 1)
+            start_index = i
+        i += 1
+    add_token(start_index, i)
+    return subalts
