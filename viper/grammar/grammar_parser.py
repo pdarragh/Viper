@@ -1,7 +1,6 @@
-from typing import Dict, List, NamedTuple
+from typing import Dict, List, NamedTuple, Tuple
 
 RawRule = NamedTuple('RawRule', [('name', str), ('raw_alternates', str)])
-Rule = NamedTuple('Rule', [('name', str), ('alternates', List[str])])
 
 ASSIGN_TOKEN = '::='
 START_RULE_TOKEN = '<'
@@ -10,8 +9,10 @@ END_RULE_TOKEN = '>'
 
 def parse_grammar_file(filename: str):
     raw_rules = get_raw_rules_from_file(filename)
-    rules = process_raw_rules(raw_rules)
-    ... # TODO: process each rule's alternates
+    unprocessed_rules = split_alternates(raw_rules)
+    rules = process_alternate_quotes(unprocessed_rules)
+    # TODO: Build a simple parser to handle the various types of rule productions.
+    return rules
 
 
 def get_raw_rules_from_file(filename: str) -> List[RawRule]:
@@ -58,7 +59,7 @@ def get_nonempty_lines_from_file(filename: str) -> List[str]:
     return lines
 
 
-def process_raw_rules(rules: List[RawRule]) -> Dict[str, List[str]]:
+def split_alternates(rules: List[RawRule]) -> Dict[str, List[str]]:
     processed_rules = {}
     for rule in rules:
         # Split the rule into its alternates.
@@ -85,3 +86,41 @@ def process_raw_rules(rules: List[RawRule]) -> Dict[str, List[str]]:
         alternates.append(raw_alternates[start_index+1:len(raw_alternates)])
         processed_rules[rule.name] = alternates
     return processed_rules
+
+
+def process_alternate_quotes(rules: Dict[str, List[str]]) -> Dict[str, List[str]]:
+    new_rules = {}
+    for name, alternates in rules.items():
+        new_rules[name] = []
+        for alternate in alternates:
+            alt_parts = split_alternate(alternate.strip())
+            alt_parts = list(map(lambda t: (t[0].strip(), t[1]), alt_parts))
+            new_rules[name].append(alt_parts)
+    return new_rules
+
+
+def split_alternate(alt: str) -> List[Tuple[str, bool]]:
+    parts = []
+    inside_quotes = False
+    quote_type = None
+    start_index = -1
+    for i, c in enumerate(alt):
+        if c == '"' or c == '\'':
+            if inside_quotes and c == quote_type:
+                # Just finished a quoted portion.
+                inside_quotes = False
+                tup = (alt[start_index+1:i], True)
+                parts.append(tup)
+                start_index = i
+            elif not inside_quotes:
+                # Just finished an unquoted portion; starting a quoted portion.
+                quote_type = c
+                inside_quotes = True
+                tup = (alt[start_index+1:i], False)
+                parts.append(tup)
+                start_index = i
+    # Add the last portion, if there is one.
+    if start_index < len(alt) - 1:
+        tup = (alt[start_index+1:len(alt)], False)
+        parts.append(tup)
+    return parts
