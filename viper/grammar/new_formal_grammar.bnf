@@ -1,5 +1,5 @@
 <single_line>   ::= SingleLine line:<line>
-<many_lines>    ::= @lines:<line>*
+<many_lines>    ::= lines:<line>*
 
 <line>          ::= BlankLine NEWLINE
                   | Stmt <stmt>
@@ -12,7 +12,7 @@
 <parameter>     ::= Parameter external:NAME? internal:NAME : param_type:CLASS
 
 <suite>         ::= SimpleSuite <simple_stmt>
-                  | ComplexSuite NEWLINE INDENT stmt:<stmt> @stmts:<stmt>* DEDENT
+                  | ComplexSuite NEWLINE INDENT stmt:<stmt> stmts:<stmt>* DEDENT
 
 <stmt>          ::= <simple_stmt>
                   | <compound_stmt>
@@ -24,15 +24,15 @@
 <expr_list>     ::= SimpleExprList expr:<expr>
                   | ExprList expr:<expr> ',' expr_list:<expr_list>
 
-<expr>          ::= Expr atom:<atom> @trailers:<trailer>*
-<atom>          ::= ParenExpr '(' @exprs{expr,expr_list}:<expr_list>? ')'
+<expr>          ::= Expr atom:<atom> trailers:<trailer>*
+<atom>          ::= ParenExpr '(' &exprs{expr,expr_list}:<expr_list>? ')'
                   | NAME
                   | NUMBER
                   | Ellipsis '...'
                   | Zilch 'Zilch'
                   | True 'True'
                   | False 'False'
-<trailer>       ::= Args '(' @args{arg,arg_list}:<arg_list>? ')'
+<trailer>       ::= Args '(' &args{arg,arg_list}:<arg_list>? ')'
                   | Field '.' NAME
 
 <compound_stmt> ::= <func_def>
@@ -40,13 +40,13 @@
                   | <interface_def>
                   | <data_def>
 
-<class_def>     ::= ClassDef 'class' *<common_def>
-<interface_def> ::= InterfaceDef 'interface' *<common_def>
-<data_def>      ::= DataDef 'data' *<common_def>
+<class_def>     ::= ClassDef 'class' @<common_def>
+<interface_def> ::= InterfaceDef 'interface' @<common_def>
+<data_def>      ::= DataDef 'data' @<common_def>
 
-<common_def>    ::= CommonDef name:NAME *<arguments>? ':' body:<suite>
+<common_def>    ::= CommonDef name:NAME @<arguments>? ':' body:<suite>
 
-<arguments>     ::= Arguments ( args:<arg_list>? )
+<arguments>     ::= Arguments '(' args:<arg_list>? ')'
 <arg_list>      ::= arg:<argument>
                   | arg:<argument> ',' arg_list:<arg_list>
 <argument>      ::= <expr>
