@@ -2,7 +2,7 @@ import viper.lexer as vl
 
 from viper.grammar.languages import *
 
-from typing import ClassVar, Dict, List, NamedTuple
+from typing import ClassVar, Dict, List, NamedTuple, Tuple, Type
 
 ASSIGN_TOKEN = '::='
 START_RULE_TOKEN = '<'
@@ -11,6 +11,7 @@ END_RULE_TOKEN = '>'
 DequotedSubalternate = NamedTuple('DequotedSubalternate', [('text', str), ('is_quoted', bool)])
 Alternate = List[DequotedSubalternate]
 RawRule = NamedTuple('RawRule', [('name', str), ('raw_alternates', str)])
+TokenParse = NamedTuple('TokenParse', [('lang', Language), ('offset', int)])
 
 
 class GrammarToken:
@@ -67,6 +68,7 @@ NAME = GrammarToken(vl.Name)
 CLASS = GrammarToken(vl.Class)
 OPERATOR = GrammarToken(vl.Operator)
 
+
 SPECIAL_TOKENS = {
     'INDENT':       INDENT,
     'DEDENT':       DEDENT,
@@ -90,12 +92,6 @@ SPECIAL_TOKENS = {
 }
 
 
-def parse_grammar_file(filename: str):
-    raw_rules = get_raw_rules_from_file(filename)
-    unprocessed_rules = split_alternates(raw_rules)
-    quoted_rules = process_alternate_quotes(unprocessed_rules)
-    rules = build_language_from_rules(quoted_rules)
-    return rules
 class AltToken:
     def __init__(self, text: str):
         self.text = text
@@ -152,6 +148,116 @@ class SpecialToken(AltToken):
 
 class ParameterNameToken(AltToken):
     pass
+
+
+class Grammar:
+    def __init__(self, grammar_filename: str):
+        self.keywords = []
+        self._grammar_dict = {}
+        self._parse_grammar_file(grammar_filename)
+        self.grammar = alt(*self._grammar_dict.values())
+
+    def _parse_grammar_file(self, filename: str):
+        raw_rules = get_raw_rules_from_file(filename)
+        split_rules = split_alternates(raw_rules)
+        dequoted_rules = process_alternate_quotes(split_rules)
+        self.process_dequoted_rules(dequoted_rules)
+
+    def process_dequoted_rules(self, rules: Dict[str, List[Alternate]]):
+        for name, alt_list in rules.items():
+            for alternate in alt_list:
+                self.process_alternate(alternate)
+
+    def process_alternate(self, alternate: Alternate):
+        alt_lang = empty()
+        def accumulate(lang: Language):
+            nonlocal alt_lang
+            if alt_lang == empty():
+                alt_lang = lang
+            else:
+                alt_lang = concat(alt_lang, lang)
+        tokens = tokenize_alternate(alternate)
+        # The first token can either be a CapitalWord or a Rule.
+        if isinstance(tokens[0], RuleToken):
+            # No other tokens may be present.
+            if len(tokens) > 1:
+                raise RuntimeError("Alias alternates may not have additional parameters.")
+            return self._make_rule(tokens[0].text)
+        elif isinstance(tokens[0], CapitalWordToken):
+            i = 1
+            while i < len(tokens):
+                token = tokens[i]
+                if isinstance(token, LiteralToken):
+                    parse = self._parse_literal_token(tokens, i)
+                elif isinstance(token, ParameterExpansionToken):
+                    parse = self._parse_parameter_expansion_token(tokens, i)
+                elif isinstance(token, SpecialParameterExpansionToken):
+                    parse = self._parse_special_parameter_expansion_token(tokens, i)
+                elif isinstance(token, ParameterNameToken):
+                    parse = self._parse_parameter_name_token(tokens, i)
+                else:
+                    raise RuntimeError(f"Cannot process rule part beginning with token: '{token}'")
+                accumulate(parse.lang)
+                i += parse.offset
+            return alt_lang
+        else:
+            # No other tokens can be first.
+            raise RuntimeError("Rule alternates must start with either a Rule or a CapitalWord.")
+
+    def _verify_token_sequence(self, tokens: List[AltToken], index: int, match: List[Type[AltToken]]):
+        for offset, classVar in enumerate(match):
+            token = tokens[index + offset]
+            if not isinstance(token, classVar):
+                raise ValueError(f"Encountered token '{token}' but expected instance of token type {classVar}.")
+
+    def _parse_literal_token(self, tokens: List[AltToken], index: int) -> TokenParse:
+        lang = literal(tokens[index].text)
+        return TokenParse(lang, 1)
+
+    def _parse_parameter_expansion_token(self, tokens: List[AltToken], index: int) -> TokenParse:
+        seq = [ParameterExpansionToken, RuleToken]
+        self._verify_token_sequence(tokens, index, seq)
+        rule = tokens[index + 1]
+        lang = self._make_rule(rule.text)
+        return TokenParse(lang, 2)
+
+    def _split_braced_token(self, token: AltToken) -> Tuple[str, str]:
+        if not isinstance(token, BracedToken):
+            raise RuntimeError(f"Cannot split non-braced token: '{token}'")
+        text = token.text
+        left, right = text.split(',')
+        return left.strip(), right.strip()
+
+    def _parse_special_parameter_expansion_token(self, tokens: List[AltToken], index: int) -> TokenParse:
+        seq = [SpecialParameterExpansionToken, ParameterNameToken, BracedToken, ColonToken, RuleToken]
+        self._verify_token_sequence(tokens, index, seq)
+        name = tokens[index + 1]
+        braced = tokens[index + 2]
+        singular, plural = self._split_braced_token(braced)
+        intmd_result = self._parse_rule_token(tokens, index + 4)
+        return TokenParse(intmd_result.lang, 4 + intmd_result.offset)
+
+    def _parse_rule_token(self, tokens: List[AltToken], index: int) -> TokenParse:
+        # Prepare the bare rule language.
+        lang = self._make_rule(tokens[index].text)
+        # Lookahead to the token after the rule.
+        succ = tokens[index + 1]
+        if isinstance(succ, RepeatToken):
+            return TokenParse(rep(lang), 2)
+        elif isinstance(succ, OptionalToken):
+            return TokenParse(opt(lang), 2)
+        else:
+            return TokenParse(lang, 1)
+
+    def _parse_parameter_name_token(self, tokens: List[AltToken], index: int) -> TokenParse:
+        seq = [ParameterNameToken, ColonToken, RuleToken]
+        self._verify_token_sequence(tokens, index, seq)
+        name = tokens[index]
+        intmd_result = self._parse_rule_token(tokens, index + 2)
+        return TokenParse(intmd_result.lang, 2 + intmd_result.offset)
+
+    def _make_rule(self, rule_name: str):
+        return RuleLiteral(rule_name, self._grammar_dict)
 
 
 def get_raw_rules_from_file(filename: str) -> List[RawRule]:
@@ -264,14 +370,6 @@ def split_alternate(alternate: str) -> List[DequotedSubalternate]:
     return parts
 
 
-def build_language_from_rules(rules: Dict[str, List[Alternate]]) -> Language:
-    lang = empty()
-    for name, alt_list in rules.items():
-        for alternate in alt_list:
-            lang = alt(lang, build_language_from_alternate(alternate))
-    return lang
-
-
 # TODO: Remove this eventually.
 '''
 Grammar productions
@@ -328,33 +426,6 @@ def tokenize_dequoted_subalternate(token: DequotedSubalternate) -> AltToken:
         return ParameterNameToken(text)
     else:
         raise ValueError(f"Invalid token: '{text}'")
-
-
-def parameter_expansion_token(tokens: List[AltToken], index: int):
-    # TODO: lookahead for the necessary types of tokens.
-    ...
-
-
-def build_language_from_alternate(alternate: Alternate) -> Language:
-    alt_lang = empty()
-    tokens = tokenize_alternate(alternate)
-    # The first token can either be a CapitalWord or a Rule.
-    if isinstance(tokens[0], RuleToken):
-        # No other tokens may be present.
-        if len(tokens) > 1:
-            raise RuntimeError("Alias alternates may not have additional parameters.")
-        # TODO: Make new version of Grammar._make_rule for this
-        return empty()
-    elif isinstance(tokens[0], CapitalWordToken):
-        # This alternate must now be parsed.
-        i = 1
-        while i < len(tokens):
-            token = tokens[i]
-            # TODO: Attempt parse based on current token (limited possibilities).
-            ...
-    else:
-        # No other tokens can be first.
-        raise RuntimeError("Rule alternates must start with either a Rule or a CapitalWord.")
 
 
 def tokenize_alternate(alternate: Alternate) -> List[AltToken]:
