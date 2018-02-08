@@ -382,11 +382,11 @@ def tokenize_subalternate(subalt: DequotedSubalternate) -> List[DequotedSubalter
         elif c == '{':
             # Special braces.
             add_token(start_index, i)
-            start_index = i
+            start_index = i - 1
             continue_until = '}'
         elif c == '}':
             # Finish special braces.
-            add_token(start_index, i)
+            add_token(start_index, i + 1)
             start_index = i
             continue_until = None
         elif c in ('@', '&', '*', '?', ':'):
