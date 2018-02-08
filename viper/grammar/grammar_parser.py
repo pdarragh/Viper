@@ -137,7 +137,7 @@ def get_nonempty_lines_from_file(filename: str) -> List[str]:
     with open(filename) as f:
         for line in f:
             line = line.strip()
-            if line:
+            if line and not line.startswith('#'):
                 lines.append(line)
     return lines
 
