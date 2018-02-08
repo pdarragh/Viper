@@ -96,6 +96,62 @@ def parse_grammar_file(filename: str):
     quoted_rules = process_alternate_quotes(unprocessed_rules)
     rules = build_language_from_rules(quoted_rules)
     return rules
+class AltToken:
+    def __init__(self, text: str):
+        self.text = text
+
+    def __repr__(self):
+        return self.text
+
+    def __str__(self):
+        return repr(self)
+
+
+class LiteralToken(AltToken):
+    def __repr__(self):
+        return '\'' + self.text + '\''
+
+
+class RepeatToken(AltToken):
+    pass
+
+
+class OptionalToken(AltToken):
+    pass
+
+
+class ParameterExpansionToken(AltToken):
+    pass
+
+
+class SpecialParameterExpansionToken(AltToken):
+    pass
+
+
+class ColonToken(AltToken):
+    pass
+
+
+class BracedToken(AltToken):
+    def __repr__(self):
+        return '{' + self.text + '}'
+
+
+class RuleToken(AltToken):
+    def __repr__(self):
+        return '<' + self.text + '>'
+
+
+class CapitalWordToken(AltToken):
+    pass
+
+
+class SpecialToken(AltToken):
+    pass
+
+
+class ParameterNameToken(AltToken):
+    pass
 
 
 def get_raw_rules_from_file(filename: str) -> List[RawRule]:
@@ -243,64 +299,6 @@ tokens = tokenize_alternate(quoted_rules['trailer'][0])
 print(' '.join(map(lambda s: s.text, tokens)))
 
 '''
-
-
-class AltToken:
-    def __init__(self, text: str):
-        self.text = text
-
-    def __repr__(self):
-        return self.text
-
-    def __str__(self):
-        return repr(self)
-
-
-class LiteralToken(AltToken):
-    def __repr__(self):
-        return '\'' + self.text + '\''
-
-
-class RepeatToken(AltToken):
-    pass
-
-
-class OptionalToken(AltToken):
-    pass
-
-
-class ParameterExpansionToken(AltToken):
-    pass
-
-
-class SpecialParameterExpansionToken(AltToken):
-    pass
-
-
-class ColonToken(AltToken):
-    pass
-
-
-class BracedToken(AltToken):
-    def __repr__(self):
-        return '{' + self.text + '}'
-
-
-class RuleToken(AltToken):
-    def __repr__(self):
-        return '<' + self.text + '>'
-
-
-class CapitalWordToken(AltToken):
-    pass
-
-
-class SpecialToken(AltToken):
-    pass
-
-
-class ParameterNameToken(AltToken):
-    pass
 
 
 def parse_token(token: DequotedSubalternate) -> AltToken:
