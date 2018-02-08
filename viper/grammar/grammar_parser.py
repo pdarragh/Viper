@@ -229,7 +229,104 @@ abc:xyz         == save a parameter named 'abc' with the value of evaluating 'xy
 abc:xyz*        == process 'xyz' >=0 times and save all results to parameter 'abc'
 &abc{x1,x2}:xyz == process 'xyz', which may return something with names 'x1' or 'x2';
                    accumulate these into a single list 'abc'
+
+All alternates must start with either a CapitalWord or a <rule>.
+
+
+import sys
+sys.path.insert(0, '/Users/pdarragh/Development/Viper/')
+from viper.grammar.grammar_parser import *
+raw_rules = get_raw_rules_from_file('./viper/grammar/new_formal_grammar.bnf')
+unprocessed_rules = split_alternates(raw_rules)
+quoted_rules = process_alternate_quotes(unprocessed_rules)
+tokens = tokenize_alternate(quoted_rules['trailer'][0])
+print(' '.join(map(lambda s: s.text, tokens)))
+
 '''
+
+
+class AltToken:
+    def __init__(self, text: str):
+        self.text = text
+
+    def __repr__(self):
+        return self.text
+
+    def __str__(self):
+        return repr(self)
+
+
+class LiteralToken(AltToken):
+    pass
+
+
+class RepeatToken(AltToken):
+    pass
+
+
+class OptionalToken(AltToken):
+    pass
+
+
+class ParameterExpansionToken(AltToken):
+    pass
+
+
+class SpecialParameterExpansionToken(AltToken):
+    pass
+
+
+class ColonToken(AltToken):
+    pass
+
+
+class BracedToken(AltToken):
+    pass
+
+
+class RuleToken(AltToken):
+    pass
+
+
+class CapitalWordToken(AltToken):
+    pass
+
+
+class SpecialToken(AltToken):
+    pass
+
+
+class ParameterNameToken(AltToken):
+    pass
+
+
+def parse_token(token: DequotedSubalternate) -> AltToken:
+    text = token.text
+    if token.is_quoted:
+        return LiteralToken(text)
+    elif text == '*':
+        return RepeatToken(text)
+    elif text == '?':
+        return OptionalToken(text)
+    elif text == '@':
+        return ParameterExpansionToken(text)
+    elif text == '&':
+        return SpecialParameterExpansionToken(text)
+    elif text == ':':
+        return ColonToken(text)
+    elif text.startswith('{') and text.endswith('}'):
+        return BracedToken(text[1:-1])
+    elif text.startswith('<') and text.endswith('>'):
+        return RuleToken(text[1:-1])
+    elif text[0].isupper():
+        if text in SPECIAL_TOKENS:
+            return SpecialToken(text)
+        else:
+            return CapitalWordToken(text)
+    elif text.islower():
+        return ParameterNameToken(text)
+    else:
+        raise ValueError(f"Invalid token: '{text}'")
 
 
 def build_language_from_alternate(alternate: Alternate) -> Language:
