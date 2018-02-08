@@ -1,12 +1,12 @@
 <single_line>   ::= SingleLine line:<line>
-<many_lines>    ::= lines:<line>*
+<many_lines>    ::= ManyLines lines:<line>*
 
 <line>          ::= BlankLine NEWLINE
                   | Stmt <stmt>
 
 <func_def>      ::= FuncDef 'def' name:NAME params:<parameters> '->' func_type:CLASS ':' body:<suite>
 
-<parameters>    ::= '(' &params{param,param_list}:<params_list>? ')'
+<parameters>    ::= Parameters '(' &params{param,param_list}:<params_list>? ')'
 <params_list>   ::= SingleParam param:<parameter>
                   | ParamList param:<parameter> ',' param_list:<params_list>
 <parameter>     ::= Parameter external:NAME? internal:NAME : param_type:CLASS
@@ -47,6 +47,6 @@
 <common_def>    ::= CommonDef name:NAME @<arguments>? ':' body:<suite>
 
 <arguments>     ::= Arguments '(' args:<arg_list>? ')'
-<arg_list>      ::= arg:<argument>
-                  | arg:<argument> ',' arg_list:<arg_list>
+<arg_list>      ::= SingleArg arg:<argument>
+                  | ArgList arg:<argument> ',' arg_list:<arg_list>
 <argument>      ::= <expr>
