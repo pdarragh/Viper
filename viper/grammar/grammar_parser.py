@@ -301,7 +301,7 @@ print(' '.join(map(lambda s: s.text, tokens)))
 '''
 
 
-def parse_token(token: DequotedSubalternate) -> AltToken:
+def tokenize_dequoted_subalternate(token: DequotedSubalternate) -> AltToken:
     text = token.text
     if token.is_quoted:
         return LiteralToken(text)
@@ -361,7 +361,7 @@ def tokenize_alternate(alternate: Alternate) -> List[AltToken]:
     tokens: List[AltToken] = []
     for subalt in alternate:
         for token in tokenize_subalternate(subalt):
-            tokens.append(parse_token(token))
+            tokens.append(tokenize_dequoted_subalternate(token))
     return tokens
 
 
