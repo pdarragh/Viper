@@ -257,7 +257,8 @@ class AltToken:
 
 
 class LiteralToken(AltToken):
-    pass
+    def __repr__(self):
+        return '\'' + self.text + '\''
 
 
 class RepeatToken(AltToken):
@@ -281,11 +282,13 @@ class ColonToken(AltToken):
 
 
 class BracedToken(AltToken):
-    pass
+    def __repr__(self):
+        return '{' + self.text + '}'
 
 
 class RuleToken(AltToken):
-    pass
+    def __repr__(self):
+        return '<' + self.text + '>'
 
 
 class CapitalWordToken(AltToken):
