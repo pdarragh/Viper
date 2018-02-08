@@ -67,6 +67,28 @@ NAME = GrammarToken(vl.Name)
 CLASS = GrammarToken(vl.Class)
 OPERATOR = GrammarToken(vl.Operator)
 
+SPECIAL_TOKENS = {
+    'INDENT':       INDENT,
+    'DEDENT':       DEDENT,
+    'NEWLINE':      NEWLINE,
+    'PERIOD':       PERIOD,
+    '.':            PERIOD,
+    'COMMA':        COMMA,
+    ',':            COMMA,
+    'OPEN_PAREN':   OPEN_PAREN,
+    '(':            OPEN_PAREN,
+    'CLOSE_PAREN':  CLOSE_PAREN,
+    ')':            CLOSE_PAREN,
+    'COLON':        COLON,
+    ':':            COLON,
+    'ARROW':        ARROW,
+    '->':           ARROW,
+    'NUMBER':       NUMBER,
+    'NAME':         NAME,
+    'CLASS':        CLASS,
+    'OPERATOR':     OPERATOR,
+}
+
 
 def parse_grammar_file(filename: str):
     raw_rules = get_raw_rules_from_file(filename)
