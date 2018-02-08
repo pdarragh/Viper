@@ -339,11 +339,11 @@ def build_language_from_alternate(alternate: Alternate) -> Language:
     return alt_lang
 
 
-def tokenize_alternate(alternate: Alternate) -> List[DequotedSubalternate]:
-    tokens: List[DequotedSubalternate] = []
+def tokenize_alternate(alternate: Alternate) -> List[AltToken]:
+    tokens: List[AltToken] = []
     for subalt in alternate:
         for token in tokenize_subalternate(subalt):
-            tokens.append(token)
+            tokens.append(parse_token(token))
     return tokens
 
 
