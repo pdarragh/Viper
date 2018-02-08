@@ -329,14 +329,31 @@ def parse_token(token: DequotedSubalternate) -> AltToken:
         raise ValueError(f"Invalid token: '{text}'")
 
 
+def parameter_expansion_token(tokens: List[AltToken], index: int):
+    # TODO: lookahead for the necessary types of tokens.
+    ...
+
+
 def build_language_from_alternate(alternate: Alternate) -> Language:
     alt_lang = empty()
     tokens = tokenize_alternate(alternate)
-    i = 0
-    while i < len(tokens):
-        # TODO: Iterate through the tokens and build the language. Ignore the rest for now.
-        ...
-    return alt_lang
+    # The first token can either be a CapitalWord or a Rule.
+    if isinstance(tokens[0], RuleToken):
+        # No other tokens may be present.
+        if len(tokens) > 1:
+            raise RuntimeError("Alias alternates may not have additional parameters.")
+        # TODO: Make new version of Grammar._make_rule for this
+        return empty()
+    elif isinstance(tokens[0], CapitalWordToken):
+        # This alternate must now be parsed.
+        i = 1
+        while i < len(tokens):
+            token = tokens[i]
+            # TODO: Attempt parse based on current token (limited possibilities).
+            ...
+    else:
+        # No other tokens can be first.
+        raise RuntimeError("Rule alternates must start with either a Rule or a CapitalWord.")
 
 
 def tokenize_alternate(alternate: Alternate) -> List[AltToken]:
