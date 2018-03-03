@@ -218,7 +218,7 @@ class Grammar:
         for offset, classVar in enumerate(match):
             token = tokens[index + offset]
             if not isinstance(token, classVar):
-                raise ValueError(f"Encountered token '{token}' but expected instance of token type {classVar}.")
+                raise GrammarFileParseError(f"Encountered token '{token}' but expected instance of token type {classVar}.")
 
     def _parse_literal_token(self, tokens: List[AltToken], index: int) -> TokenParse:
         lang = literal(tokens[index].text)
