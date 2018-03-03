@@ -345,23 +345,23 @@ def linguify(token: Token) -> Language:
     return token
 
 
-def empty():
+def empty() -> Language:
     return Empty()
 
 
-def eps(func: EpsFunc):
+def eps(func: EpsFunc) -> Language:
     return Epsilon(func)
 
 
-def literal(c):
+def literal(c) -> Language:
     return Literal(c)
 
 
-def delay(rl: RuleLiteral, c):
+def delay(rl: RuleLiteral, c) -> Language:
     return DelayRule(rl, c)
 
 
-def concat(l1: Language, *ls: Language):
+def concat(l1: Language, *ls: Language) -> Language:
     l1 = linguify(l1)
     if len(ls) == 0:
         return l1
@@ -383,7 +383,7 @@ def concat(l1: Language, *ls: Language):
         return Concat(l1, concat(*ls))
 
 
-def alt(l1: Language, *ls: Language):
+def alt(l1: Language, *ls: Language) -> Language:
     l1 = linguify(l1)
     if len(ls) == 0:
         return l1
@@ -398,15 +398,15 @@ def alt(l1: Language, *ls: Language):
         return Alt(l1, alt(*ls))
 
 
-def rep(lang: Language):
+def rep(lang: Language) -> Language:
     return Rep(linguify(lang))
 
 
-def opt(lang: Language):
+def opt(lang: Language) -> Language:
     return alt(lang, eps(lambda: SPPF(ParseTreeEmpty())))
 
 
-def red(lang: Language, f: RedFunc):
+def red(lang: Language, f: RedFunc) -> Language:
     return Red(linguify(lang), f)
 
 
@@ -570,7 +570,7 @@ def print_lang(lang: Language):
     print(_make_nice_lang_string(lang, 0))
 
 
-def _make_nice_lang_string(lang: Language, start_column: int):
+def _make_nice_lang_string(lang: Language, start_column: int) -> str:
     if isinstance(lang, Empty):
         return "(empty)"
     if isinstance(lang, Epsilon):
