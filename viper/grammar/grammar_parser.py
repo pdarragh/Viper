@@ -178,8 +178,10 @@ class Grammar:
                     self.process_alternate(alternate)
             except GrammarFileParseError as e:
                 # Inject the rule name and that rule's initial line number into the message.
-                e.msg = f"Error parsing rule <{name}> on line {self._rule_line_nos[name]}: {e.msg}"
-                raise
+                msg = f"Error parsing rule <{name}> on line {self._rule_line_nos[name]}: {e.msg}"
+                err = GrammarFileParseError(msg)
+                err.__traceback__ = e.__traceback__
+                raise err
 
     def process_alternate(self, alternate: Alternate):
         alt_lang = empty()
