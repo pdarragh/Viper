@@ -271,7 +271,10 @@ class Grammar:
             return TokenParse(lang, 1)
 
     def _parse_parameter_name_token(self, tokens: List[AltToken], index: int) -> TokenParse:
-        seq = [ParameterNameToken, ColonToken, RuleToken]
+        if isinstance(tokens[index + 2], RuleToken):
+            seq = [ParameterNameToken, ColonToken, RuleToken]
+        else:
+            seq = [ParameterNameToken, ColonToken, SpecialToken]
         self._verify_token_sequence(tokens, index, seq)
         name = tokens[index]
         intmd_result = self._parse_rule_token(tokens, index + 2)
