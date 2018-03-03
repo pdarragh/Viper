@@ -150,23 +150,33 @@ class ParameterNameToken(AltToken):
     pass
 
 
+class GrammarFileParseError(Exception):
+    def __init__(self, msg: str):
+        self.msg = msg
+
+
 class Grammar:
     def __init__(self, grammar_filename: str):
         self.keywords = []
         self._grammar_dict = {}
+        self._rule_line_nos = {}
         self._parse_grammar_file(grammar_filename)
         self.grammar = alt(*self._grammar_dict.values())
 
     def _parse_grammar_file(self, filename: str):
-        raw_rules = get_raw_rules_from_file(filename)
+        raw_rules, line_nos = get_raw_rules_from_file(filename)
+        self._rule_line_nos = line_nos
         split_rules = split_alternates(raw_rules)
         dequoted_rules = process_alternate_quotes(split_rules)
         self.process_dequoted_rules(dequoted_rules)
 
     def process_dequoted_rules(self, rules: Dict[str, List[Alternate]]):
         for name, alt_list in rules.items():
-            for alternate in alt_list:
-                self.process_alternate(alternate)
+            try:
+                for alternate in alt_list:
+                    self.process_alternate(alternate)
+            except GrammarFileParseError as e:
+                raise RuntimeError(f"Error parsing rule <{name}> on line {self._rule_line_nos[name]}: {e.msg}")
 
     def process_alternate(self, alternate: Alternate):
         alt_lang = empty()
@@ -181,7 +191,7 @@ class Grammar:
         if isinstance(tokens[0], RuleToken):
             # No other tokens may be present.
             if len(tokens) > 1:
-                raise RuntimeError("Alias alternates may not have additional parameters.")
+                raise GrammarFileParseError("Alias alternates may not have additional parameters.")
             return self._make_rule(tokens[0].text)
         elif isinstance(tokens[0], CapitalWordToken):
             i = 1
@@ -196,13 +206,13 @@ class Grammar:
                 elif isinstance(token, ParameterNameToken):
                     parse = self._parse_parameter_name_token(tokens, i)
                 else:
-                    raise RuntimeError(f"Cannot process rule part beginning with token: '{token}'")
+                    raise GrammarFileParseError(f"Cannot process rule part beginning with token: '{token}'")
                 accumulate(parse.lang)
                 i += parse.offset
             return alt_lang
         else:
             # No other tokens can be first.
-            raise RuntimeError("Rule alternates must start with either a Rule or a CapitalWord.")
+            raise GrammarFileParseError("Rule alternates must start with either a Rule or a CapitalWord.")
 
     def _verify_token_sequence(self, tokens: List[AltToken], index: int, match: List[Type[AltToken]]):
         for offset, classVar in enumerate(match):
@@ -223,7 +233,7 @@ class Grammar:
 
     def _split_braced_token(self, token: AltToken) -> Tuple[str, str]:
         if not isinstance(token, BracedToken):
-            raise RuntimeError(f"Cannot split non-braced token: '{token}'")
+            raise GrammarFileParseError(f"Cannot split non-braced token: '{token}'")
         text = token.text
         left, right = text.split(',')
         return left.strip(), right.strip()
@@ -263,48 +273,45 @@ class Grammar:
         return RuleLiteral(rule_name, self._grammar_dict)
 
 
-def get_raw_rules_from_file(filename: str) -> List[RawRule]:
-    lines = get_nonempty_lines_from_file(filename)
+def get_raw_rules_from_file(filename: str) -> Tuple[List[RawRule], Dict[str, int]]:
     rules = {}
+    line_nos = {}
     current_rule = None
-    for line in lines:
-        if line.find(ASSIGN_TOKEN) > 0:
-            # This line names a rule.
-            if line.count(ASSIGN_TOKEN) > 1:
-                # Can only define one rule per line.
-                raise RuntimeError(f"Too many rule assignments in one line.")
-            # Process the name of the rule.
-            name, raw_rule = line.split(ASSIGN_TOKEN)
-            name = name.strip()
-            if not (name.startswith(START_RULE_TOKEN) and name.endswith(END_RULE_TOKEN)):
-                raise RuntimeError(f"Invalid rule name: '{name}'")
-            name = name[1:-1]
-            # If the rule has not been named previously, create it.
-            if name in rules:
-                raise RuntimeError(f"Cannot create multiple rules with the same name: '{name}'")
-            rules[name] = [raw_rule.strip()]
-            current_rule = name
-        else:
-            if current_rule is None:
-                raise RuntimeError(f"First nonempty line must name a new rule.")
-            # We must be continuing a rule.
-            rules[current_rule].append(line.strip())
+    i = 0
+    with open(filename) as f:
+        for line in f:
+            i += 1
+            line = line.strip()
+            if line.startswith('#') or not line:
+                continue
+            if line.find(ASSIGN_TOKEN) > 0:
+                # This line names a rule.
+                if line.count(ASSIGN_TOKEN) > 1:
+                    # Can only define one rule per line.
+                    raise RuntimeError(f"Too many rule assignments in one line.")
+                # Process the name of the rule.
+                name, raw_rule = line.split(ASSIGN_TOKEN)
+                name = name.strip()
+                if not (name.startswith(START_RULE_TOKEN) and name.endswith(END_RULE_TOKEN)):
+                    raise RuntimeError(f"Invalid rule name: '{name}'")
+                name = name[1:-1]
+                # If the rule has not been named previously, create it.
+                if name in rules:
+                    raise RuntimeError(f"Cannot create multiple rules with the same name: '{name}'")
+                rules[name] = [raw_rule.strip()]
+                line_nos[name] = i
+                current_rule = name
+            else:
+                if current_rule is None:
+                    raise RuntimeError(f"First nonempty line must name a new rule.")
+                # We must be continuing a rule.
+                rules[current_rule].append(line.strip())
     rule_list: List[RawRule] = []
     for name, raw_rules in rules.items():
         alternates = ' '.join(raw_rules)
         rule = RawRule(name, alternates)
         rule_list.append(rule)
-    return rule_list
-
-
-def get_nonempty_lines_from_file(filename: str) -> List[str]:
-    lines = []
-    with open(filename) as f:
-        for line in f:
-            line = line.strip()
-            if line and not line.startswith('#'):
-                lines.append(line)
-    return lines
+    return rule_list, line_nos
 
 
 def split_alternates(rules: List[RawRule]) -> Dict[str, List[str]]:
