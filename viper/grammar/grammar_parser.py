@@ -176,7 +176,9 @@ class Grammar:
                 for alternate in alt_list:
                     self.process_alternate(alternate)
             except GrammarFileParseError as e:
-                raise RuntimeError(f"Error parsing rule <{name}> on line {self._rule_line_nos[name]}: {e.msg}")
+                # Inject the rule name and that rule's initial line number into the message.
+                e.msg = f"Error parsing rule <{name}> on line {self._rule_line_nos[name]}: {e.msg}"
+                raise
 
     def process_alternate(self, alternate: Alternate):
         alt_lang = empty()
