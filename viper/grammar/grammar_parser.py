@@ -183,14 +183,15 @@ class Grammar:
                 err.__traceback__ = e.__traceback__
                 raise err
 
-    def process_alternate(self, alternate: Alternate):
-        alt_lang = empty()
+    def process_alternate(self, alternate: Alternate) -> Language:
+        alternate_lang = empty()
+
         def accumulate(lang: Language):
-            nonlocal alt_lang
-            if alt_lang == empty():
-                alt_lang = lang
+            nonlocal alternate_lang
+            if alternate_lang == empty():
+                alternate_lang = lang
             else:
-                alt_lang = concat(alt_lang, lang)
+                alternate_lang = concat(alternate_lang, lang)
         tokens = tokenize_alternate(alternate)
         # The first token can either be a CapitalWord or a Rule.
         if isinstance(tokens[0], RuleToken):
@@ -214,7 +215,7 @@ class Grammar:
                     raise GrammarFileParseError(f"Cannot process rule part beginning with token: '{token}'")
                 accumulate(parse.lang)
                 i += parse.offset
-            return alt_lang
+            return alternate_lang
         else:
             # No other tokens can be first.
             raise GrammarFileParseError("Rule alternates must start with either a Rule or a CapitalWord.")
