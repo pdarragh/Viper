@@ -218,10 +218,14 @@ class Grammar:
             raise GrammarFileParseError("Rule alternates must start with either a Rule or a CapitalWord.")
 
     def _verify_token_sequence(self, tokens: List[AltToken], index: int, match: List[Type[AltToken]]):
-        for offset, classVar in enumerate(match):
+        for offset, class_var in enumerate(match):
             token = tokens[index + offset]
-            if not isinstance(token, classVar):
-                raise GrammarFileParseError(f"Encountered token '{token}' but expected instance of token type {classVar}.")
+            if not isinstance(token, class_var):
+                given_type = type(token).__name__
+                expected_type = class_var.__name__
+                raise GrammarFileParseError(f"Token '{token}' does not match expected type.\n"
+                                            f"    Given type:    {given_type}\n"
+                                            f"    Expected type: {expected_type}")
 
     def _parse_literal_token(self, tokens: List[AltToken], index: int) -> TokenParse:
         lang = literal(tokens[index].text)
