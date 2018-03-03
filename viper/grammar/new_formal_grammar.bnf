@@ -2,16 +2,16 @@
 <many_lines>    ::= ManyLines lines:<line>*
 
 <line>          ::= BlankLine NEWLINE
-                  | Stmt <stmt>
+                  | <stmt>
 
 <func_def>      ::= FuncDef 'def' name:NAME params:<parameters> '->' func_type:CLASS ':' body:<suite>
 
 <parameters>    ::= Parameters '(' &params{param,param_list}:<params_list>? ')'
 <params_list>   ::= SingleParam param:<parameter>
                   | ParamList param:<parameter> ',' param_list:<params_list>
-<parameter>     ::= Parameter external:NAME? internal:NAME : param_type:CLASS
+<parameter>     ::= Parameter external:NAME? internal:NAME ':' param_type:CLASS
 
-<suite>         ::= SimpleSuite <simple_stmt>
+<suite>         ::= <simple_stmt>
                   | ComplexSuite NEWLINE INDENT stmt:<stmt> stmts:<stmt>* DEDENT
 
 <stmt>          ::= <simple_stmt>
@@ -20,7 +20,7 @@
 <simple_stmt>   ::= SimpleStmt expr:<expr_stmt> NEWLINE
 <expr_stmt>     ::= PassStmt 'pass'
                   | ReturnStmt 'return' expr:<expr_list>?
-                  | ExprListStmt &exprs{expr,expr_list}<expr_list>
+                  | ExprListStmt &exprs{expr,expr_list}:<expr_list>
 <expr_list>     ::= SimpleExprList expr:<expr>
                   | ExprList expr:<expr> ',' expr_list:<expr_list>
 
@@ -44,9 +44,8 @@
 <interface_def> ::= InterfaceDef 'interface' @<common_def>
 <data_def>      ::= DataDef 'data' @<common_def>
 
-<common_def>    ::= CommonDef name:NAME @<arguments>? ':' body:<suite>
+<common_def>    ::= CommonDef name:NAME '(' args:<arg_list>? ')' ':' body:<suite>
 
-<arguments>     ::= Arguments '(' args:<arg_list>? ')'
 <arg_list>      ::= SingleArg arg:<argument>
                   | ArgList arg:<argument> ',' arg_list:<arg_list>
 <argument>      ::= <expr>
