@@ -26,8 +26,8 @@
 
 <expr>          ::= Expr atom:<atom> trailers:<trailer>*
 <atom>          ::= ParenExpr '(' &exprs{expr,expr_list}:<expr_list>? ')'
-                  | NAME
-                  | NUMBER
+                  | Name NAME
+                  | Number NUMBER
                   | Ellipsis '...'
                   | Zilch 'Zilch'
                   | True 'True'
