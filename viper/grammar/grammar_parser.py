@@ -241,7 +241,10 @@ class Grammar:
         # Prepare the bare rule language.
         lang = self._make_rule(tokens[index].text)
         # Lookahead to the token after the rule.
-        succ = tokens[index + 1]
+        if index + 1 < len(tokens):
+            succ = tokens[index + 1]
+        else:
+            succ = None
         if isinstance(succ, RepeatToken):
             return TokenParse(rep(lang), 2)
         elif isinstance(succ, OptionalToken):
