@@ -108,6 +108,10 @@ class LiteralToken(AltToken):
         return '\'' + self.text + '\''
 
 
+class SpecialToken(LiteralToken):
+    pass
+
+
 class RepeatToken(AltToken):
     pass
 
@@ -139,10 +143,6 @@ class RuleToken(AltToken):
 
 
 class CapitalWordToken(AltToken):
-    pass
-
-
-class SpecialToken(AltToken):
     pass
 
 
