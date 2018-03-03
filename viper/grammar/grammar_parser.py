@@ -197,7 +197,7 @@ class Grammar:
             # No other tokens may be present.
             if len(tokens) > 1:
                 raise GrammarFileParseError("Alias alternates may not have additional parameters.")
-            return self._make_rule(tokens[0].text)
+            return self._make_rule_literal(tokens[0].text)
         elif isinstance(tokens[0], CapitalWordToken):
             i = 1
             while i < len(tokens):
@@ -237,7 +237,7 @@ class Grammar:
         seq = [ParameterExpansionToken, RuleToken]
         self._verify_token_sequence(tokens, index, seq)
         rule = tokens[index + 1]
-        lang = self._make_rule(rule.text)
+        lang = self._make_rule_literal(rule.text)
         return TokenParse(lang, 2)
 
     def _split_braced_token(self, token: AltToken) -> Tuple[str, str]:
@@ -258,7 +258,7 @@ class Grammar:
 
     def _parse_rule_token(self, tokens: List[AltToken], index: int) -> TokenParse:
         # Prepare the bare rule language.
-        lang = self._make_rule(tokens[index].text)
+        lang = self._make_rule_literal(tokens[index].text)
         # Lookahead to the token after the rule.
         succ = None
         if index + 1 < len(tokens):
@@ -280,7 +280,7 @@ class Grammar:
         intmd_result = self._parse_rule_token(tokens, index + 2)
         return TokenParse(intmd_result.lang, 2 + intmd_result.offset)
 
-    def _make_rule(self, rule_name: str):
+    def _make_rule_literal(self, rule_name: str):
         return RuleLiteral(rule_name, self._grammar_dict)
 
 
