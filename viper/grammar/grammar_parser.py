@@ -2,7 +2,7 @@ import viper.lexer as vl
 
 from viper.grammar.languages import *
 
-from typing import ClassVar, Dict, List, NamedTuple, Tuple, Type
+from typing import Any, Callable, ClassVar, Dict, List, NamedTuple, Tuple, Type
 
 ASSIGN_TOKEN = '::='
 START_RULE_TOKEN = '<'
@@ -171,27 +171,41 @@ class Grammar:
         dequoted_rules = process_alternate_quotes(split_rules)
         self.process_dequoted_rules(dequoted_rules)
 
+    @staticmethod
+    def _acc(base_lang: Language, lang: Language, const: Callable[[Language, Any], Language]) -> Language:
+        if base_lang == empty():
+            return lang
+        else:
+            return const(lang, base_lang)
+
     def process_dequoted_rules(self, rules: Dict[str, List[Alternate]]):
         for name, alt_list in rules.items():
+            rule_lang = empty()
+
+            def accumulate(lang: Language):
+                nonlocal rule_lang
+                rule_lang = self._acc(rule_lang, lang, alt)
+
             try:
                 for alternate in alt_list:
-                    self.process_alternate(alternate)
+                    alternate_lang = self.process_alternate(alternate)
+                    accumulate(alternate_lang)
             except GrammarFileParseError as e:
                 # Inject the rule name and that rule's initial line number into the message.
                 msg = f"Error parsing rule <{name}> on line {self._rule_line_nos[name]}: {e.msg}"
                 err = GrammarFileParseError(msg)
                 err.__traceback__ = e.__traceback__
                 raise err
+            self._grammar_dict[name] = rule_lang
+
 
     def process_alternate(self, alternate: Alternate) -> Language:
         alternate_lang = empty()
 
         def accumulate(lang: Language):
             nonlocal alternate_lang
-            if alternate_lang == empty():
-                alternate_lang = lang
-            else:
-                alternate_lang = concat(alternate_lang, lang)
+            alternate_lang = self._acc(alternate_lang, lang, concat)
+
         tokens = tokenize_alternate(alternate)
         # The first token can either be a CapitalWord or a Rule.
         if isinstance(tokens[0], RuleToken):
