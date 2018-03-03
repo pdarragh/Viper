@@ -109,7 +109,8 @@ class LiteralToken(AltToken):
 
 
 class SpecialToken(LiteralToken):
-    pass
+    def __repr__(self):
+        return self.text
 
 
 class RepeatToken(AltToken):
