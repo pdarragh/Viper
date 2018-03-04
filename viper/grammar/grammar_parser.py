@@ -108,9 +108,8 @@ class LiteralToken(AltToken):
         return '\'' + self.text + '\''
 
 
-class SpecialToken(LiteralToken):
-    def __repr__(self):
-        return self.text
+class SpecialToken(AltToken):
+    pass
 
 
 class RepeatToken(AltToken):
@@ -237,6 +236,8 @@ class Grammar:
                 token = tokens[i]
                 if isinstance(token, LiteralToken):
                     parse = self._parse_literal_token(tokens, i)
+                elif isinstance(token, SpecialToken):
+                    parse = self._parse_special_token(tokens, i)
                 elif isinstance(token, ParameterExpansionToken):
                     parse = self._parse_parameter_expansion_token(tokens, i)
                 elif isinstance(token, SpecialParameterExpansionToken):
@@ -289,9 +290,12 @@ class Grammar:
         intmd_result = self._parse_rule_token(tokens, index + 4)
         return TokenParse(intmd_result.lang, 4 + intmd_result.offset)
 
-    def _parse_rule_token(self, tokens: List[AltToken], index: int) -> TokenParse:
-        # Prepare the bare rule language.
-        lang = self._make_rule_literal(tokens[index].text)
+    def _parse_rule_or_special_token(self, tokens: List[AltToken], index: int, is_rule: bool) -> TokenParse:
+        # Prepare the bare language.
+        if is_rule:
+            lang = self._make_rule_literal(tokens[index].text)
+        else:
+            lang = Literal(SPECIAL_TOKENS[tokens[index].text])
         # Lookahead to the token after the rule.
         succ = None
         if index + 1 < len(tokens):
@@ -303,14 +307,32 @@ class Grammar:
         else:
             return TokenParse(lang, 1)
 
+    def _parse_rule_token(self, tokens: List[AltToken], index: int) -> TokenParse:
+        return self._parse_rule_or_special_token(tokens, index, True)
+
+    def _parse_special_token(self, tokens: List[AltToken], index: int) -> TokenParse:
+        return self._parse_rule_or_special_token(tokens, index, False)
+
     def _parse_parameter_name_token(self, tokens: List[AltToken], index: int) -> TokenParse:
         if isinstance(tokens[index + 2], RuleToken):
-            seq = [ParameterNameToken, ColonToken, RuleToken]
+            return self._parse_parameter_name_rule_token(tokens, index)
+        elif isinstance(tokens[index + 2], SpecialToken):
+            return self._parse_parameter_name_special_token(tokens, index)
         else:
-            seq = [ParameterNameToken, ColonToken, SpecialToken]
+            raise GrammarFileParseError(f"Invalid token given as argument to named parameter: {tokens[index + 2]}")
+
+    def _parse_parameter_name_rule_token(self, tokens: List[AltToken], index: int) -> TokenParse:
+        seq = [ParameterNameToken, ColonToken, RuleToken]
         self._verify_token_sequence(tokens, index, seq)
         name = tokens[index]
         intmd_result = self._parse_rule_token(tokens, index + 2)
+        return TokenParse(intmd_result.lang, 2 + intmd_result.offset)
+
+    def _parse_parameter_name_special_token(self, tokens: List[AltToken], index: int) -> TokenParse:
+        seq = [ParameterNameToken, ColonToken, SpecialToken]
+        self._verify_token_sequence(tokens, index, seq)
+        name = tokens[index]
+        intmd_result = self._parse_special_token(tokens, index + 2)
         return TokenParse(intmd_result.lang, 2 + intmd_result.offset)
 
     def _make_rule_literal(self, rule_name: str):
