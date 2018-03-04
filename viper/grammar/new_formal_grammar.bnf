@@ -44,8 +44,9 @@
 <interface_def> ::= InterfaceDef 'interface' @<common_def>
 <data_def>      ::= DataDef 'data' @<common_def>
 
-<common_def>    ::= CommonDef name:NAME '(' args:<arg_list>? ')' ':' body:<suite>
+<common_def>    ::= CommonDef name:NAME args:<arguments>? ':' body:<suite>
 
+<arguments>     ::= Args '(' args:<arg_list>? ')'
 <arg_list>      ::= SingleArg arg:<argument>
                   | ArgList arg:<argument> ',' arg_list:<arg_list>
 <argument>      ::= <expr>
