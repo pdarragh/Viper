@@ -1,39 +1,52 @@
-<single_line>   ::= NEWLINE | <stmt>
-<many_lines>    ::= <lines>*
+<single_line>   ::= SingleLine line:<line>
+<many_lines>    ::= ManyLines lines:<line>*
 
-<lines>         ::= NEWLINE | <stmt>
+<line>          ::= BlankLine NEWLINE
+                  | <stmt>
 
-<type_expr>     ::= CLASS
+<func_def>      ::= FuncDef 'def' name:NAME params:<parameters> '->' func_type:CLASS ':' body:<suite>
 
-<func_def>      ::= def <func_name> <parameters> -> <func_type> : <suite>
-<func_name>     ::= NAME
-<func_type>     ::= <type_expr>
+<parameters>    ::= Parameters '(' &params{param,param_list}:<params_list>? ')'
+<params_list>   ::= SingleParam param:<parameter>
+                  | ParamList param:<parameter> ',' param_list:<params_list>
+<parameter>     ::= Parameter external:NAME? internal:NAME ':' param_type:CLASS
 
-<parameters>    ::= ( <params_list>? )
-<params_list>   ::= <parameter> | <parameter> , <params_list>
-<parameter>     ::= <ext_label>? <local_label> : <param_type>
-<ext_label>     ::= NAME
-<local_label>   ::= NAME
-<param_type>    ::= <type_expr>
+<suite>         ::= <simple_stmt>
+                  | ComplexSuite NEWLINE INDENT stmt:<stmt> stmts:<stmt>* DEDENT
 
-<suite>         ::= <simple_stmt> | NEWLINE INDENT <stmt> <stmt>* DEDENT
+<stmt>          ::= <simple_stmt>
+                  | <compound_stmt>
 
-<stmt>          ::= <simple_stmt> | <compound_stmt>
+<simple_stmt>   ::= SimpleStmt expr:<expr_stmt> NEWLINE
+<expr_stmt>     ::= PassStmt 'pass'
+                  | ReturnStmt 'return' expr:<expr_list>?
+                  | ExprListStmt &exprs{expr,expr_list}:<expr_list>
+<expr_list>     ::= SimpleExprList expr:<expr>
+                  | ExprList expr:<expr> ',' expr_list:<expr_list>
 
-<simple_stmt>   ::= <expr_stmt> NEWLINE
-<expr_stmt>     ::= pass | return <expr_list>? | <expr_list>
-<expr_list>     ::= <expr> | <expr> , <expr_list>
+<expr>          ::= Expr atom:<atom> trailers:<trailer>*
+<atom>          ::= ParenExpr '(' &exprs{expr,expr_list}:<expr_list>? ')'
+                  | Name NAME
+                  | Number NUMBER
+                  | Ellipsis '...'
+                  | Zilch 'Zilch'
+                  | True 'True'
+                  | False 'False'
+<trailer>       ::= Args '(' &args{arg,arg_list}:<arg_list>? ')'
+                  | Field '.' NAME
 
-<expr>          ::= <atom> <trailer>*
-<atom>          ::= ( <expr_list>? ) | NAME | NUMBER | ... | Zilch | True | False
-<trailer>       ::= ( <arg_list>? ) | . NAME
+<compound_stmt> ::= <func_def>
+                  | <class_def>
+                  | <interface_def>
+                  | <data_def>
 
-<compound_stmt> ::= <func_def> | <class_def> | <interface_def> | <data_def>
+<class_def>     ::= ClassDef 'class' @<common_def>
+<interface_def> ::= InterfaceDef 'interface' @<common_def>
+<data_def>      ::= DataDef 'data' @<common_def>
 
-<class_def>     ::= class <common_def>
-<interface_def> ::= interface <common_def>
-<data_def>      ::= data <common_def>
-<common_def>    ::= NAME <arguments>? : <suite>
-<arguments>     ::= ( <arg_list>? )
-<arg_list>      ::= <argument> | <argument> , <arg_list>
+<common_def>    ::= CommonDef name:NAME args:<arguments>? ':' body:<suite>
+
+<arguments>     ::= Args '(' args:<arg_list>? ')'
+<arg_list>      ::= SingleArg arg:<argument>
+                  | ArgList arg:<argument> ',' arg_list:<arg_list>
 <argument>      ::= <expr>
