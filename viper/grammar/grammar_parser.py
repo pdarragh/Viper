@@ -2,6 +2,7 @@ import viper.lexer as vl
 
 from viper.grammar.languages import *
 
+from os.path import dirname, join as join_paths
 from typing import Any, Callable, ClassVar, Dict, List, NamedTuple, Tuple, Type
 
 ASSIGN_TOKEN = '::='
@@ -556,3 +557,7 @@ def tokenize_subalternate(subalt: DequotedSubalternate) -> List[DequotedSubalter
         i += 1
     add_token(start_index, i)
     return subalts
+
+
+GRAMMAR_FILE = join_paths(dirname(__file__), 'formal_grammar.bnf')
+GRAMMAR = Grammar(GRAMMAR_FILE)
