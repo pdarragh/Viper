@@ -193,36 +193,25 @@ class Grammar:
         if base_lang == empty():
             return lang
         else:
-            return const(lang, base_lang)
+            return const(base_lang, lang)
 
     def process_dequoted_rules(self, rules: Dict[str, List[Alternate]]):
         for name, alt_list in rules.items():
-            rule_lang = empty()
-
-            def accumulate(lang: Language):
-                nonlocal rule_lang
-                rule_lang = self._acc(rule_lang, lang, alt)
-
+            rule_lang_parts = []
             try:
                 for alternate in alt_list:
                     alternate_lang = self.process_alternate(alternate)
-                    accumulate(alternate_lang)
+                    rule_lang_parts.append(alternate_lang)
             except GrammarFileParseError as e:
                 # Inject the rule name and that rule's initial line number into the message.
                 msg = f"Error parsing rule <{name}> on line {self._rule_line_nos[name]}: {e.msg}"
                 err = GrammarFileParseError(msg)
                 err.__traceback__ = e.__traceback__
                 raise err
-            self._grammar_dict[name] = rule_lang
-
+            self._grammar_dict[name] = alt(*rule_lang_parts)
 
     def process_alternate(self, alternate: Alternate) -> Language:
-        alternate_lang = empty()
-
-        def accumulate(lang: Language):
-            nonlocal alternate_lang
-            alternate_lang = self._acc(alternate_lang, lang, concat)
-
+        alternate_lang_parts = []
         tokens = tokenize_alternate(alternate)
         # The first token can either be a CapitalWord or a Rule.
         if isinstance(tokens[0], RuleToken):
@@ -246,9 +235,11 @@ class Grammar:
                     parse = self._parse_parameter_name_token(tokens, i)
                 else:
                     raise GrammarFileParseError(f"Cannot process rule part beginning with token: '{token}'")
-                accumulate(parse.lang)
+                alternate_lang_parts.append(parse.lang)
+                # accumulate(parse.lang)
                 i += parse.offset
-            return alternate_lang
+            # return alternate_lang
+            return concat(*alternate_lang_parts)
         else:
             # No other tokens can be first.
             raise GrammarFileParseError("Rule alternates must start with either a Rule or a CapitalWord.")
