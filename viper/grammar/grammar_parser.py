@@ -478,7 +478,10 @@ print(' '.join(map(lambda s: s.text, tokens)))
 def tokenize_dequoted_subalternate(token: DequotedSubalternate) -> AltToken:
     text = token.text
     if token.is_quoted:
-        return LiteralToken(text)
+        if text in SPECIAL_TOKENS:
+            return SpecialToken(text)
+        else:
+            return LiteralToken(text)
     elif text == '*':
         return RepeatToken(text)
     elif text == '?':
