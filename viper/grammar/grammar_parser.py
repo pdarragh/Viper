@@ -264,7 +264,7 @@ class Grammar:
                                             f"    Expected type: {expected_type}")
 
     def _parse_literal_token(self, tokens: List[AltToken], index: int) -> TokenParse:
-        lang = literal(tokens[index].text)
+        lang = literal(GrammarLiteral(tokens[index].text))
         return TokenParse(lang, 1)
 
     def _parse_parameter_expansion_token(self, tokens: List[AltToken], index: int) -> TokenParse:
