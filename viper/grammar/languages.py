@@ -268,7 +268,7 @@ class Concat(Language):
         if isinstance(self.right, Epsilon):
             return repr(self.left)
         if self._all_chars():
-            return repr(self.left) + repr(self.right)
+            return repr(self.left) + " ◦ " + repr(self.right)
         else:
             return "{" + repr(self.left) + " ◦ " + repr(self.right) + "}"
 
