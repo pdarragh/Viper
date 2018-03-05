@@ -189,13 +189,6 @@ class Grammar:
         dequoted_rules = process_alternate_quotes(split_rules)
         self.process_dequoted_rules(dequoted_rules)
 
-    @staticmethod
-    def _acc(base_lang: Language, lang: Language, const: Callable[[Language, Any], Language]) -> Language:
-        if base_lang == empty():
-            return lang
-        else:
-            return const(base_lang, lang)
-
     def process_dequoted_rules(self, rules: Dict[str, List[Alternate]]):
         for name, alt_list in rules.items():
             rule_lang_parts = []
@@ -245,7 +238,8 @@ class Grammar:
             # No other tokens can be first.
             raise GrammarFileParseError("Rule alternates must start with either a Rule or a CapitalWord.")
 
-    def _verify_token_sequence(self, tokens: List[AltToken], index: int, match: List[Type[AltToken]]):
+    @staticmethod
+    def _verify_token_sequence(tokens: List[AltToken], index: int, match: List[Type[AltToken]]):
         for offset, class_var in enumerate(match):
             token = tokens[index + offset]
             if not isinstance(token, class_var):
@@ -255,7 +249,8 @@ class Grammar:
                                             f"    Given type:    {given_type}\n"
                                             f"    Expected type: {expected_type}")
 
-    def _parse_literal_token(self, tokens: List[AltToken], index: int) -> TokenParse:
+    @staticmethod
+    def _parse_literal_token(tokens: List[AltToken], index: int) -> TokenParse:
         lang = literal(GrammarLiteral(tokens[index].text))
         return TokenParse(lang, 1)
 
@@ -266,7 +261,8 @@ class Grammar:
         lang = self._make_rule_literal(rule.text)
         return TokenParse(lang, 2)
 
-    def _split_braced_token(self, token: AltToken) -> Tuple[str, str]:
+    @staticmethod
+    def _split_braced_token(token: AltToken) -> Tuple[str, str]:
         if not isinstance(token, BracedToken):
             raise GrammarFileParseError(f"Cannot split non-braced token: '{token}'")
         text = token.text
@@ -458,7 +454,7 @@ All alternates must start with either a CapitalWord or a <rule>.
 import sys
 sys.path.insert(0, '/Users/pdarragh/Development/Viper/')
 from viper.grammar.grammar_parser import *
-raw_rules = get_raw_rules_from_file('./viper/grammar/new_formal_grammar.bnf')
+raw_rules = get_raw_rules_from_file('./viper/grammar/formal_grammar.bnf')
 unprocessed_rules = split_alternates(raw_rules)
 quoted_rules = process_alternate_quotes(unprocessed_rules)
 tokens = tokenize_alternate(quoted_rules['trailer'][0])
@@ -513,10 +509,12 @@ def tokenize_subalternate(subalt: DequotedSubalternate) -> List[DequotedSubalter
     text = subalt.text
     # Create list of tokens.
     subalts: List[DequotedSubalternate] = []
+
     def add_token(start: int, end: int):
         token = text[start+1:end]
         if token.strip():
             subalts.append(DequotedSubalternate(token, False))
+
     start_index = -1
     continue_until = None
     i = 0
