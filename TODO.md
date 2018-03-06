@@ -24,3 +24,4 @@
 
 - Document types and interesting methods
 - Convert interactive viper.py to use subcommands
+- Determine whether to switch to brace-style (instead of Python-like indentation style)
