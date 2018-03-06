@@ -163,8 +163,23 @@ class Grammar:
         self._parse_grammar_file(grammar_filename)
         self.grammar = alt(*self._grammar_dict.values())
 
+    def partial_parse(self, lexemes: List[vl.Lexeme], lang=None) -> SPPF:
+        if lang is None:
+            lang = self.grammar
+        return make_sppf(lang, lexemes)
+
     def get_rule(self, rule: str) -> Language:
         return self._grammar_dict.get(rule, empty())
+
+    def parse_rule(self, rule: str, lexemes: List[vl.Lexeme]) -> SPPF:
+        lang = self.get_rule(rule)
+        return self.partial_parse(lexemes, lang)
+
+    def parse_single(self, lexemes: List[vl.Lexeme]) -> SPPF:
+        return self.parse_rule('single_line', lexemes)
+
+    def parse_multiple(self, lexemes: List[vl.Lexeme]) -> SPPF:
+        return self.parse_rule('many_lines', lexemes)
 
     def _parse_grammar_file(self, filename: str):
         raw_rules, line_nos = get_raw_rules_from_file(filename)
