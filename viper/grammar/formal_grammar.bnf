@@ -12,18 +12,25 @@
 <parameter>     ::= Parameter external:NAME? internal:NAME ':' param_type:CLASS
 
 <suite>         ::= <simple_stmt>
-                  | ComplexSuite NEWLINE INDENT stmt:<stmt> stmts:<stmt>* DEDENT
+                  | ComplexSuite NEWLINE INDENT stmt:<stmt> stmts:<stmt>*
 
 <stmt>          ::= <simple_stmt>
                   | <compound_stmt>
 
 <simple_stmt>   ::= SimpleStmt expr:<expr_stmt> NEWLINE
 <expr_stmt>     ::= PassStmt 'pass'
-                  | ReturnStmt 'return' expr:<expr_list>?
-                  | ExprListStmt &exprs{expr,expr_list}:<expr_list>
+                  | ReturnStmt 'return' exprs:<op_expr_list>?
+                  | ExprListStmt &exprs{op_expr,op_expr_list}:<op_expr_list>
+<op_expr_list>  ::= SimpleOpExprList op_expr:<op_expr>
+                  | OpExprList op_expr:<op_expr> ',' op_expr_list:<op_expr_list>
+
+<op_expr>        ::= <expr>
+                  | BinOp left:<expr> op:OPERATOR right:<op_expr>?
+                  | LeftOp op:OPERATOR expr:<expr>
+                  | RightOp op:OPERATOR expr:<expr>
+
 <expr_list>     ::= SimpleExprList expr:<expr>
                   | ExprList expr:<expr> ',' expr_list:<expr_list>
-
 <expr>          ::= Expr atom:<atom> trailers:<trailer>*
 <atom>          ::= ParenExpr '(' &exprs{expr,expr_list}:<expr_list>? ')'
                   | Name NAME
