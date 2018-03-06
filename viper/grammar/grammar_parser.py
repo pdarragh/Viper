@@ -3,7 +3,7 @@ import viper.lexer as vl
 from viper.grammar.languages import *
 
 from os.path import dirname, join as join_paths
-from typing import Any, Callable, ClassVar, Dict, List, NamedTuple, Tuple, Type
+from typing import ClassVar, Dict, List, NamedTuple, Tuple, Type
 
 ASSIGN_TOKEN = '::='
 START_RULE_TOKEN = '<'
@@ -158,29 +158,13 @@ class GrammarFileParseError(Exception):
 
 class Grammar:
     def __init__(self, grammar_filename: str):
-        self.keywords = []
         self._grammar_dict = {}
         self._rule_line_nos = {}
         self._parse_grammar_file(grammar_filename)
         self.grammar = alt(*self._grammar_dict.values())
 
-    def partial_parse(self, lexemes: List[vl.Lexeme], lang=None) -> SPPF:
-        if lang is None:
-            lang = self.grammar
-        return make_sppf(lang, lexemes)
-
     def get_rule(self, rule: str) -> Language:
         return self._grammar_dict.get(rule, empty())
-
-    def parse_rule(self, rule: str, lexemes: List[vl.Lexeme]) -> SPPF:
-        lang = self.get_rule(rule)
-        return self.partial_parse(lexemes, lang)
-
-    def parse_single(self, lexemes: List[vl.Lexeme]) -> SPPF:
-        return self.parse_rule('single_line', lexemes)
-
-    def parse_multiple(self, lexemes: List[vl.Lexeme]) -> SPPF:
-        return self.parse_rule('many_lines', lexemes)
 
     def _parse_grammar_file(self, filename: str):
         raw_rules, line_nos = get_raw_rules_from_file(filename)
