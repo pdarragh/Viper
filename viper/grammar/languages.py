@@ -147,13 +147,20 @@ class RedFunc(Callable[[SPPF], SPPF]):
     def __call__(self, sppf: SPPF) -> SPPF:
         pass
 
+    @abstractmethod
+    def make_nice_string(self, start_column: int) -> str:
+        pass
+
 
 class LeftEpsRedFunc(RedFunc):
     def __init__(self, left: SPPF):
         self.left = left
 
     def __repr__(self):
-        return repr(self.left)
+        return self.make_nice_string(0)
+
+    def make_nice_string(self, start_column: int) -> str:
+        return self.left.make_nice_string(start_column)
 
     def __call__(self, right: SPPF) -> SPPF:
         return SPPF(ParseTreePair(self.left, right))
@@ -164,7 +171,10 @@ class RightEpsRedFunc(RedFunc):
         self.right = right
 
     def __repr__(self):
-        return repr(self.right)
+        return self.make_nice_string(0)
+
+    def make_nice_string(self, start_column: int) -> str:
+        return self.right.make_nice_string(start_column)
 
     def __call__(self, left: SPPF) -> SPPF:
         return SPPF(ParseTreePair(left, self.right))
@@ -609,5 +619,8 @@ def _make_nice_lang_string(lang: Language, start_column: int) -> str:
     if isinstance(lang, Red):
         leader = "(reduce "
         indent = start_column + len(leader)
-        return leader + _make_nice_lang_string(lang.lang, indent) + " -> " + repr(lang.func) + ")"
+        return (
+            leader + _make_nice_lang_string(lang.lang, indent) + "\n" +
+            (" " * indent) + "-> " + lang.func.make_nice_string(indent) + ")"
+        )
     raise ValueError
