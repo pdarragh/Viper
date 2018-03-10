@@ -18,7 +18,7 @@
 <stmt>          ::= <simple_stmt>
                   | <compound_stmt>
 
-<simple_stmt>   ::= SimpleStmt op_expr:<op_expr> NEWLINE
+<simple_stmt>   ::= SimpleStmt expr_stmt:<expr_stmt> NEWLINE
 <expr_stmt>     ::= PassStmt 'pass'
                   | ReturnStmt 'return' exprs:<op_expr_list>?
                   | ExprListStmt &exprs{op_expr,op_expr_list}:<op_expr_list>
