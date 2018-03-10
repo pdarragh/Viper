@@ -176,10 +176,10 @@ class Grammar:
         return self.partial_parse(lexemes, lang)
 
     def parse_single(self, lexemes: List[vl.Lexeme]) -> SPPF:
-        return self.parse_rule('single_line', lexemes)
+        return self.parse_rule('single_input', lexemes)
 
-    def parse_multiple(self, lexemes: List[vl.Lexeme]) -> SPPF:
-        return self.parse_rule('many_lines', lexemes)
+    def parse_file(self, lexemes: List[vl.Lexeme]) -> SPPF:
+        return self.parse_rule('file_input', lexemes)
 
     def _parse_grammar_file(self, filename: str):
         raw_rules, line_nos = get_raw_rules_from_file(filename)
