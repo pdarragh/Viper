@@ -66,20 +66,33 @@ class LexerError(Exception):
 class Lexer:
     @classmethod
     def lex_file(cls, file: str) -> List[Lexeme]:
-        lexemes = []
         with open(file) as f:
-            for line in f:
-                lexemes.extend(cls.lex_line(line))
-                lexemes.append(NEWLINE)
-        return lexemes
+            text = f.read()
+        return lex_lines(text)
 
     @classmethod
     def lex_lines(cls, text: str) -> List[Lexeme]:
-        lexemes = []
-        for line in text.splitlines():
-            lexemes.extend(cls.lex_line(line))
-            lexemes.append(NEWLINE)
-        return lexemes
+        lexed_lines = []
+        prev_indents = 0
+        lines = text.splitlines()
+        for i in range(len(lines)):
+            line = lines[i]
+            lexed_line = cls.lex_line(line)
+            if i != 0:
+                # If this isn't the first line, prepend a NEWLINE.
+                lexed_line.insert(0, NEWLINE)
+            # Append a DEDENT to the previous line for each INDENT missing in this line.
+            curr_indents = sum(map(lambda l: isinstance(l, Indent), lexed_line))
+            for _ in range(prev_indents - curr_indents):
+                lexed_lines[i - 1].append(DEDENT)
+            prev_indents = curr_indents
+            if i == len(lines) - 1:
+                # If this is the last line, append remaining necessary DEDENT tokens.
+                for _ in range(prev_indents):
+                    lexed_line.append(DEDENT)
+            lexed_lines.append(lexed_line)
+        # Flatten the list.
+        return [lexeme for lexed_line in lexed_lines for lexeme in lexed_line]
 
     @classmethod
     def lex_line(cls, line: str) -> List[Lexeme]:
@@ -92,7 +105,7 @@ class Lexer:
             raise LexerError(f"invalid line given: '{line}'")
         indentation, rest = match.groups()
         for indentation_level in range(len(indentation) // INDENT_SIZE):
-            lexemes.append(Indent())
+            lexemes.append(INDENT)
         for token in rest.split():
             for lexeme in cls.lex_token(token):
                 lexemes.append(lexeme)
