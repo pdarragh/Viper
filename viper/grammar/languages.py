@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from collections import defaultdict, OrderedDict
+from collections import defaultdict
 from typing import Any, Callable, List
 
 
@@ -10,10 +10,9 @@ PartialParse = List[Parse]
 
 class SPPF:
     def __init__(self, *args):
-        self._sppf = OrderedDict()
-        # We abuse the OrderedDict to act as an ordered set. All values will be None.
+        self._sppf: List[ParseTree] = []
         for arg in args:
-            self._sppf[arg] = None
+            self._sppf.append(arg)
 
     def __eq__(self, other):
         if not isinstance(other, SPPF):
@@ -24,33 +23,20 @@ class SPPF:
         return len(self._sppf)
 
     def __getitem__(self, item):
-        return list(self._sppf.keys())[item]
-
-    def __delitem__(self, key):
-        del(self._sppf[key])
-
-    def __iter__(self):
-        return iter(self._sppf)
-
-    def __reversed__(self):
-        return reversed(self._sppf)
-
-    def __contains__(self, item):
-        return item in self._sppf
+        return self._sppf[item]
 
     def append(self, item):
-        self._sppf[item] = None
+        self._sppf.append(item)
 
     def __add__(self, other):
         if not isinstance(other, SPPF):
             raise NotImplementedError
+        from itertools import chain
         result = SPPF()
-        new_od = OrderedDict()
-        for item in self._sppf.keys():
-            new_od[item] = None
-        for item in other._sppf.keys():
-            new_od[item] = None
-        result._sppf = new_od
+        new_list = []
+        for item in chain(self._sppf, other._sppf):
+            new_list.append(item)
+        result._sppf = new_list
         return result
 
     def __str__(self):
@@ -85,9 +71,6 @@ class ParseTree(ABC):
     def __eq__(self, other):
         return False
 
-    def __hash__(self):
-        return hash(str(self))
-
     @abstractmethod
     def make_nice_string(self, start_column: int) -> str:
         return ""
@@ -97,11 +80,16 @@ class ParseTreeEmpty(ParseTree):
     def __eq__(self, other):
         return isinstance(other, ParseTreeEmpty)
 
-    def __hash__(self):
-        return super().__hash__()
-
     def make_nice_string(self, start_column: int) -> str:
         return "(empty)"
+
+
+class ParseTreeEps(ParseTree):
+    def __eq__(self, other):
+        return isinstance(other, ParseTreeEps)
+
+    def make_nice_string(self, start_column: int) -> str:
+        return "(eps)"
 
 
 class ParseTreeChar(ParseTree):
@@ -112,9 +100,6 @@ class ParseTreeChar(ParseTree):
         if not isinstance(other, ParseTreeChar):
             return False
         return self.token == other.token
-
-    def __hash__(self):
-        return super().__hash__()
 
     def make_nice_string(self, start_column: int) -> str:
         return "(char " + repr(self.token) + ")"
@@ -129,9 +114,6 @@ class ParseTreePair(ParseTree):
         if not isinstance(other, ParseTreePair):
             return False
         return self.left == other.left and self.right == other.right
-
-    def __hash__(self):
-        return super().__hash__()
 
     def make_nice_string(self, start_column: int) -> str:
         leader = "(pair "
@@ -151,17 +133,41 @@ class ParseTreeRep(ParseTree):
             return False
         return self.parse == other.parse
 
-    def __hash__(self):
-        return hash(str(self))
-
     def make_nice_string(self, start_column: int) -> str:
         leader = "(repeat "
         indent = start_column + len(leader)
         return leader + self.parse.make_nice_string(indent) + ")"
 
 
-RedFunc = Callable[[SPPF], SPPF]
 EpsFunc = Callable[[], SPPF]
+
+
+class RedFunc(Callable[[SPPF], SPPF]):
+    @abstractmethod
+    def __call__(self, sppf: SPPF) -> SPPF:
+        pass
+
+
+class LeftEpsRedFunc(RedFunc):
+    def __init__(self, left: SPPF):
+        self.left = left
+
+    def __repr__(self):
+        return repr(self.left)
+
+    def __call__(self, right: SPPF) -> SPPF:
+        return SPPF(ParseTreePair(self.left, right))
+
+
+class RightEpsRedFunc(RedFunc):
+    def __init__(self, right: SPPF):
+        self.right = right
+
+    def __repr__(self):
+        return repr(self.right)
+
+    def __call__(self, left: SPPF) -> SPPF:
+        return SPPF(ParseTreePair(left, self.right))
 
 
 class Language(ABC):
@@ -328,7 +334,7 @@ class Red(Language):
         self.func = func
 
     def __repr__(self):
-        return "⌊" + repr(self.lang) + " --> f⌋"
+        return "⌊" + repr(self.lang) + " --> " + repr(self.func) + "⌋"
 
     def __eq__(self, other):
         if not isinstance(other, Red):
@@ -370,14 +376,9 @@ def concat(l1: Language, *ls: Language) -> Language:
         if isinstance(l1, Empty) or isinstance(l2, Empty):
             return empty()
         if isinstance(l1, Epsilon):
-            # TODO: explain this
-            def f(x):
-                return SPPF(ParseTreePair(parse_null(l1), x))
-            return red(l2, f)
+            return red(l2, LeftEpsRedFunc(parse_null(l1)))
         if isinstance(l2, Epsilon):
-            def f(x):
-                return SPPF(ParseTreePair(x, parse_null(l2)))
-            return red(l1, f)
+            return red(l1, RightEpsRedFunc(parse_null(l2)))
         return Concat(l1, l2)
     else:
         return Concat(l1, concat(*ls))
@@ -403,7 +404,7 @@ def rep(lang: Language) -> Language:
 
 
 def opt(lang: Language) -> Language:
-    return alt(lang, eps(lambda: SPPF(ParseTreeEmpty())))
+    return alt(lang, eps(lambda: SPPF(ParseTreeEps())))
 
 
 def red(lang: Language, f: RedFunc) -> Language:
@@ -411,19 +412,11 @@ def red(lang: Language, f: RedFunc) -> Language:
 
 
 def is_empty(sppf: SPPF) -> bool:
-    if len(sppf) == 0:
-        return True
-    return False
+    return len(sppf) == 0
 
 
-def should_delete(sppf: SPPF) -> bool:
-    if len(sppf) == 1:
-        item = sppf[0]
-        if item is None:
-            return True
-        if isinstance(item, ParseTreeRep) and is_empty(item.parse):
-            return True
-    return False
+def is_eps(sppf: SPPF) -> bool:
+    return len(sppf) == 1 and isinstance(sppf[0], ParseTreeEps)
 
 
 def is_nullable(lang: Language) -> bool:
@@ -505,16 +498,21 @@ def parse_null(lang: Language) -> SPPF:
         return parse_null(lang.derivative)
     if isinstance(lang, Concat):
         left_parse = parse_null(lang.left)
-        if len(left_parse) == 0:
+        if is_empty(left_parse):
             return SPPF()
         right_parse = parse_null(lang.right)
-        if len(right_parse) == 0:
+        if is_empty(right_parse):
             return SPPF()
         return SPPF(ParseTreePair(left_parse, right_parse))
     if isinstance(lang, Alt):
         return parse_null(lang.this) + parse_null(lang.that)
     if isinstance(lang, Rep):
-        return SPPF(ParseTreeRep(parse_null(lang.lang)))
+        rep_parse = parse_null(lang.lang)
+        if is_empty(rep_parse):
+            # Repeats produce epsilons instead of empties due to nullability.
+            return SPPF(ParseTreeEps())
+        else:
+            return SPPF(ParseTreeRep(rep_parse))
     if isinstance(lang, Red):
         return lang.func(parse_null(lang.lang))
     raise ValueError(f"parse_null: unknown language: {lang}")
@@ -527,37 +525,44 @@ def collapse_parse(sppf: SPPF) -> SPPF:
     # Now build a new set, eliminating any empty parses.
     for root in sppf:
         if isinstance(root, ParseTreeEmpty):
-            # This should be deleted further up the tree.
-            new_sppf.append(None)
+            # Empty parses should remain empty.
+            pass
+        elif isinstance(root, ParseTreeEps):
+            # Epsilons are needed for proper pair reduction.
+            new_sppf.append(root)
         elif isinstance(root, ParseTreeChar):
             # Always add terminals.
             new_sppf.append(root)
         elif isinstance(root, ParseTreePair):
             left = collapse_parse(root.left)
             right = collapse_parse(root.right)
-            if should_delete(left):
-                # Delete left.
-                if should_delete(right):
-                    # Delete both.
-                    continue
-                else:
-                    # Delete left, not right.
-                    new_sppf += right
+            if is_empty(left) or is_empty(right):
+                # Pairs must have two non-empty children.
+                pass
             else:
-                # Don't delete left.
-                if should_delete(right):
-                    # But delete right.
-                    new_sppf += left
+                # If either side is an epsilon, the pair can be reduced.
+                if is_eps(left):
+                    if is_eps(right):
+                        new_sppf.append(ParseTreeEps())
+                    else:
+                        for item in right:
+                            new_sppf.append(item)
+                        # new_sppf.append(right)
                 else:
-                    # Don't delete either, but only add if they aren't both empty.
-                    if is_empty(left) or is_empty(right):
-                        continue
+                    if is_eps(right):
+                        for item in left:
+                            new_sppf.append(item)
+                        # new_sppf.append(left)
                     else:
                         new_sppf.append(ParseTreePair(left, right))
         elif isinstance(root, ParseTreeRep):
             # Always add the ASTRep, even if its interior parse comes up empty.
             # This ensures we can properly parse repeated tokens.
-            new_sppf.append(ParseTreeRep(collapse_parse(root.parse)))
+            collapsed = collapse_parse(root.parse)
+            if is_empty(collapsed):
+                new_sppf.append(ParseTreeEps())
+            else:
+                new_sppf.append(ParseTreeRep(collapsed))
     return new_sppf
 
 
@@ -602,5 +607,5 @@ def _make_nice_lang_string(lang: Language, start_column: int) -> str:
     if isinstance(lang, Red):
         leader = "(reduce "
         indent = start_column + len(leader)
-        return leader + _make_nice_lang_string(lang.lang, indent) + ")"
+        return leader + _make_nice_lang_string(lang.lang, indent) + " -> " + repr(lang.func) + ")"
     raise ValueError
