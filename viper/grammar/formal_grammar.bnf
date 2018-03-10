@@ -1,8 +1,9 @@
-<single_line>   ::= SingleLine line:<line>
-<many_lines>    ::= ManyLines lines:<line>*
-
-<line>          ::= BlankLine NEWLINE
-                  | <stmt>
+<single_input>  ::= SingleNewline NEWLINE
+                  | SimpleLine line:<simple_stmt>
+                  | ComplexLine line:<compound_stmt> NEWLINE
+<file_input>    ::= FileInput lines:<file_lines>*
+<file_lines>    ::= FileNewline NEWLINE
+                  | FileStmt stmt:<stmt>
 
 <func_def>      ::= FuncDef 'def' name:NAME params:<parameters> '->' func_type:CLASS ':' body:<suite>
 
@@ -12,27 +13,25 @@
 <parameter>     ::= Parameter external:NAME? internal:NAME ':' param_type:CLASS
 
 <suite>         ::= <simple_stmt>
-                  | ComplexSuite NEWLINE INDENT stmt:<stmt> stmts:<stmt>*
+                  | ComplexSuite NEWLINE INDENT stmt:<stmt> stmts:<stmt>* DEDENT
 
 <stmt>          ::= <simple_stmt>
                   | <compound_stmt>
 
-<simple_stmt>   ::= SimpleStmt expr:<expr_stmt> NEWLINE
+<simple_stmt>   ::= SimpleStmt op_expr:<op_expr> NEWLINE
 <expr_stmt>     ::= PassStmt 'pass'
                   | ReturnStmt 'return' exprs:<op_expr_list>?
                   | ExprListStmt &exprs{op_expr,op_expr_list}:<op_expr_list>
 <op_expr_list>  ::= SimpleOpExprList op_expr:<op_expr>
                   | OpExprList op_expr:<op_expr> ',' op_expr_list:<op_expr_list>
 
-<op_expr>        ::= <expr>
-                  | BinOp left:<expr> op:OPERATOR right:<op_expr>?
-                  | LeftOp op:OPERATOR expr:<expr>
-                  | RightOp op:OPERATOR expr:<expr>
+<op_expr>       ::= OpExpr left_ops:OPERATOR* expr:<expr> sub_op_exprs:<sub_op_expr>* right_ops:OPERATOR*
+<sub_op_expr>   ::= SubOpExpr first_op:OPERATOR ops:OPERATOR* expr:<expr>
 
 <expr_list>     ::= SimpleExprList expr:<expr>
                   | ExprList expr:<expr> ',' expr_list:<expr_list>
 <expr>          ::= Expr atom:<atom> trailers:<trailer>*
-<atom>          ::= ParenExpr '(' &exprs{expr,expr_list}:<expr_list>? ')'
+<atom>          ::= ParenExpr '(' &exprs{op_expr,op_expr_list}:<op_expr_list>? ')'
                   | Name NAME
                   | Number NUMBER
                   | Ellipsis '...'
