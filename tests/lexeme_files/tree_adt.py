@@ -1,12 +1,12 @@
 from viper.lexer import (
-    NEWLINE, INDENT, COLON, OPEN_PAREN as OP, CLOSE_PAREN as CP,
+    NEWLINE as NL, INDENT as IND, DEDENT as DED, COLON, OPEN_PAREN as OP, CLOSE_PAREN as CP,
     Name as N,
     Class as C,
 )
 
 
 lexemes = [
-    N('data'), C('Tree'), OP, N('a'), CP, COLON, NEWLINE,
-    INDENT, C('Leaf'), N('a'), NEWLINE,
-    INDENT, C('Branch'), OP, C('Tree'), N('a'), CP, OP, C('Tree'), N('a'), CP, NEWLINE
+    N('data'), C('Tree'), OP, N('a'), CP, COLON,
+    NL, IND, C('Leaf'), N('a'),
+    NL, IND, C('Branch'), OP, C('Tree'), N('a'), CP, OP, C('Tree'), N('a'), CP, DED,
 ]
