@@ -563,6 +563,8 @@ def collapse_parse(sppf: SPPF) -> SPPF:
                 new_sppf.append(ParseTreeEps())
             else:
                 new_sppf.append(ParseTreeRep(collapsed))
+        else:
+            raise ValueError(f"collapse_parse: unknown ParseTree node: {root}")
     return new_sppf
 
 
