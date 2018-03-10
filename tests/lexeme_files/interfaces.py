@@ -1,5 +1,6 @@
 from viper.lexer import (
     NEWLINE as NL, INDENT as IND, DEDENT as DED, PERIOD, COMMA, COLON, OPEN_PAREN as OP, CLOSE_PAREN as CP, ARROW,
+    ENDMARKER as EM,
     Number as Num,
     Name as N,
     Class as C,
@@ -33,4 +34,5 @@ lexemes = [
     NL, IND, N('def'), N('init'), OP, N('side'), COLON, C('Int'), CP, COLON,
     NL, IND, IND, N('self'), PERIOD, N('length'), COLON, C('Int'), Op('='), N('side'),
     NL, IND, IND, N('self'), PERIOD, N('width'), COLON, C('Int'), Op('='), N('side'), DED, DED,
+    EM,
 ]

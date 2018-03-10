@@ -37,6 +37,11 @@ class Dedent(Lexeme):
         super().__init__('', False)
 
 
+class EndMarker(Lexeme):
+    def __init__(self):
+        super().__init__('EOF', False)
+
+
 class NewLine(Lexeme):
     def __init__(self):
         super().__init__('\n', False)
@@ -90,6 +95,7 @@ class Operator(Lexeme):
 
 INDENT = Indent()
 DEDENT = Dedent()
+ENDMARKER = EndMarker()
 NEWLINE = NewLine()
 PERIOD = Period()
 COMMA = Comma()

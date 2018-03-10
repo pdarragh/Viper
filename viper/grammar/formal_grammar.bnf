@@ -1,7 +1,7 @@
 <single_input>  ::= SingleNewline NEWLINE
                   | SimpleLine line:<simple_stmt>
                   | ComplexLine line:<compound_stmt> NEWLINE
-<file_input>    ::= FileInput lines:<file_lines>*
+<file_input>    ::= FileInput lines:<file_lines>* ENDMARKER
 <file_lines>    ::= FileNewline NEWLINE
                   | FileStmt stmt:<stmt>
 

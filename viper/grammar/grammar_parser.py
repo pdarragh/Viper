@@ -57,6 +57,7 @@ class GrammarLiteral:
 
 INDENT = GrammarToken(vl.Indent)
 DEDENT = GrammarToken(vl.Dedent)
+ENDMARKER = GrammarToken(vl.EndMarker)
 NEWLINE = GrammarToken(vl.NewLine)
 PERIOD = GrammarToken(vl.Period, vl.PERIOD.text)
 COMMA = GrammarToken(vl.Comma, vl.COMMA.text)
@@ -73,6 +74,7 @@ OPERATOR = GrammarToken(vl.Operator)
 SPECIAL_TOKENS = {
     'INDENT':       INDENT,
     'DEDENT':       DEDENT,
+    'ENDMARKER':    ENDMARKER,
     'NEWLINE':      NEWLINE,
     'PERIOD':       PERIOD,
     '.':            PERIOD,
