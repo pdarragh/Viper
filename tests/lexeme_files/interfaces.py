@@ -34,5 +34,5 @@ lexemes = [
     NL, IND, N('def'), N('init'), OP, N('side'), COLON, C('Int'), CP, COLON,
     NL, IND, IND, N('self'), PERIOD, N('length'), COLON, C('Int'), Op('='), N('side'),
     NL, IND, IND, N('self'), PERIOD, N('width'), COLON, C('Int'), Op('='), N('side'), DED, DED,
-    EM,
+    NL, EM,
 ]

@@ -13,5 +13,5 @@ lexemes = [
     NL, IND, IND, N('return'), Num('1'), DED,
     NL, IND, N('return'), N('fib'), OP, N('n'), Op('-'), Num('1'), CP, Op('+'), N('fib'), OP, N('n'), Op('-'), Num('2'),
     CP, DED,
-    EM,
+    NL, EM,
 ]

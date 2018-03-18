@@ -9,5 +9,5 @@ lexemes = [
     N('data'), C('Tree'), OP, N('a'), CP, COLON,
     NL, IND, C('Leaf'), N('a'),
     NL, IND, C('Branch'), OP, C('Tree'), N('a'), CP, OP, C('Tree'), N('a'), CP, DED,
-    EM,
+    NL, EM,
 ]
