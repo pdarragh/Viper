@@ -62,6 +62,19 @@ class LexerError(Exception):
     pass
 
 
+# Reserved words.
+RESERVED_NAMES = {
+    'def',
+    'pass',
+    'return',
+    'class',
+    'interface',
+    'data',
+}
+
+RESERVED_CLASSES = set()
+
+
 # Lexer implementation.
 class Lexer:
     @classmethod
@@ -125,9 +138,17 @@ class Lexer:
         elif matcher.fullmatch(RE_NUMBER):
             lexemes.append(Number(matcher.group(0)))
         elif matcher.fullmatch(RE_NAME):
-            lexemes.append(Name(matcher.group(0)))
+            text = matcher.group(0)
+            if text in RESERVED_NAMES:
+                lexemes.append(ReservedName(text))
+            else:
+                lexemes.append(Name(text))
         elif matcher.fullmatch(RE_CLASS):
-            lexemes.append(Class(matcher.group(0)))
+            text = matcher.group(0)
+            if text in RESERVED_CLASSES:
+                lexemes.append(ReservedClass(text))
+            else:
+                lexemes.append(Class(text))
         elif matcher.fullmatch(RE_PARENS):
             lexemes.append(OPEN_PAREN)
             lexemes.append(CLOSE_PAREN)

@@ -85,7 +85,15 @@ class Name(Lexeme):
     pass
 
 
+class ReservedName(Lexeme):
+    pass
+
+
 class Class(Lexeme):
+    pass
+
+
+class ReservedClass(Lexeme):
     pass
 
 
