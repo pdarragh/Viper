@@ -81,48 +81,59 @@ class Lexer:
     def lex_file(cls, file: str) -> List[Lexeme]:
         with open(file) as f:
             text = f.read()
-        return lex_lines(text)
+        return cls.lex_lines(text)
 
     @classmethod
     def lex_lines(cls, text: str) -> List[Lexeme]:
-        lexed_lines = []
+        all_lexemes: List[Lexeme] = []
+        # indents: List[int] = []
         prev_indents = 0
         lines = text.splitlines()
-        for i in range(len(lines)):
-            line = lines[i]
-            lexed_line = cls.lex_line(line)
-            if i != 0:
-                # If this isn't the first line, prepend a NEWLINE.
-                lexed_line.insert(0, NEWLINE)
-            # Append a DEDENT to the previous line for each INDENT missing in this line.
-            curr_indents = sum(map(lambda l: isinstance(l, Indent), lexed_line))
-            for _ in range(prev_indents - curr_indents):
-                lexed_lines[i - 1].append(DEDENT)
+        for i, line in enumerate(lines):
+            # Find the raw number of indentation levels for this line.
+            indent_match = RE_LEADING_INDENT.match(line)
+            if indent_match is None:  # pragma: no cover
+                raise LexerError(f"invalid line indentation given: '{line}'")
+            indentation, rest = indent_match.groups()
+            rest = rest.strip()
+            if not rest:
+                # Don't use blank lines to handle indentation.
+                continue
+            lexemes = cls.lex_line(rest)
+            curr_indents = len(indentation) // INDENT_SIZE
+            # Determine whether we need to add indents, dedents, or neither.
+            indent_diff = curr_indents - prev_indents
             prev_indents = curr_indents
-            if i == len(lines) - 1:
-                # If this is the last line, append remaining necessary DEDENT tokens.
-                for _ in range(prev_indents):
-                    lexed_line.append(DEDENT)
-                # Also add a NEWLINE and the end-of-file marker.
-                lexed_line.append(NEWLINE)
-                lexed_line.append(ENDMARKER)
-            lexed_lines.append(lexed_line)
-        # Flatten the list.
-        return [lexeme for lexed_line in lexed_lines for lexeme in lexed_line]
+            if indent_diff > 0:
+                # This line is more indented than the previous line.
+                for _ in range(indent_diff):
+                    lexemes.insert(0, INDENT)
+                # Add a newline before all the indents.
+                lexemes.insert(0, NEWLINE)
+            elif indent_diff < 0:
+                # This line is less indented than the previous line, which means DEDENT tokens are needed.
+                for _ in range(abs(indent_diff)):
+                    lexemes.insert(0, DEDENT)
+                # Add a newline before the dedents.
+                lexemes.insert(0, NEWLINE)
+            else:
+                # We're at the same indentation level, so add neither.
+                lexemes.insert(0, NEWLINE)
+            # Add these lexemes to the list.
+            all_lexemes += lexemes
+        # At the end of the file, append necessary dedents, newline, and end-of-file tokens.
+        all_lexemes.append(NEWLINE)
+        for _ in range(prev_indents):
+            all_lexemes.append(DEDENT)
+        all_lexemes.append(ENDMARKER)
+        return all_lexemes
 
     @classmethod
     def lex_line(cls, line: str) -> List[Lexeme]:
         lexemes = []
         if not line:
             return lexemes
-        # Remove properly-indented leading whitespace.
-        match = RE_LEADING_INDENT.match(line)
-        if match is None:  # pragma: no cover
-            raise LexerError(f"invalid line given: '{line}'")
-        indentation, rest = match.groups()
-        for indentation_level in range(len(indentation) // INDENT_SIZE):
-            lexemes.append(INDENT)
-        for token in rest.split():
+        for token in line.split():
             for lexeme in cls.lex_token(token):
                 lexemes.append(lexeme)
         return lexemes
