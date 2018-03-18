@@ -90,7 +90,8 @@ class Lexer:
                 # If this is the last line, append remaining necessary DEDENT tokens.
                 for _ in range(prev_indents):
                     lexed_line.append(DEDENT)
-                # Also add the end-of-file marker.
+                # Also add a NEWLINE and the end-of-file marker.
+                lexed_line.append(NEWLINE)
                 lexed_line.append(ENDMARKER)
             lexed_lines.append(lexed_line)
         # Flatten the list.
