@@ -7,7 +7,9 @@ from viper.lexer import (
 
 lexemes = [
     RN('data'), C('Tree'), OP, N('a'), CP, COLON,
-    NL, IND, C('Leaf'), N('a'),
-    NL, IND, C('Branch'), OP, C('Tree'), N('a'), CP, OP, C('Tree'), N('a'), CP, DED,
-    NL, EM,
+    NL, IND,
+        C('Leaf'), N('a'), NL,
+        C('Branch'), OP, C('Tree'), N('a'), CP, OP, C('Tree'), N('a'), CP, NL,
+    DED,
+    EM,
 ]

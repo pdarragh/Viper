@@ -9,8 +9,10 @@ from viper.lexer import (
 
 lexemes = [
     RN('def'), N('simple'), OP, N('foo'), COL, C('A'), COM, N('bar'), COL, C('B'), CP, ARR, C('C'), COL,
-    NL, IND, N('foo'), Op('='), N('bar'), Op('+'), Num('42'),
-    NL, IND, N('bar'), Op('*='), Num('17'),
-    NL, IND, RN('return'), N('foo'), Op('>=>'), N('bar'), DED,
-    NL, EM,
+    NL, IND,
+        N('foo'), Op('='), N('bar'), Op('+'), Num('42'), NL,
+        N('bar'), Op('*='), Num('17'), NL,
+        RN('return'), N('foo'), Op('>=>'), N('bar'), NL,
+    DED,
+    EM,
 ]

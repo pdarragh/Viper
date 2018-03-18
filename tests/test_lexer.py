@@ -123,34 +123,6 @@ def test_bad_operator(token: str):
 ###############################################################################
 
 
-# INDENTATION
-
-@pytest.mark.parametrize('levels', [
-    0, 1, 2, 3, 4,
-])
-def test_indentation(levels: int):
-    line = ''.join(' ' * vl.INDENT_SIZE for _ in range(levels))
-    correct = [vl.INDENT for _ in range(levels)]
-    assert vl.lex_line(line) == correct
-
-
-@pytest.mark.parametrize('line,indent_count', [
-    ('none', 0),
-    ('    one', 1),
-    ('        two', 2),
-    ('     one plus space', 1),
-])
-def test_leading_indentation(line: str, indent_count: int):
-    lexemes = vl.lex_line(line)
-    assert len(lexemes) >= indent_count
-    indents = lexemes[:indent_count]
-    rest = lexemes[indent_count:]
-    for indent in indents:
-        assert indent == vl.INDENT
-    if rest:
-        assert rest[0] != vl.INDENT
-
-
 # OPERATORS
 
 @pytest.mark.parametrize('line,correct_lexemes', [
@@ -203,15 +175,15 @@ def test_commas(line: str, correct_lexemes: List[vl.Lexeme]):
             'def foo(arg):',
             '    return bar()')),
      [vl.ReservedName('def'), vl.Name('foo'), vl.OPEN_PAREN, vl.Name('arg'), vl.CLOSE_PAREN, vl.COLON,
-      vl.NEWLINE, vl.INDENT, vl.ReservedName('return'), vl.Name('bar'), vl.OPEN_PAREN, vl.CLOSE_PAREN, vl.DEDENT,
-      vl.NEWLINE, vl.ENDMARKER]),
+      vl.NEWLINE, vl.INDENT, vl.ReservedName('return'), vl.Name('bar'), vl.OPEN_PAREN, vl.CLOSE_PAREN, vl.NEWLINE,
+      vl.DEDENT, vl.ENDMARKER]),
     ('\n'.join((
             'def foo(arg1, arg2):',
             '    return bar(arg1, arg2,)')),
      [vl.ReservedName('def'), vl.Name('foo'), vl.OPEN_PAREN, vl.Name('arg1'), vl.COMMA, vl.Name('arg2'), vl.CLOSE_PAREN,
       vl.COLON,
       vl.NEWLINE, vl.INDENT, vl.ReservedName('return'), vl.Name('bar'), vl.OPEN_PAREN, vl.Name('arg1'), vl.COMMA,
-      vl.Name('arg2'), vl.COMMA, vl.CLOSE_PAREN, vl.DEDENT, vl.NEWLINE, vl.ENDMARKER]),
+      vl.Name('arg2'), vl.COMMA, vl.CLOSE_PAREN, vl.NEWLINE, vl.DEDENT, vl.ENDMARKER]),
 ])
 def test_multiple_lines(text: str, correct_lexemes: List[vl.Lexeme]):
     assert vl.Lexer.lex_lines(text) == correct_lexemes

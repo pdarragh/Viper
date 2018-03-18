@@ -9,9 +9,12 @@ from viper.lexer import (
 
 lexemes = [
     RN('def'), N('fib'), OP, N('n'), COLON, C('Int'), CP, ARROW, C('Int'), COLON,
-    NL, IND, N('if'), N('n'), Op('=='), Num('1'), N('or'), N('n'), Op('=='), Num('2'), COLON,
-    NL, IND, IND, RN('return'), Num('1'), DED,
-    NL, IND, RN('return'), N('fib'), OP, N('n'), Op('-'), Num('1'), CP, Op('+'), N('fib'), OP, N('n'), Op('-'),
-    Num('2'), CP, DED,
-    NL, EM,
+    NL, IND,
+        N('if'), N('n'), Op('=='), Num('1'), N('or'), N('n'), Op('=='), Num('2'), COLON,
+        NL, IND,
+            RN('return'), Num('1'), NL,
+        DED,
+        RN('return'), N('fib'), OP, N('n'), Op('-'), Num('1'), CP, Op('+'), N('fib'), OP, N('n'), Op('-'), Num('2'), CP, NL,
+    DED,
+    EM,
 ]
