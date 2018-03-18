@@ -102,17 +102,17 @@ def test_parameters(line: str, sppf: SPPF):
 
 @pytest.mark.parametrize('line,sppf', [
     ('def foo() -> Bar: pass',
-     pair(char(Name('def')),
+     pair(char(ReservedName('def')),
           pair(char(Name('foo')),
                pair(pair(char(OPEN_PAREN),
                          char(CLOSE_PAREN)),
                     pair(char(ARROW),
                          pair(char(Class('Bar')),
                               pair(char(COLON),
-                                   pair(char(Name('pass')),
+                                   pair(char(ReservedName('pass')),
                                         char(NEWLINE))))))))),
     ('def foo(a: B, c d: E) -> F: pass',
-     pair(char(Name('def')),
+     pair(char(ReservedName('def')),
           pair(char(Name('foo')),
                pair(pair(char(OPEN_PAREN),
                          pair(pair(pair(char(Name('a')),
@@ -127,7 +127,7 @@ def test_parameters(line: str, sppf: SPPF):
                     pair(char(ARROW),
                          pair(char(Class('F')),
                               pair(char(COLON),
-                                   pair(char(Name('pass')),
+                                   pair(char(ReservedName('pass')),
                                         char(NEWLINE))))))))),
 ])
 def test_func_def(line: str, sppf: SPPF):

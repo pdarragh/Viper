@@ -202,15 +202,15 @@ def test_commas(line: str, correct_lexemes: List[vl.Lexeme]):
     ('\n'.join((
             'def foo(arg):',
             '    return bar()')),
-     [vl.Name('def'), vl.Name('foo'), vl.OPEN_PAREN, vl.Name('arg'), vl.CLOSE_PAREN, vl.COLON,
-      vl.NEWLINE, vl.INDENT, vl.Name('return'), vl.Name('bar'), vl.OPEN_PAREN, vl.CLOSE_PAREN, vl.DEDENT, vl.NEWLINE,
-      vl.ENDMARKER]),
+     [vl.ReservedName('def'), vl.Name('foo'), vl.OPEN_PAREN, vl.Name('arg'), vl.CLOSE_PAREN, vl.COLON,
+      vl.NEWLINE, vl.INDENT, vl.ReservedName('return'), vl.Name('bar'), vl.OPEN_PAREN, vl.CLOSE_PAREN, vl.DEDENT,
+      vl.NEWLINE, vl.ENDMARKER]),
     ('\n'.join((
             'def foo(arg1, arg2):',
             '    return bar(arg1, arg2,)')),
-     [vl.Name('def'), vl.Name('foo'), vl.OPEN_PAREN, vl.Name('arg1'), vl.COMMA, vl.Name('arg2'), vl.CLOSE_PAREN,
+     [vl.ReservedName('def'), vl.Name('foo'), vl.OPEN_PAREN, vl.Name('arg1'), vl.COMMA, vl.Name('arg2'), vl.CLOSE_PAREN,
       vl.COLON,
-      vl.NEWLINE, vl.INDENT, vl.Name('return'), vl.Name('bar'), vl.OPEN_PAREN, vl.Name('arg1'), vl.COMMA,
+      vl.NEWLINE, vl.INDENT, vl.ReservedName('return'), vl.Name('bar'), vl.OPEN_PAREN, vl.Name('arg1'), vl.COMMA,
       vl.Name('arg2'), vl.COMMA, vl.CLOSE_PAREN, vl.DEDENT, vl.NEWLINE, vl.ENDMARKER]),
 ])
 def test_multiple_lines(text: str, correct_lexemes: List[vl.Lexeme]):
