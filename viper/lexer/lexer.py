@@ -119,6 +119,9 @@ class Lexer:
             else:
                 # We're at the same indentation level, so add neither.
                 lexemes.insert(0, NEWLINE)
+            # If this is the first line, remove the extraneous NEWLINE.
+            if i == 0:
+                del(lexemes[0])
             # Add these lexemes to the list.
             all_lexemes += lexemes
         # At the end of the file, append necessary dedents, newline, and end-of-file tokens.
