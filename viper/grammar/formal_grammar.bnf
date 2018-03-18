@@ -12,7 +12,7 @@
                   | ParamList param:<parameter> ',' param_list:<params_list>
 <parameter>     ::= Parameter external:NAME? internal:NAME ':' param_type:CLASS
 
-<suite>         ::= <simple_stmt>
+<suite>         ::= SimpleSuite stmt:<simple_stmt>
                   | ComplexSuite NEWLINE INDENT stmt:<stmt> stmts:<stmt>* DEDENT
 
 <stmt>          ::= <simple_stmt>
