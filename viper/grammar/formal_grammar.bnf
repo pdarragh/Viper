@@ -32,11 +32,11 @@
                   | ExprList expr:<expr> ',' expr_list:<expr_list>
 <expr>          ::= Expr atom:<atom> trailers:<trailer>*
 <atom>          ::= ParenExpr '(' &exprs{op_expr,op_expr_list}:<op_expr_list>? ')'
-                  | Name NAME
-                  | Number NUMBER
+                  | Name name:NAME
+                  | Number num:NUMBER
                   | Ellipsis '...'
 <trailer>       ::= Args '(' &args{arg,arg_list}:<arg_list>? ')'
-                  | Field '.' NAME
+                  | Field '.' field:NAME
 
 <compound_stmt> ::= <func_def>
                   | <class_def>
