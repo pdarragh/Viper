@@ -26,6 +26,8 @@ class SPPF:
         return self._sppf[item]
 
     def append(self, item):
+        if not isinstance(item, ParseTree):
+            raise ValueError(f"invalid argument to SPPF.append: {item}")
         self._sppf.append(item)
 
     def __add__(self, other):
