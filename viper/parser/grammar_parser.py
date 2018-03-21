@@ -1,9 +1,11 @@
 import viper.lexer as vl
 
-from viper.grammar.languages import *
+from viper.parser.languages import *
 
 from os.path import dirname, join as join_paths
 from typing import ClassVar, Dict, List, NamedTuple, Tuple, Type
+
+# TODO: use a single AST class and pass alternate names along as an argument
 
 ASSIGN_TOKEN = '::='
 START_RULE_TOKEN = '<'
@@ -215,6 +217,8 @@ class Grammar:
                 raise GrammarFileParseError("Alias alternates may not have additional parameters.")
             return self._make_rule_literal(tokens[0].text)
         elif isinstance(tokens[0], CapitalWordToken):
+            alternate_name = tokens[0].text
+            args = {}
             i = 1
             while i < len(tokens):
                 token = tokens[i]
@@ -231,9 +235,7 @@ class Grammar:
                 else:
                     raise GrammarFileParseError(f"Cannot process rule part beginning with token: '{token}'")
                 alternate_lang_parts.append(parse.lang)
-                # accumulate(parse.lang)
                 i += parse.offset
-            # return alternate_lang
             return concat(*alternate_lang_parts)
         else:
             # No other tokens can be first.
@@ -326,6 +328,16 @@ class Grammar:
 
     def _make_rule_literal(self, rule_name: str):
         return RuleLiteral(rule_name, self._grammar_dict)
+
+
+"""
+import sys
+sys.path.insert(0, '/Users/pdarragh/Development/Viper')
+from viper.parser import GRAMMAR as G
+from viper.parser.languages import *
+from viper.lexer import lex_line, lex_lines, lex_file
+
+"""
 
 
 def get_raw_rules_from_file(filename: str) -> Tuple[List[RawRule], Dict[str, int]]:
@@ -454,8 +466,8 @@ All alternates must start with either a CapitalWord or a <rule>.
 
 import sys
 sys.path.insert(0, '/Users/pdarragh/Development/Viper/')
-from viper.grammar.grammar_parser import *
-raw_rules = get_raw_rules_from_file('./viper/grammar/formal_grammar.bnf')
+from viper.parser.grammar_parser import *
+raw_rules = get_raw_rules_from_file('./viper/parser/formal_grammar.bnf')
 unprocessed_rules = split_alternates(raw_rules)
 quoted_rules = process_alternate_quotes(unprocessed_rules)
 tokens = tokenize_alternate(quoted_rules['trailer'][0])
@@ -560,3 +572,10 @@ def tokenize_subalternate(subalt: DequotedSubalternate) -> List[DequotedSubalter
 
 GRAMMAR_FILE = join_paths(dirname(__file__), 'formal_grammar.bnf')
 GRAMMAR = Grammar(GRAMMAR_FILE)
+
+
+if __name__ == '__main__':
+    from viper.lexer import lex_line
+    tokens = lex_line('()')
+    sppf = make_sppf(GRAMMAR.get_rule('atom'), tokens)
+    print(sppf)

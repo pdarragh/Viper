@@ -1,4 +1,4 @@
-from viper.grammar import *
+from viper.parser import *
 from viper.lexer import lex_line, LexerError, NEWLINE
 
 import cmd

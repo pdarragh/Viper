@@ -1,9 +1,9 @@
-import viper.grammar as vg
+import viper.parser as vg
 
 from viper.lexer import lex_line
 from viper.lexer.lexemes import *
 
-from viper.grammar.languages import (
+from viper.parser.languages import (
     SPPF, ParseTreeChar as Char, ParseTreePair as Pair
 )
 
