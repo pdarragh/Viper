@@ -570,7 +570,7 @@ def tokenize_subalternate(subalt: DequotedSubalternate) -> List[DequotedSubalter
     return subalts
 
 
-GRAMMAR_FILE = join_paths(dirname(__file__), 'formal_grammar.bnf')
+GRAMMAR_FILE = join_paths(dirname(__file__), join_paths('grammar', 'formal_grammar.bnf'))
 GRAMMAR = Grammar(GRAMMAR_FILE)
 
 
