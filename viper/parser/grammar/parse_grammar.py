@@ -3,8 +3,7 @@ from .production_part import *
 from .tokenize.alt_token import *
 from .tokenize.grammar_tokenizer import tokenize_grammar_file
 
-from typing import Dict, List, NamedTuple, Type
-
+from typing import Dict, List, NamedTuple
 
 TokenParse = NamedTuple('TokenParse', [('part', ProductionPart), ('idx', int)])
 
@@ -52,7 +51,8 @@ def parse_production(token_list: List[AltToken]) -> NamedProduction:
     Prod            = RuleAlias
                     | ProdName (Match | Save)+
     RuleAlias       = Rule
-    Match           = '@'? MatchOpt
+    Match           = MatchOpt
+                    | '@' Rule
     MatchOpt        = Literal
                     | StaticMatch
     StaticMatch     = SpecialMatch
@@ -94,16 +94,19 @@ def parse_production(token_list: List[AltToken]) -> NamedProduction:
 
 
 def parse_literal(token_list: List[AltToken], index: int) -> TokenParse:
-    part = LiteralPart(token_list[index].text)
-    return TokenParse(part, index + 1)
+    return TokenParse(LiteralPart(token_list[index].text), index + 1)
 
 
 def parse_special_literal(token_list: List[AltToken], index: int) -> TokenParse:
-    return parse_special_token_or_rule_token(token_list, index, True)
+    return TokenParse(SpecialPart(token_list[index].text), index + 1)
 
 
-def parse_rule_match(token_list: List[AltToken], index: int) -> TokenParse:
-    return parse_special_token_or_rule_token(token_list, index, False)
+def parse_rule_literal(token_list: List[AltToken], index: int) -> TokenParse:
+    token = token_list[index]
+    if not isinstance(token, RuleToken):
+        # TODO: Make custom error here.
+        raise RuntimeError
+    return TokenParse(RulePart(token_list[index].text), index + 1)
 
 
 def parse_regular_parameter(token_list: List[AltToken], index: int) -> TokenParse:
@@ -114,9 +117,9 @@ def parse_regular_parameter(token_list: List[AltToken], index: int) -> TokenPars
     index += 2
     match_token = token_list[index]
     if isinstance(match_token, SpecialToken):
-        match_parse = parse_special(token_list, index)
+        match_parse = parse_special_literal(token_list, index)
     elif isinstance(match_token, RuleToken):
-        match_parse = parse_rule_match(token_list, index)
+        match_parse = parse_rule_literal(token_list, index)
     else:
         # TODO: Make custom error here.
         raise RuntimeError
@@ -125,31 +128,40 @@ def parse_regular_parameter(token_list: List[AltToken], index: int) -> TokenPars
 
 
 def parse_expanded_parameter(token_list: List[AltToken], index: int) -> TokenParse:
-    pass
+    rule_parse = parse_rule_literal(token_list, index + 1)
+    return TokenParse(ExpandedParameterPart(rule_parse.part), rule_parse.idx)
 
 
 def parse_special_expanded_parameter(token_list: List[AltToken], index: int) -> TokenParse:
-    pass
+    name_token = token_list[index + 1]
+    if not isinstance(name_token, ParameterNameToken):
+        # TODO: Make custom error here.
+        raise RuntimeError
+    parameter_name = name_token.text
+    brace_token = token_list[index + 2]
+    if not isinstance(brace_token, BracedToken):
+        # TODO: Make custom error here.
+        raise RuntimeError
+    if not isinstance(token_list[index + 3], ColonToken):
+        # TODO: Make custom error here.
+        raise RuntimeError
+    rule_parse = parse_rule_literal(token_list, index + 4)
+    part = SpecialExpandedParameterPart(parameter_name, brace_token.left, brace_token.right, rule_parse.part)
+    return parse_optional(token_list, rule_parse.idx, part)
 
 
-def parse_special_token_or_rule_token(token_list: List[AltToken], index: int, is_special: bool) -> TokenParse:
-    if is_special:
-        parse = parse_special(token_list, index)
-    else:
-        parse = parse_literal(token_list, index)
-    return parse_possible_repeatable_or_optional(token_list, parse.idx, parse.part)
-
-
-def parse_special(token_list: List[AltToken], index: int) -> TokenParse:
-    part = SpecialPart(token_list[index].text)
-    return TokenParse(part, index + 1)
-
-
-def parse_possible_repeatable_or_optional(token_list: List[AltToken], index: int, enclosed_part: ProductionPart) -> TokenParse:
+def parse_possible_repeatable_or_optional(token_list: List[AltToken],
+                                          index: int,
+                                          enclosed_part: ProductionPart) -> TokenParse:
     token = token_list[index]
     if isinstance(token, RepeatToken):
         return TokenParse(RepeatPart(enclosed_part), index + 1)
-    elif isinstance(token, OptionalToken):
+    else:
+        return parse_optional(token_list, index, enclosed_part)
+
+
+def parse_optional(token_list: List[AltToken], index: int, enclosed_part: ProductionPart) -> TokenParse:
+    if isinstance(token_list[index], OptionalToken):
         return TokenParse(OptionPart(enclosed_part), index + 1)
     else:
         return TokenParse(enclosed_part, index)
