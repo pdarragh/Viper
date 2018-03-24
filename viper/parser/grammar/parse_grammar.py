@@ -147,21 +147,23 @@ def parse_special_expanded_parameter(token_list: List[AltToken], index: int) -> 
         raise RuntimeError
     rule_parse = parse_rule_literal(token_list, index + 4)
     part = SpecialExpandedParameterPart(parameter_name, brace_token.left, brace_token.right, rule_parse.part)
-    return parse_optional(token_list, rule_parse.idx, part)
+    return parse_possible_optional(token_list, rule_parse.idx, part)
 
 
 def parse_possible_repeatable_or_optional(token_list: List[AltToken],
                                           index: int,
                                           enclosed_part: ProductionPart) -> TokenParse:
+    if index >= len(token_list):
+        return TokenParse(enclosed_part, index)
     token = token_list[index]
     if isinstance(token, RepeatToken):
         return TokenParse(RepeatPart(enclosed_part), index + 1)
     else:
-        return parse_optional(token_list, index, enclosed_part)
+        return parse_possible_optional(token_list, index, enclosed_part)
 
 
-def parse_optional(token_list: List[AltToken], index: int, enclosed_part: ProductionPart) -> TokenParse:
-    if isinstance(token_list[index], OptionalToken):
-        return TokenParse(OptionPart(enclosed_part), index + 1)
-    else:
+def parse_possible_optional(token_list: List[AltToken], index: int, enclosed_part: ProductionPart) -> TokenParse:
+    if index >= len(token_list) or not isinstance(token_list[index], OptionalToken):
         return TokenParse(enclosed_part, index)
+    else:
+        return TokenParse(OptionPart(enclosed_part), index + 1)
