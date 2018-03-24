@@ -8,7 +8,7 @@ from typing import Dict, List, NamedTuple
 TokenParse = NamedTuple('TokenParse', [('part', ProductionPart), ('idx', int)])
 
 
-def parse_grammar_file(filename: str) -> Dict[str, List[ProductionPart]]:
+def parse_grammar_file(filename: str) -> Dict[str, List[Production]]:
     tokenized_rules = tokenize_grammar_file(filename)
     parsed_rules = {}
     for name, rule in tokenized_rules.items():
@@ -17,8 +17,8 @@ def parse_grammar_file(filename: str) -> Dict[str, List[ProductionPart]]:
     return parsed_rules
 
 
-def parse_rule(rule: List[List[AltToken]]) -> List[ProductionPart]:
-    parsed_alternates = []
+def parse_rule(rule: List[List[AltToken]]) -> List[Production]:
+    parsed_alternates: List[Production] = []
     for alternate in rule:
         parsed_alternate = parse_alternate(alternate)
         parsed_alternates.append(parsed_alternate)
