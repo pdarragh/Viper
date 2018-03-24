@@ -219,7 +219,10 @@ def tokenize_dequoted_subalternate(token: DequotedSubalternate) -> AltToken:
     elif text == ':':
         return ColonToken(text)
     elif text.startswith('{') and text.endswith('}'):
-        return BracedToken(text[1:-1])
+        parts = text[1:-1].split(',')
+        if len(parts) != 2:
+            raise ValueError("Invalid braced expression: '{text}'")
+        return BracedToken(parts[0].strip(), parts[1].strip())
     elif text.startswith('<') and text.endswith('>'):
         return RuleToken(text[1:-1])
     elif text[0].isupper():

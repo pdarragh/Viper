@@ -39,6 +39,11 @@ class ColonToken(AltToken):
 
 
 class BracedToken(AltToken):
+    def __init__(self, left: str, right: str):
+        self.left = left
+        self.right = right
+        super().__init__(left + ", " + right)
+
     def __repr__(self):
         return '{' + self.text + '}'
 
