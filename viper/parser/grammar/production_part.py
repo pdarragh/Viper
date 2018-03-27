@@ -16,7 +16,7 @@ class SpecialPart(ProductionPart):
         self.token = special_token
 
     def __repr__(self):
-        return self.token
+        return "'" + self.token + "'"
 
 
 class RulePart(ProductionPart):
