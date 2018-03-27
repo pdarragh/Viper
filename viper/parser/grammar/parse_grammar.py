@@ -3,9 +3,15 @@ from .production_part import *
 from .tokenize.alt_token import *
 from .tokenize.grammar_tokenizer import tokenize_grammar_file
 
+from viper.error import ViperError
+
 from typing import Dict, List, NamedTuple
 
 TokenParse = NamedTuple('TokenParse', [('part', ProductionPart), ('idx', int)])
+
+
+class GrammarParserError(ViperError):
+    pass
 
 
 def parse_grammar_file(filename: str) -> Dict[str, List[Production]]:
@@ -29,14 +35,12 @@ def parse_alternate(token_list: List[AltToken]) -> Production:
     head = token_list[0]
     if isinstance(head, RuleToken):
         if len(token_list) > 1:
-            # TODO: Make custom error here.
-            raise RuntimeError
+            raise GrammarParserError("Rule aliases may not have additional parameters.")
         return parse_rule_alias(head)
     elif isinstance(head, CapitalWordToken):
         return parse_production(token_list)
     else:
-        # TODO: Make custom error here.
-        raise RuntimeError
+        raise GrammarParserError(f"Unexpected initial token in alternate: {head}")
 
 
 def parse_rule_alias(token: RuleToken) -> RuleAliasProduction:
@@ -86,8 +90,7 @@ def parse_production(token_list: List[AltToken]) -> NamedProduction:
         elif isinstance(token, SpecialParameterExpansionToken):
             parse = parse_special_expanded_parameter(token_list, i)
         else:
-            # TODO: Make custom error here.
-            raise RuntimeError
+            raise GrammarParserError(f"Unexpected token in production: {token}")
         parts.append(parse.part)
         i = parse.idx
     return NamedProduction(name, parts)
@@ -104,16 +107,14 @@ def parse_special_literal(token_list: List[AltToken], index: int) -> TokenParse:
 def parse_rule_literal(token_list: List[AltToken], index: int) -> TokenParse:
     token = token_list[index]
     if not isinstance(token, RuleToken):
-        # TODO: Make custom error here.
-        raise RuntimeError
+        raise GrammarParserError(f"Cannot parse token as rule literal: {token}")
     return TokenParse(RulePart(token_list[index].text), index + 1)
 
 
 def parse_regular_parameter(token_list: List[AltToken], index: int) -> TokenParse:
     parameter_name = token_list[index].text
     if not isinstance(token_list[index + 1], ColonToken):
-        # TODO: Make custom error here.
-        raise RuntimeError
+        raise GrammarParserError(f"Expected colon following parameter name; instead got: {token_list[index + 1]}")
     index += 2
     match_token = token_list[index]
     if isinstance(match_token, SpecialToken):
@@ -121,8 +122,8 @@ def parse_regular_parameter(token_list: List[AltToken], index: int) -> TokenPars
     elif isinstance(match_token, RuleToken):
         match_parse = parse_rule_literal(token_list, index)
     else:
-        # TODO: Make custom error here.
-        raise RuntimeError
+        raise GrammarParserError(f"Expected special token or rule as argument of parameter {parameter_name}; "
+                                 f"instead got {match_token}")
     match_parse = parse_possible_repeatable_or_optional(token_list, match_parse.idx, match_parse.part)
     return TokenParse(ParameterPart(parameter_name, match_parse.part), match_parse.idx)
 
@@ -135,16 +136,13 @@ def parse_expanded_parameter(token_list: List[AltToken], index: int) -> TokenPar
 def parse_special_expanded_parameter(token_list: List[AltToken], index: int) -> TokenParse:
     name_token = token_list[index + 1]
     if not isinstance(name_token, ParameterNameToken):
-        # TODO: Make custom error here.
-        raise RuntimeError
+        raise GrammarParserError(f"Expected parameter name following '@'; instead got: {name_token}")
     parameter_name = name_token.text
     brace_token = token_list[index + 2]
     if not isinstance(brace_token, BracedToken):
-        # TODO: Make custom error here.
-        raise RuntimeError
+        raise GrammarParserError(f"Expected braced expression following parameter name; instead got: {brace_token}")
     if not isinstance(token_list[index + 3], ColonToken):
-        # TODO: Make custom error here.
-        raise RuntimeError
+        raise GrammarParserError(f"Expected colon following braced expression; instead got: {token_list[index + 3]}")
     rule_parse = parse_rule_literal(token_list, index + 4)
     part = SpecialExpandedParameterPart(parameter_name, brace_token.left, brace_token.right, rule_parse.part)
     return parse_possible_optional(token_list, rule_parse.idx, part)

@@ -1,6 +1,8 @@
 from .alt_token import *
 from .special_tokens import SPECIAL_TOKENS
 
+from viper.error import ViperError
+
 from typing import Dict, List, NamedTuple, Tuple
 
 
@@ -11,6 +13,10 @@ END_RULE_TOKEN = '>'
 DequotedSubalternate = NamedTuple('DequotedSubalternate', [('text', str), ('is_quoted', bool)])
 Alternate = List[DequotedSubalternate]
 RawRule = NamedTuple('RawRule', [('name', str), ('raw_alternates', str)])
+
+
+class TokenizerError(ViperError):
+    pass
 
 
 def tokenize_grammar_file(filename: str) -> Dict[str, List[List[AltToken]]]:
@@ -36,22 +42,22 @@ def get_raw_rules_and_line_numbers_from_file(filename: str) -> Tuple[List[RawRul
                 # This line names a rule.
                 if line.count(ASSIGN_TOKEN) > 1:
                     # Can only define one rule per line.
-                    raise RuntimeError(f"Too many rule assignments in one line.")
+                    raise TokenizerError(f"Too many rule assignments in one line.")
                 # Process the name of the rule.
                 name, raw_rule = line.split(ASSIGN_TOKEN)
                 name = name.strip()
                 if not (name.startswith(START_RULE_TOKEN) and name.endswith(END_RULE_TOKEN)):
-                    raise RuntimeError(f"Invalid rule name: '{name}'")
+                    raise TokenizerError(f"Invalid rule name: '{name}'")
                 name = name[1:-1]
                 # If the rule has not been named previously, create it.
                 if name in rules:
-                    raise RuntimeError(f"Cannot create multiple rules with the same name: '{name}'")
+                    raise TokenizerError(f"Cannot create multiple rules with the same name: '{name}'")
                 rules[name] = [raw_rule.strip()]
                 line_nos[name] = i
                 current_rule = name
             else:
                 if current_rule is None:
-                    raise RuntimeError(f"First nonempty line must name a new rule.")
+                    raise TokenizerError(f"First nonempty line must name a new rule.")
                 # We must be continuing a rule.
                 rules[current_rule].append(line.strip())
     rule_list: List[RawRule] = []
@@ -85,7 +91,7 @@ def split_rule_alternates(raw_rules: List[RawRule]) -> Dict[str, List[str]]:
                 alternates.append(raw_alternates[start_index+1:i])
                 start_index = i
         if inside_quotes:
-            raise RuntimeError(f"Missing closing quote ({quote_type}) for rule: '{rule.name}'")
+            raise TokenizerError(f"Missing closing quote ({quote_type}) for rule: '{rule.name}'")
         alternates.append(raw_alternates[start_index+1:len(raw_alternates)])
         processed_rules[rule.name] = alternates
     return processed_rules
@@ -221,7 +227,7 @@ def tokenize_dequoted_subalternate(token: DequotedSubalternate) -> AltToken:
     elif text.startswith('{') and text.endswith('}'):
         parts = text[1:-1].split(',')
         if len(parts) != 2:
-            raise ValueError("Invalid braced expression: '{text}'")
+            raise TokenizerError("Invalid braced expression: '{text}'")
         return BracedToken(parts[0].strip(), parts[1].strip())
     elif text.startswith('<') and text.endswith('>'):
         return RuleToken(text[1:-1])
@@ -233,4 +239,4 @@ def tokenize_dequoted_subalternate(token: DequotedSubalternate) -> AltToken:
     elif text.islower():
         return ParameterNameToken(text)
     else:
-        raise ValueError(f"Invalid token: '{text}'")
+        raise TokenizerError(f"Invalid token: '{text}'")

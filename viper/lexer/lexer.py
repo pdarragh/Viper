@@ -1,3 +1,4 @@
+from viper.error import ViperError
 from viper.lexer.lexemes import *
 
 import re
@@ -58,7 +59,7 @@ class RegexMatcher:
 
 
 # Lexer errors.
-class LexerError(Exception):
+class LexerError(ViperError):
     pass
 
 

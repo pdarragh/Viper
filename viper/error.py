@@ -1,0 +1,2 @@
+class ViperError(Exception):
+    pass
