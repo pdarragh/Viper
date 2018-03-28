@@ -17,16 +17,6 @@ class LinguifierError(ViperError):
     pass
 
 
-class Grammar:
-    def __init__(self, grammar_filename: str):
-        self.file = grammar_filename
-        self.rules = linguify_grammar_file(self.file)
-
-    def parse_rule(self, rule: str, lexemes: List[Lexeme]) -> SPPF:
-        lang = self.rules[rule]
-        return make_sppf(lang, lexemes)
-
-
 def linguify_grammar_file(filename: str) -> RuleDict:
     parsed_rules = parse_grammar_file(filename)
     rule_dict = {}
