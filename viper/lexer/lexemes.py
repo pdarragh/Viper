@@ -16,7 +16,21 @@ class Lexeme:
         return self.text
 
     def __eq__(self, other):
-        if not isinstance(other, type(self)):
+        # This is inverted from the standard style because we want for Lexemes to be compared less restrictively.
+        # The [Python reference](https://docs.python.org/3/reference/datamodel.html#object.__eq__) states:
+        #
+        #   There are no swapped-argument versions of these methods (to be used
+        #   when the left argument does not support the operation but the right
+        #   argument does). [...] If the operands are of different types, and
+        #   right operand’s type is a direct or indirect subclass of the left
+        #   operand’s type, the reflected method of the right operand has
+        #   priority, otherwise the left operand’s method has priority.
+        #
+        # This equality method is used primarily for comparing lexed inputs with expected grammar productions.
+        # (Specifically, see the `derive' method in viper.parser.languages.) To avoid a hacked-together specialty Lexeme
+        # class purely for such comparisons, I opted to invert the type-checking in this method. (Note also that
+        # subclassing is considered — the classes need not be identical.)
+        if not isinstance(self, type(other)):
             return False
         return self.text == other.text
 
