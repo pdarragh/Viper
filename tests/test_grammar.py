@@ -24,7 +24,7 @@ def pair(x, y):
     ('42',
      char(Number('42'))),
     ('...',
-     char(Operator('...'))),
+     char(ELLIPSIS)),
     ('()',
      pair(char(OPEN_PAREN),
           char(CLOSE_PAREN))),

@@ -77,6 +77,11 @@ class Arrow(Lexeme):
         super().__init__('->', False)
 
 
+class Ellipsis(Lexeme):
+    def __init__(self):
+        super().__init__('...', False)
+
+
 class Number(Lexeme):
     pass
 
@@ -111,3 +116,4 @@ OPEN_PAREN = OpenParen()
 CLOSE_PAREN = CloseParen()
 COLON = Colon()
 ARROW = Arrow()
+ELLIPSIS = Ellipsis()

@@ -179,6 +179,8 @@ class Lexer:
                 lexemes.append(COLON)
             elif symbol == ARROW.text:
                 lexemes.append(ARROW)
+            elif symbol == ELLIPSIS.text:
+                lexemes.append(ELLIPSIS)
             else:
                 lexemes.append(Operator(symbol))
         elif matcher.fullmatch(RE_INFIX_COMMA):
