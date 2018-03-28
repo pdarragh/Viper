@@ -625,4 +625,4 @@ def _make_nice_lang_string(lang: Language, start_column: int) -> str:
             leader + _make_nice_lang_string(lang.lang, indent) + "\n" +
             (" " * indent) + "-> " + lang.func.make_nice_string(indent) + ")"
         )
-    raise ValueError
+    raise ValueError(f"Unknown language type: {lang}")
