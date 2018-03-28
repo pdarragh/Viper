@@ -20,6 +20,7 @@ class TokenizerError(ViperError):
 
 
 def tokenize_grammar_file(filename: str) -> Dict[str, List[List[AltToken]]]:
+    # TODO: Number all tokens uniquely and use this to correlate tokens to line numbers.
     raw_rules, line_nos = get_raw_rules_and_line_numbers_from_file(filename)
     split_rules = split_rule_alternates(raw_rules)
     dequoted_rules = process_alternate_quotes(split_rules)
