@@ -1,7 +1,7 @@
-from .grammar.parse_grammar import parse_grammar_file
-from .grammar.production import *
-from .grammar.production_part import *
-from .grammar.tokenize.special_tokens import SPECIAL_TOKENS
+from .grammar_parsing.parse_grammar import parse_grammar_file
+from .grammar_parsing.production import *
+from .grammar_parsing.production_part import *
+from .grammar_parsing.tokenize.special_tokens import SPECIAL_TOKENS
 from .languages import *
 
 from viper.error import ViperError
