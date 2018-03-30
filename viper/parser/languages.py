@@ -549,7 +549,11 @@ def derive(lang: Language, c) -> Language:
     if isinstance(lang, Rep):
         return concat(derive(lang.lang, c), lang)
     if isinstance(lang, Red):
-        return red(derive(lang.lang, c), lang.func)
+        inner = derive(lang.lang, c)
+        if isinstance(inner, Empty):
+            return empty()
+        else:
+            return red(inner, lang.func)
     raise ValueError(f"derive: unknown language: {lang}")
 
 
