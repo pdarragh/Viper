@@ -222,14 +222,12 @@ def tokenize_dequoted_subalternate(token: DequotedSubalternate) -> AltToken:
     elif text == '@':
         return ParameterExpansionToken(text)
     elif text == '&':
-        return SpecialParameterExpansionToken(text)
+        return SeparatedRepeatToken(text)
     elif text == ':':
         return ColonToken(text)
     elif text.startswith('{') and text.endswith('}'):
-        parts = text[1:-1].split(',')
-        if len(parts) != 2:
-            raise TokenizerError("Invalid braced expression: '{text}'")
-        return BracedToken(parts[0].strip(), parts[1].strip())
+        text = text[1:-1]
+        return BracedToken(text)
     elif text.startswith('<') and text.endswith('>'):
         return RuleToken(text[1:-1])
     elif text[0].isupper():
