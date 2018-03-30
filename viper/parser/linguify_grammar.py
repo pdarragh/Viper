@@ -145,6 +145,11 @@ def linguify_production_part(part: ProductionPart, rule_dict: RuleDict) -> PartT
         inner_part = linguify_production_part(part.part, rule_dict)
         part = rep(inner_part.lang)  # TODO: Ensure inner_part.func is unneeded.
         return PartTuple(part, None)
+    elif isinstance(part, SeparatedRepeatPart):
+        inner_part = linguify_production_part(part.rule, rule_dict)
+        separator_part = linguify_production_part(part.separator, rule_dict)
+        part = sep_rep(separator_part.lang, inner_part.lang)
+        return PartTuple(part, None)
     elif isinstance(part, OptionPart):
         inner_part = linguify_production_part(part.part, rule_dict)
         part = opt(inner_part.lang)  # TODO: Ensure inner_part.func is unneeded.
@@ -154,9 +159,6 @@ def linguify_production_part(part: ProductionPart, rule_dict: RuleDict) -> PartT
         return PartTuple(inner_part.lang, part.name)
     elif isinstance(part, ExpandedParameterPart):
         # TODO: Fix this.
-        return linguify_production_part(part.rule, rule_dict)
-    elif isinstance(part, SpecialExpandedParameterPart):
-        # TODO: Incorporate sep_rep. sep_lang is a language of the separator.
         return linguify_production_part(part.rule, rule_dict)
     else:
         raise LinguifierError(f"Cannot linguify unknown production part: {part}")
