@@ -8,3 +8,9 @@ class ASTNode:
 
     def __repr__(self):
         return "AST_" + self._name + "(" + repr(self._params) + ")"
+
+    def __getattr__(self, item):
+        if item in self._params:
+            return self._params[item]
+        else:
+            return super().__getattribute__(item)
