@@ -1,30 +1,10 @@
-from viper.lexer.lexemes import *
+from typing import Any, Dict
 
 
-class AST:
-    pass
+class ASTNode:
+    def __init__(self, production_name: str, params: Dict[str, Any]):
+        self._name = production_name
+        self._params = params
 
-
-class BinOp(AST):
-    def __init__(self, op: Operator, left: Lexeme, right: Lexeme):
-        self.op = op
-        self.left = left
-        self.right = right
-
-
-class UnOpPre(AST):
-    def __init__(self, op: Operator, arg: Lexeme):
-        self.op = op
-        self.arg = arg
-
-
-class UnOpPost(AST):
-    def __init__(self, arg: Lexeme, op: Operator):
-        self.arg = arg
-        self.op = op
-
-
-class Num(AST):
-    def __init__(self, token: Number):
-        self.token = token
-        self.value = float(token.text)
+    def __repr__(self):
+        return "AST_" + self._name + "(" + repr(self._params) + ")"
