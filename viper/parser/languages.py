@@ -68,6 +68,73 @@ class SPPF:
             return "\n".join(lines) + ")"
 
 
+EpsFunc = Callable[[], SPPF]
+
+
+class RedFunc(Callable[[SPPF], SPPF]):
+    @abstractmethod
+    def __call__(self, sppf: SPPF) -> SPPF:
+        pass
+
+    def __repr__(self):
+        return self.make_nice_string(0)
+
+    @abstractmethod
+    def make_nice_string(self, start_column: int) -> str:
+        pass
+
+
+class LeftEpsRedFunc(RedFunc):
+    def __init__(self, left: SPPF):
+        self.left = left
+
+    def make_nice_string(self, start_column: int) -> str:
+        return self.left.make_nice_string(start_column)
+
+    def __call__(self, right: SPPF) -> SPPF:
+        return SPPF(ParseTreePair(self.left, right))
+
+
+class RightEpsRedFunc(RedFunc):
+    def __init__(self, right: SPPF):
+        self.right = right
+
+    def make_nice_string(self, start_column: int) -> str:
+        return self.right.make_nice_string(start_column)
+
+    def __call__(self, left: SPPF) -> SPPF:
+        return SPPF(ParseTreePair(left, self.right))
+
+
+class SepRepEpsRedFunc(RedFunc):
+    def make_nice_string(self, start_column: int) -> str:
+        return "sep-rep epsilon"
+
+    def __call__(self, sppf: SPPF) -> SPPF:
+        if len(sppf) == 0:
+            return SPPF()
+        elif len(sppf) == 1:
+            return SPPF(ParseTreeEps())
+        else:
+            raise RuntimeError("Epsilon produced multiple results.")
+
+
+class SepRepConcatRedFunc(RedFunc):
+    def make_nice_string(self, start_column: int) -> str:
+        return "sep-rep concat"
+
+    def __call__(self, sppf: SPPF) -> SPPF:
+        if len(sppf) == 0:
+            return SPPF()
+        elif len(sppf) == 1:
+            child = sppf[0]
+            if not isinstance(child, ParseTreePair):
+                raise RuntimeError("Invalid concat child.")
+            return child.right
+        else:
+            raise RuntimeError("Too many children from concat reduction.")
+
+
 class ParseTree(ABC):
     def __str__(self):
         return self.make_nice_string(0)
@@ -145,47 +212,6 @@ class ParseTreeRep(ParseTree):
         leader = "(repeat "
         indent = start_column + len(leader)
         return leader + self.parse.make_nice_string(indent) + ")"
-
-
-EpsFunc = Callable[[], SPPF]
-
-
-class RedFunc(Callable[[SPPF], SPPF]):
-    @abstractmethod
-    def __call__(self, sppf: SPPF) -> SPPF:
-        pass
-
-    @abstractmethod
-    def make_nice_string(self, start_column: int) -> str:
-        pass
-
-
-class LeftEpsRedFunc(RedFunc):
-    def __init__(self, left: SPPF):
-        self.left = left
-
-    def __repr__(self):
-        return self.make_nice_string(0)
-
-    def make_nice_string(self, start_column: int) -> str:
-        return self.left.make_nice_string(start_column)
-
-    def __call__(self, right: SPPF) -> SPPF:
-        return SPPF(ParseTreePair(self.left, right))
-
-
-class RightEpsRedFunc(RedFunc):
-    def __init__(self, right: SPPF):
-        self.right = right
-
-    def __repr__(self):
-        return self.make_nice_string(0)
-
-    def make_nice_string(self, start_column: int) -> str:
-        return self.right.make_nice_string(start_column)
-
-    def __call__(self, left: SPPF) -> SPPF:
-        return SPPF(ParseTreePair(left, self.right))
 
 
 class Language(ABC):
@@ -419,6 +445,30 @@ def alt(l1: Language, *ls: Language) -> Language:
 
 def rep(lang: Language) -> Language:
     return Rep(linguify(lang))
+
+
+def sep_rep(sep_lang: Language, lang: Language) -> Language:
+    """
+    A separated-repeat, e.g. for matching things like:
+
+        wswsw
+
+    (where "w" is the item to be matched and "s" is a separator to be discarded).
+
+    Constructed as:
+
+          ∪
+         / \
+        ε   ◦
+           / \
+          w   *
+              |
+              ◦
+             / \
+            s   w
+    """
+    return alt(red(eps(lambda: SPPF(ParseTreeEps())), SepRepEpsRedFunc()),
+               concat(lang, rep(red(concat(sep_lang, lang), SepRepConcatRedFunc()))))
 
 
 def opt(lang: Language) -> Language:
