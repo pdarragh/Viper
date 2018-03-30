@@ -22,8 +22,14 @@ class SPPF:
     def __len__(self):
         return len(self._sppf)
 
+    def __bool__(self):
+        return len(self) > 0
+
     def __getitem__(self, item):
         return self._sppf[item]
+
+    def __iter__(self):
+        return iter(self._sppf)
 
     def append(self, item):
         if not isinstance(item, ParseTree):
