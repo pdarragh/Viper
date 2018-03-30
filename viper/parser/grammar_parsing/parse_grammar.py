@@ -1,7 +1,7 @@
 from .production import *
 from .production_part import *
 from .tokenize.alt_token import *
-from .tokenize.grammar_tokenizer import tokenize_grammar_file
+from .tokenize.tokenize_grammar import tokenize_grammar_file
 
 from viper.error import ViperError
 
