@@ -35,6 +35,15 @@ class RepeatPart(ProductionPart):
         return repr(self.part) + "*"
 
 
+class SeparatedRepeatPart(ProductionPart):
+    def __init__(self, separator: ProductionPart, rule_part: ProductionPart):
+        self.separator = separator
+        self.rule = rule_part
+
+    def __repr__(self):
+        return repr(self.rule) + "{" + repr(self.separator) + "}&"
+
+
 class OptionPart(ProductionPart):
     def __init__(self, optional_part: ProductionPart):
         self.part = optional_part
@@ -58,14 +67,3 @@ class ExpandedParameterPart(ProductionPart):
 
     def __repr__(self):
         return "@" + repr(self.rule)
-
-
-class SpecialExpandedParameterPart(ProductionPart):
-    def __init__(self, name: str, single_param: str, list_param: str, rule_part: ProductionPart):
-        self.name = name
-        self.single = single_param
-        self.list = list_param
-        self.rule = rule_part
-
-    def __repr__(self):
-        return "&" + self.name + "{" + self.single + ", " + self.list + "}: " + repr(self.rule)

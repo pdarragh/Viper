@@ -49,31 +49,6 @@ def parse_rule_alias(token: RuleToken) -> RuleAliasProduction:
 
 
 def parse_production(token_list: List[AltToken]) -> NamedProduction:
-    """
-    Grammar productions follow their own (very simple) grammar:
-
-    Prod            = RuleAlias
-                    | ProdName (Match | Save)+
-    RuleAlias       = Rule
-    Match           = MatchOpt
-                    | '@' Rule
-    MatchOpt        = Literal
-                    | StaticMatch
-    StaticMatch     = SpecialMatch
-                    | RuleMatch
-    SpecialMatch    = Special ('*' | '?')?
-    RuleMatch       = Rule ('*' | '?')?
-    Save            = ParamSpec ':' StaticMatch
-    ParamSpec       = ParamName
-                    | '&' ParamName '{' ParamName ',' ParamName '}'
-    ParamName       = LITERAL
-    Literal         = "'" LITERAL "'"
-    Special         = SPECIAL
-    Rule            = '<' LITERAL '>'
-
-    :param token_list:
-    :return:
-    """
     parts: List[ProductionPart] = []
     name = token_list[0].text
     i = 1
@@ -84,11 +59,9 @@ def parse_production(token_list: List[AltToken]) -> NamedProduction:
         elif isinstance(token, SpecialToken):
             parse = parse_special_literal(token_list, i)
         elif isinstance(token, ParameterNameToken):
-            parse = parse_regular_parameter(token_list, i)
+            parse = parse_parameter(token_list, i)
         elif isinstance(token, ParameterExpansionToken):
             parse = parse_expanded_parameter(token_list, i)
-        elif isinstance(token, SpecialParameterExpansionToken):
-            parse = parse_special_expanded_parameter(token_list, i)
         else:
             raise GrammarParserError(f"Unexpected token in production: {token}")
         parts.append(parse.part)
@@ -111,7 +84,7 @@ def parse_rule_literal(token_list: List[AltToken], index: int) -> TokenParse:
     return TokenParse(RulePart(token_list[index].text), index + 1)
 
 
-def parse_regular_parameter(token_list: List[AltToken], index: int) -> TokenParse:
+def parse_parameter(token_list: List[AltToken], index: int) -> TokenParse:
     parameter_name = token_list[index].text
     if not isinstance(token_list[index + 1], ColonToken):
         raise GrammarParserError(f"Expected colon following parameter name; instead got: {token_list[index + 1]}")
@@ -133,31 +106,24 @@ def parse_expanded_parameter(token_list: List[AltToken], index: int) -> TokenPar
     return TokenParse(ExpandedParameterPart(rule_parse.part), rule_parse.idx)
 
 
-def parse_special_expanded_parameter(token_list: List[AltToken], index: int) -> TokenParse:
-    name_token = token_list[index + 1]
-    if not isinstance(name_token, ParameterNameToken):
-        raise GrammarParserError(f"Expected parameter name following '@'; instead got: {name_token}")
-    parameter_name = name_token.text
-    brace_token = token_list[index + 2]
-    if not isinstance(brace_token, BracedToken):
-        raise GrammarParserError(f"Expected braced expression following parameter name; instead got: {brace_token}")
-    if not isinstance(token_list[index + 3], ColonToken):
-        raise GrammarParserError(f"Expected colon following braced expression; instead got: {token_list[index + 3]}")
-    rule_parse = parse_rule_literal(token_list, index + 4)
-    part = SpecialExpandedParameterPart(parameter_name, brace_token.left, brace_token.right, rule_parse.part)
-    return parse_possible_optional(token_list, rule_parse.idx, part)
-
-
-def parse_possible_repeatable_or_optional(token_list: List[AltToken],
-                                          index: int,
+def parse_possible_repeatable_or_optional(token_list: List[AltToken], index: int,
                                           enclosed_part: ProductionPart) -> TokenParse:
     if index >= len(token_list):
         return TokenParse(enclosed_part, index)
     token = token_list[index]
-    if isinstance(token, RepeatToken):
+    if isinstance(token, SeparatedRepeatToken):
+        return parse_separated_repeat_token(token_list, index + 1, enclosed_part)
+    elif isinstance(token, RepeatToken):
         return TokenParse(RepeatPart(enclosed_part), index + 1)
     else:
         return parse_possible_optional(token_list, index, enclosed_part)
+
+
+def parse_separated_repeat_token(token_list: List[AltToken], index: int, enclosed_part: ProductionPart) -> TokenParse:
+    if index >= len(token_list) or not isinstance(token_list[index], BracedToken):
+        raise GrammarParserError(f"Expected braced token after rep-sep '&'; instead got {token_list[index]}")
+    token: BracedToken = token_list[index]
+    return TokenParse(SeparatedRepeatPart(LiteralPart(token.text), enclosed_part), index + 1)
 
 
 def parse_possible_optional(token_list: List[AltToken], index: int, enclosed_part: ProductionPart) -> TokenParse:
