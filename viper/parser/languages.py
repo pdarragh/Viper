@@ -523,7 +523,15 @@ def parse_null(lang: Language) -> SPPF:
             return SPPF()
         return SPPF(ParseTreePair(left_parse, right_parse))
     if isinstance(lang, Alt):
-        return parse_null(lang.this) + parse_null(lang.that)
+        this_parse = parse_null(lang.this)
+        that_parse = parse_null(lang.that)
+        if is_empty(this_parse):
+            return that_parse
+        else:
+            if is_empty(that_parse):
+                return this_parse
+            else:
+                return this_parse + that_parse
     if isinstance(lang, Rep):
         rep_parse = parse_null(lang.lang)
         if is_empty(rep_parse):
