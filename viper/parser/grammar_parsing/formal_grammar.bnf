@@ -5,7 +5,7 @@
 <file_lines>    ::= FileNewline NEWLINE
                   | FileStmt stmt:<stmt>
 
-<func_def>      ::= FuncDef 'def' name:NAME @<param_list> '->' func_type:CLASS ':' body:<suite>
+<func_def>      ::= FuncDef 'def' name:NAME @<parameters> '->' func_type:CLASS ':' body:<suite>
 
 <parameters>    ::= Parameters '(' params:<parameter>&{,}? ')'
 <parameter>     ::= Parameter external:NAME? internal:NAME ':' param_type:CLASS
