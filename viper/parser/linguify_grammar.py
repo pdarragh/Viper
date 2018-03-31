@@ -8,12 +8,12 @@ from .languages import *
 from viper.error import ViperError
 from viper.lexer import Lexeme
 
-from typing import Any, Callable, Dict, List, NamedTuple, Optional
+from typing import Any, Callable, Dict, List, NamedTuple, Optional, Tuple
 
 
 RuleDict = Dict[str, Language]
 ParamFunc = Callable[[SPPF], Any]
-PartTuple = NamedTuple('PartTuple', [('lang', Language), ('name', Optional[str])])
+PartTuple = NamedTuple('PartTuple', [('lang', Language), ('name', Optional[str]), ('lift', bool)])
 
 
 class LinguifierError(ViperError):
@@ -51,21 +51,22 @@ def linguify_rule_alias_production(production: RuleAliasProduction, rule_dict: R
 
 
 def linguify_named_production(production: NamedProduction, rule_dict: RuleDict) -> Language:
-    param_names: List[Optional[str]] = []
+    parameters: List[Tuple[Optional[str], bool]] = []
     part_langs = []
     for part in production.parts:
         part = linguify_production_part(part, rule_dict)
         part_langs.append(part.lang)
-        param_names.append(part.name)
+        param_tuple = (part.name, part.lift)
+        parameters.append(param_tuple)
     prod_lang = concat(*part_langs)
-    prod_lang = make_ast_red(prod_lang, production.name, param_names)
+    prod_lang = make_ast_red(prod_lang, production.name, parameters)
     return prod_lang
 
 
 class ASTNodeRedFunc(RedFunc):
-    def __init__(self, name: str, param_names: List[Optional[str]]):
+    def __init__(self, name: str, parameters: List[Tuple[Optional[str], bool]]):
         self.name = name
-        self.param_names = param_names
+        self.parameters = parameters
 
     def make_nice_string(self, start_column: int) -> str:
         return self.name
@@ -86,7 +87,9 @@ class ASTNodeRedFunc(RedFunc):
         """
         params = {}
         curr = sppf
-        for name in self.param_names:
+        for name, lift in self.parameters:
+            if name is not None and lift:
+                raise LinguifierError("Cannot lift parameters with named target.")
             if not curr:
                 # There was nothing for the parameter to match.
                 return SPPF()
@@ -94,6 +97,7 @@ class ASTNodeRedFunc(RedFunc):
                 # TODO: Not sure if this is correct.
                 raise LinguifierError(f"SPPF has too many children: {curr}")
             child = curr[0]
+            to_add = None
             if isinstance(child, ParseTreeEmpty):
                 return SPPF()
             elif isinstance(child, ParseTreeEps):
@@ -102,28 +106,36 @@ class ASTNodeRedFunc(RedFunc):
                 else:
                     params[name] = None
             elif isinstance(child, ParseTreeChar):
-                if name is not None:
-                    params[name] = child.token
+                if name is not None or lift:
+                    to_add = child.token
                 curr = SPPF()
             elif isinstance(child, ParseTreePair):
                 param_sppf = child.left
                 if len(param_sppf) != 1:
                     raise LinguifierError(f"Invalid child SPPF: {param_sppf}")
-                if name is not None:
+                if name is not None or lift:
                     # TODO: This should be checked more safely.
                     param_child = param_sppf[0]
                     if isinstance(param_child, ParseTreeChar):
-                        params[name] = param_child.token
+                        to_add = param_child.token
                     else:
                         raise LinguifierError(f"Invalid child SPPF child: {param_child}")
                 curr = child.right
             else:
                 raise LinguifierError("Invalid child node.")
+            if to_add is not None:
+                if lift:
+                    if not isinstance(to_add, ASTNode):
+                        raise LinguifierError(f"Cannot lift parameters from child: {to_add}")
+                    else:
+                        params.update(to_add._params)
+                else:
+                    params[name] = to_add
         return SPPF(ParseTreeChar(ASTNode(self.name, params)))
 
 
-def make_ast_red(lang: Language, name: str, param_names: List[Optional[str]]) -> Language:
-    func = ASTNodeRedFunc(name, param_names)
+def make_ast_red(lang: Language, name: str, parameters: List[Tuple[Optional[str], bool]]) -> Language:
+    func = ASTNodeRedFunc(name, parameters)
     return red(lang, func)
 
 
@@ -134,31 +146,31 @@ def make_rule_literal(rule_name: str, rule_dict: RuleDict) -> RuleLiteral:
 def linguify_production_part(part: ProductionPart, rule_dict: RuleDict) -> PartTuple:
     if isinstance(part, LiteralPart):
         part = literal(Lexeme(part.text))
-        return PartTuple(part, None)
+        return PartTuple(part, None, False)
     elif isinstance(part, SpecialPart):
         part = literal(SPECIAL_TOKENS[part.token])
-        return PartTuple(part, None)
+        return PartTuple(part, None, False)
     elif isinstance(part, RulePart):
         part = make_rule_literal(part.name, rule_dict)
-        return PartTuple(part, None)
+        return PartTuple(part, None, False)
     elif isinstance(part, RepeatPart):
         inner_part = linguify_production_part(part.part, rule_dict)
         part = rep(inner_part.lang)
-        return PartTuple(part, None)
+        return PartTuple(part, None, False)
     elif isinstance(part, SeparatedRepeatPart):
         inner_part = linguify_production_part(part.rule, rule_dict)
         separator_part = linguify_production_part(part.separator, rule_dict)
         part = sep_rep(separator_part.lang, inner_part.lang)
-        return PartTuple(part, None)
+        return PartTuple(part, None, False)
     elif isinstance(part, OptionPart):
         inner_part = linguify_production_part(part.part, rule_dict)
         part = opt(inner_part.lang)
-        return PartTuple(part, None)
+        return PartTuple(part, None, False)
     elif isinstance(part, ParameterPart):
         inner_part = linguify_production_part(part.part, rule_dict)
-        return PartTuple(inner_part.lang, part.name)
+        return PartTuple(inner_part.lang, part.name, False)
     elif isinstance(part, LiftedParameterPart):
-        # TODO: Fix this.
-        return linguify_production_part(part.rule, rule_dict)
+        inner_part = linguify_production_part(part.rule, rule_dict)
+        return PartTuple(inner_part.lang, inner_part.name, True)
     else:
         raise LinguifierError(f"Cannot linguify unknown production part: {part}")
