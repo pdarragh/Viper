@@ -106,6 +106,52 @@ class RightEpsRedFunc(RedFunc):
         return SPPF(ParseTreePair(left, self.right))
 
 
+class SepRepRedFunc(RedFunc):
+    def make_nice_string(self, start_column: int) -> str:
+        return "&"
+
+    def __call__(self, sppf: SPPF) -> SPPF:
+        if len(sppf) == 0:
+            return SPPF()
+        elif len(sppf) == 1:
+            child = sppf[0]
+            if isinstance(child, ParseTreeEps):
+                return SPPF()
+            elif isinstance(child, ParseTreeChar):
+                return SPPF(ParseTreeChar([child.token]))
+            elif isinstance(child, ParseTreePair):
+                accum = []
+                curr = child
+                while isinstance(curr, ParseTreePair):
+                    inner_child_sppf: SPPF = curr.left
+                    if len(inner_child_sppf) == 0:
+                        return SPPF()
+                    elif len(inner_child_sppf) == 1:
+                        inner_child = inner_child_sppf[0]
+                        if not isinstance(inner_child, ParseTreeChar):
+                            raise RuntimeError(f"Invalid inner child of sep-rep reduction: {curr.left}")
+                        accum.append(inner_child.token)
+                        inner_sppf: SPPF = curr.right
+                        if len(inner_sppf) == 0:
+                            return SPPF()
+                        elif len(inner_sppf) == 1:
+                            curr = inner_sppf[0]
+                        else:
+                            raise RuntimeError("Too many children in inner-inner sep-rep reduction target.")
+                    else:
+                        raise RuntimeError("Too many children in inner sep-rep reduction target.")
+                if isinstance(curr, ParseTreeEmpty):
+                    return SPPF()
+                elif isinstance(curr, ParseTreeEps):
+                    return SPPF(ParseTreeChar(accum))
+                else:
+                    raise RuntimeError("Invalid inner sep-rep reduction target.")
+            else:
+                raise RuntimeError("Invalid sep-rep reduction target.")
+        else:
+            raise RuntimeError("Too many children from sep-rep reduction.")
+
+
 class SepRepEpsRedFunc(RedFunc):
     def make_nice_string(self, start_column: int) -> str:
         return "sep-rep epsilon"
@@ -467,8 +513,9 @@ def sep_rep(sep_lang: Language, lang: Language) -> Language:
              / \
             s   w
     """
-    return alt(red(eps(lambda: SPPF(ParseTreeEps())), SepRepEpsRedFunc()),
-               concat(lang, rep(red(concat(sep_lang, lang), SepRepConcatRedFunc()))))
+    return red(alt(red(eps(lambda: SPPF(ParseTreeEps())), SepRepEpsRedFunc()),
+                   concat(lang, rep(red(concat(sep_lang, lang), SepRepConcatRedFunc())))),
+               SepRepRedFunc())
 
 
 def opt(lang: Language) -> Language:
