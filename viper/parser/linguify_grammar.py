@@ -116,7 +116,9 @@ class ASTNodeRedFunc(RedFunc):
                 if name is not None or lift:
                     # TODO: This should be checked more safely.
                     param_child = param_sppf[0]
-                    if isinstance(param_child, ParseTreeChar):
+                    if isinstance(param_child, ParseTreeEps):
+                        to_add = None
+                    elif isinstance(param_child, ParseTreeChar):
                         to_add = param_child.token
                     else:
                         raise LinguifierError(f"Invalid child SPPF child: {param_child}")
