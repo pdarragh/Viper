@@ -61,7 +61,7 @@ class ParameterPart(ProductionPart):
         return self.name + ": " + repr(self.part)
 
 
-class ExpandedParameterPart(ProductionPart):
+class LiftedParameterPart(ProductionPart):
     def __init__(self, rule_part: ProductionPart):
         self.rule = rule_part
 

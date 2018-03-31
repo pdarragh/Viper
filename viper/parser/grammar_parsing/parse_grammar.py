@@ -60,8 +60,8 @@ def parse_production(token_list: List[AltToken]) -> NamedProduction:
             parse = parse_special_literal(token_list, i)
         elif isinstance(token, ParameterNameToken):
             parse = parse_parameter(token_list, i)
-        elif isinstance(token, ParameterExpansionToken):
-            parse = parse_expanded_parameter(token_list, i)
+        elif isinstance(token, LiftedParameterToken):
+            parse = parse_lifted_parameter(token_list, i)
         else:
             raise GrammarParserError(f"Unexpected token in production: {token}")
         parts.append(parse.part)
@@ -101,9 +101,9 @@ def parse_parameter(token_list: List[AltToken], index: int) -> TokenParse:
     return TokenParse(ParameterPart(parameter_name, match_parse.part), match_parse.idx)
 
 
-def parse_expanded_parameter(token_list: List[AltToken], index: int) -> TokenParse:
+def parse_lifted_parameter(token_list: List[AltToken], index: int) -> TokenParse:
     rule_parse = parse_rule_literal(token_list, index + 1)
-    return TokenParse(ExpandedParameterPart(rule_parse.part), rule_parse.idx)
+    return TokenParse(LiftedParameterPart(rule_parse.part), rule_parse.idx)
 
 
 def parse_possible_repeatable_or_optional(token_list: List[AltToken], index: int,

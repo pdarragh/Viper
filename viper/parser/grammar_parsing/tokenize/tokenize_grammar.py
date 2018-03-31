@@ -220,7 +220,7 @@ def tokenize_dequoted_subalternate(token: DequotedSubalternate) -> AltToken:
     elif text == '?':
         return OptionalToken(text)
     elif text == '@':
-        return ParameterExpansionToken(text)
+        return LiftedParameterToken(text)
     elif text == '&':
         return SeparatedRepeatToken(text)
     elif text == ':':

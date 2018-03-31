@@ -157,7 +157,7 @@ def linguify_production_part(part: ProductionPart, rule_dict: RuleDict) -> PartT
     elif isinstance(part, ParameterPart):
         inner_part = linguify_production_part(part.part, rule_dict)
         return PartTuple(inner_part.lang, part.name)
-    elif isinstance(part, ExpandedParameterPart):
+    elif isinstance(part, LiftedParameterPart):
         # TODO: Fix this.
         return linguify_production_part(part.rule, rule_dict)
     else:

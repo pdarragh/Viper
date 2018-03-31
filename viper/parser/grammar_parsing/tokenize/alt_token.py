@@ -26,7 +26,7 @@ class OptionalToken(AltToken):
     pass
 
 
-class ParameterExpansionToken(AltToken):
+class LiftedParameterToken(AltToken):
     pass
 
 
