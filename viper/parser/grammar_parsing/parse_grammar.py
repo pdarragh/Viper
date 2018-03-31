@@ -123,7 +123,8 @@ def parse_separated_repeat_token(token_list: List[AltToken], index: int, enclose
     if index >= len(token_list) or not isinstance(token_list[index], BracedToken):
         raise GrammarParserError(f"Expected braced token after rep-sep '&'; instead got {token_list[index]}")
     token: BracedToken = token_list[index]
-    return TokenParse(SeparatedRepeatPart(LiteralPart(token.text), enclosed_part), index + 1)
+    part = TokenParse(SeparatedRepeatPart(LiteralPart(token.text), enclosed_part), index + 1)
+    return parse_possible_optional(token_list, part.idx, part.part)
 
 
 def parse_possible_optional(token_list: List[AltToken], index: int, enclosed_part: ProductionPart) -> TokenParse:
