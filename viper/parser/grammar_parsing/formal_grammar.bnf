@@ -5,11 +5,9 @@
 <file_lines>    ::= FileNewline NEWLINE
                   | FileStmt stmt:<stmt>
 
-<func_def>      ::= FuncDef 'def' name:NAME params:<parameters> '->' func_type:CLASS ':' body:<suite>
+<func_def>      ::= FuncDef 'def' name:NAME @<param_list> '->' func_type:CLASS ':' body:<suite>
 
-<parameters>    ::= Parameters '(' &params{param,param_list}:<params_list>? ')'
-<params_list>   ::= SingleParam param:<parameter>
-                  | ParamList param:<parameter> ',' param_list:<params_list>
+<parameters>    ::= Parameters '(' params:<parameter>&{,}? ')'
 <parameter>     ::= Parameter external:NAME? internal:NAME ':' param_type:CLASS
 
 <suite>         ::= SimpleSuite stmt:<simple_stmt>
@@ -21,21 +19,18 @@
 <simple_stmt>   ::= SimpleStmt expr_stmt:<expr_stmt> NEWLINE
 <expr_stmt>     ::= PassStmt 'pass'
                   | ReturnStmt 'return' exprs:<op_expr_list>?
-                  | ExprListStmt &exprs{op_expr,op_expr_list}:<op_expr_list>
-<op_expr_list>  ::= SimpleOpExprList op_expr:<op_expr>
-                  | OpExprList op_expr:<op_expr> ',' op_expr_list:<op_expr_list>
-
+                  | ExprListStmt @<op_expr_list>
+<op_expr_list>  ::= OpExprList op_exprs:<op_expr>&{,}
 <op_expr>       ::= OpExpr left_ops:OPERATOR* expr:<expr> sub_op_exprs:<sub_op_expr>* right_ops:OPERATOR*
 <sub_op_expr>   ::= SubOpExpr first_op:OPERATOR ops:OPERATOR* expr:<expr>
 
-<expr_list>     ::= SimpleExprList expr:<expr>
-                  | ExprList expr:<expr> ',' expr_list:<expr_list>
+<expr_list>     ::= ExprList exprs:<expr>&{,}
 <expr>          ::= Expr atom:<atom> trailers:<trailer>*
-<atom>          ::= ParenExpr '(' &exprs{op_expr,op_expr_list}:<op_expr_list>? ')'
+<atom>          ::= ParenExpr '(' expr_list:<op_expr_list>? ')'
                   | Name name:NAME
                   | Number num:NUMBER
                   | Ellipsis '...'
-<trailer>       ::= Args '(' &args{arg,arg_list}:<arg_list>? ')'
+<trailer>       ::= Args '(' @<arg_list> ')'
                   | Field '.' field:NAME
 
 <compound_stmt> ::= <func_def>
@@ -49,7 +44,6 @@
 
 <common_def>    ::= CommonDef name:CLASS args:<arguments>? ':' body:<suite>
 
-<arguments>     ::= Args '(' args:<arg_list>? ')'
-<arg_list>      ::= SingleArg arg:<argument>
-                  | ArgList arg:<argument> ',' arg_list:<arg_list>
+<arguments>     ::= Arguments '(' @<arg_list> ')'
+<arg_list>      ::= ArgList args:<argument>&{,}?
 <argument>      ::= <expr>
