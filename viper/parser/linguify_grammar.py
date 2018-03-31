@@ -143,7 +143,7 @@ def linguify_production_part(part: ProductionPart, rule_dict: RuleDict) -> PartT
         return PartTuple(part, None)
     elif isinstance(part, RepeatPart):
         inner_part = linguify_production_part(part.part, rule_dict)
-        part = rep(inner_part.lang)  # TODO: Ensure inner_part.func is unneeded.
+        part = rep(inner_part.lang)
         return PartTuple(part, None)
     elif isinstance(part, SeparatedRepeatPart):
         inner_part = linguify_production_part(part.rule, rule_dict)
@@ -152,7 +152,7 @@ def linguify_production_part(part: ProductionPart, rule_dict: RuleDict) -> PartT
         return PartTuple(part, None)
     elif isinstance(part, OptionPart):
         inner_part = linguify_production_part(part.part, rule_dict)
-        part = opt(inner_part.lang)  # TODO: Ensure inner_part.func is unneeded.
+        part = opt(inner_part.lang)
         return PartTuple(part, None)
     elif isinstance(part, ParameterPart):
         inner_part = linguify_production_part(part.part, rule_dict)
