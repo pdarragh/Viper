@@ -1,4 +1,5 @@
-from .languages import SPPF, make_sppf
+from .ast import ASTNode
+from .languages import ParseTreeChar, make_sppf
 from .linguify_grammar import linguify_grammar_file
 
 from viper.lexer import Lexeme
@@ -12,9 +13,21 @@ class Grammar:
         self.file = grammar_filename
         self.rules = linguify_grammar_file(self.file)
 
-    def parse_rule(self, rule: str, lexemes: List[Lexeme]) -> SPPF:
+    def parse_rule(self, rule: str, lexemes: List[Lexeme]) -> ASTNode:
         lang = self.rules[rule]
-        return make_sppf(lang, lexemes)
+        sppf = make_sppf(lang, lexemes)
+        if len(sppf) == 0:
+            raise RuntimeError("Invalid parse.")
+        elif len(sppf) == 1:
+            child = sppf[0]
+            if not isinstance(child, ParseTreeChar):
+                raise RuntimeError(f"Invalid parse result: {child}")
+            result = child.token
+            if not isinstance(result, ASTNode):
+                raise RuntimeError(f"Invalid parse result: {result}")
+            return result
+        else:
+            raise RuntimeError("Ambiguous parse.")
 
 
 GRAMMAR_FILE = join(dirname(__file__), join('grammar_parsing', 'formal_grammar.bnf'))
