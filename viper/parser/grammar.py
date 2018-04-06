@@ -1,4 +1,4 @@
-from .ast import ASTNode
+from .ast_node import ASTNode
 from .languages import ParseTreeChar, make_sppf
 from .linguify_grammar import linguify_grammar_file
 

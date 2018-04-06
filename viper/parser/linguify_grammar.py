@@ -1,4 +1,4 @@
-from .ast import ASTNode
+from .ast_node import ASTNode
 from .grammar_parsing.parse_grammar import parse_grammar_file
 from .grammar_parsing.production import *
 from .grammar_parsing.production_part import *
