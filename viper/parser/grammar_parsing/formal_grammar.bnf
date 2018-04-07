@@ -8,8 +8,11 @@
 <suite>         ::= SimpleSuite stmt:<simple_stmt>
                   | ComplexSuite NEWLINE INDENT stmt:<stmt> stmts:<stmt>* DEDENT
 
-<stmt>          ::= SimpleStmt expr_stmt:<expr_stmt> NEWLINE
-                  | FuncDefStmt @<func_def>
+<stmt>          ::= <simple_stmt>
+                  | <compound_stmt>
+
+<simple_stmt>   ::= SimpleStmt expr_stmt:<expr_stmt> NEWLINE
+<compound_stmt> ::= FuncDefStmt @<func_def>
                   | ClassDefStmt @<class_def>
                   | InterfaceDefStmt @<interface_def>
                   | DataDefStmt @<data_def>
