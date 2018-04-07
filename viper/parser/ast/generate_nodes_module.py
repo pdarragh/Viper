@@ -18,9 +18,17 @@ from typing import Dict, List, Optional, Tuple
 #
 # Classes in (1) must be written first, then (2), then (3).
 
+Param = Tuple[str, Optional[str]]
 
-Arg = Tuple[str, Optional[str]]
-ArgList = List[Arg]
+
+class Arg:
+    def __init__(self, name: Optional[str], type: Optional[str], wrappers=None):
+        self.name = name
+        self.type = type
+        if wrappers:
+            self.wrappers = wrappers
+        else:
+            self.wrappers = []
 
 
 class ASTNodeGenerator:
@@ -28,9 +36,9 @@ class ASTNodeGenerator:
 
     def __init__(self, filename: str):
         self.tree = None
-        parsed_rules = parse_grammar_file(filename)
-        self.build_rule_tree(parsed_rules)
-        for rule, production_list in parsed_rules.items():
+        self.parsed_rules = parse_grammar_file(filename)
+        self.build_rule_tree(self.parsed_rules)
+        for rule, production_list in self.parsed_rules.items():
             if len(production_list) == 1:
                 self.make_ast_node_class_from_single_production(rule, production_list[0])
             else:
@@ -40,7 +48,10 @@ class ASTNodeGenerator:
         # Add the header.
         lines = [
             "# This module was automatically generated.",
-            ""
+            "",
+            "from typing import List, Optional",
+            "",
+            "",
         ]
         # Set the depths of the nodes to accommodate parameters.
         from itertools import chain
@@ -152,8 +163,7 @@ class ASTNodeGenerator:
             # This was handled in pre-processing.
             return
         elif isinstance(production, NamedProduction):
-            args = self.get_args_from_production(production)
-            self.make_ast_node_class(rule, args)
+            self.make_ast_node_class(rule, production.parts)
         else:
             raise RuntimeError  # TODO: Replace with custom error.
 
@@ -164,44 +174,81 @@ class ASTNodeGenerator:
         for production in production_list:
             if isinstance(production, NamedProduction):
                 class_name = production.name
-                args = self.get_args_from_production(production)
-                self.make_ast_node_class(class_name, args)
+                self.make_ast_node_class(class_name, production.parts)
 
-    def get_args_from_production(self, production: NamedProduction) -> List[Arg]:
-        args: List[Arg] = []
-        for part in production.parts:
-            if isinstance(part, ParameterPart):
-                if isinstance(part.part, RulePart):
-                    arg_type = part.part.name
-                else:
-                    arg_type = None
-                pair = (part.name, arg_type)
-                args.append(pair)
-            elif isinstance(part, LiftedParameterPart):
-                ...
-            else:
-                continue
-        return args
-
-    def make_ast_node_class(self, class_rule_name: str, args: List[Arg]):
+    def make_ast_node_class(self, class_rule_name: str, parts: List[ProductionPart]):
         node = self.tree[class_rule_name]
-        node.params = list(filter(lambda p: p is not None, map(lambda p: p[1], args)))
         lines = node.lines
         class_name = self.convert_name_to_class_name(class_rule_name)
         superclasses = ', '.join([self.convert_name_to_class_name(parent.name) for parent in node.parents])
 
-        def param_from_arg(arg: Arg) -> str:
-            arg_name, arg_type = arg
-            return arg_name if arg_type is None else arg_name + ": " + self.convert_name_to_class_name(arg_type)
+        has_args = False
+        params = [('self', None)]
+        for part in parts:
+            arg = self.get_arg_from_production_part(part)
+            if arg is None or arg.name is None:
+                continue
+            if arg.type is None:
+                arg_type = None
+            else:
+                has_args = True
+                node.params.append(arg.type)
+                arg_type = self.convert_name_to_class_name(arg.type)
+                for wrapper in reversed(arg.wrappers):
+                    arg_type = wrapper + '[' + arg_type + ']'
+            pair = (arg.name, arg_type)
+            params.append(pair)
 
-        params = ', '.join(map(param_from_arg, [('self', None)] + args))
+        def param_to_str(param: Param) -> str:
+            param_name, param_type = param
+            return param_name if param_type is None else param_name + ": " + self.convert_name_to_class_name(param_type)
+
+        joined_params = ', '.join(map(param_to_str, params))
         lines.append(f"class {class_name}({superclasses}):")
-        if args:
-            lines.append(f"    def__init__({params}):")
-            for name, _ in args:
+        if has_args:
+            lines.append(f"    def__init__({joined_params}):")
+            for name in (name for name, _ in params if name != 'self'):
                 lines.append(f"        self.{name} = {name}")
         else:
             lines.append(f"    pass")
+
+    def get_arg_from_production_part(self, part: ProductionPart) -> Optional[Arg]:
+            if isinstance(part, LiteralPart):
+                return None
+            elif isinstance(part, SpecialPart):
+                return None
+            elif isinstance(part, RulePart):
+                return Arg(None, part.name)
+            elif isinstance(part, RepeatPart):
+                part_arg = self.get_arg_from_production_part(part.part)
+                if part_arg is None:
+                    return None
+                arg = Arg(part_arg.name, part_arg.type, part_arg.wrappers)
+                arg.wrappers.append('List')
+                return arg
+            elif isinstance(part, SeparatedRepeatPart):
+                part_arg = self.get_arg_from_production_part(part.rule)
+                if part_arg is None:
+                    return None
+                arg = Arg(part_arg.name, part_arg.type, part_arg.wrappers)
+                arg.wrappers.append('List')
+                return arg
+            elif isinstance(part, OptionPart):
+                part_arg = self.get_arg_from_production_part(part.part)
+                if part_arg is None:
+                    return None
+                arg = Arg(part_arg.name, part_arg.type, part_arg.wrappers)
+                arg.wrappers.append('Optional')
+                return arg
+            elif isinstance(part, ParameterPart):
+                part_arg = self.get_arg_from_production_part(part.part)
+                if part_arg is None:
+                    return Arg(part.name, None)
+                return Arg(part.name, part_arg.type, part_arg.wrappers)
+            elif isinstance(part, LiftedParameterPart):
+                ...
+            else:
+                raise RuntimeError(f"Unexpected production part type: {type(part)}")  # TODO: Replace with custom error.
 
     def convert_name_to_class_name(self, name: str) -> str:
         if name[0].isupper():
