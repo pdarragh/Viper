@@ -60,9 +60,11 @@ class ASTNodeGenerator:
             self.parents = []
             self.children = []
             self.lines = []
+            self.depth = 0
 
         def add_new_child(self, child_name: str):
             node = ASTNodeGenerator.ClassTreeNode(child_name)
+            node.depth = self.depth + 1
             node.parents.append(self)
             self.children.append(node)
             return node
@@ -92,6 +94,7 @@ class ASTNodeGenerator:
                 parent_node = self.tree[parent]
                 node.parents.append(parent_node)
                 parent_node.children.append(node)
+            node.depth = max(parent.depth for parent in node.parents)
         for production, parent in productions.items():
             parent_node = self.tree[parent]
             self.tree[production] = parent_node.add_new_child(production)
