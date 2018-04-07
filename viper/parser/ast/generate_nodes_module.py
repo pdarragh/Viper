@@ -2,6 +2,7 @@ from ..grammar_parsing.parse_grammar import parse_grammar_file
 from ..grammar_parsing.production import *
 from ..grammar_parsing.production_part import *
 
+from collections import defaultdict
 from typing import Dict, List, Optional, Tuple
 
 
@@ -69,17 +70,15 @@ class ASTNodeGenerator:
     def build_rule_tree(self, parsed_rules: Dict[str, List[Production]]):
         self.tree = ASTNodeGenerator.ClassTree()
 
-        rules = set()       # All rules.
-        aliases = {}        # Map: aliased-rule -> [parent rules]
-        productions = {}    # Map: prod-name -> parent rule
+        rules = set()                   # All rules.
+        aliases = defaultdict(list)     # Map: aliased-rule -> [parent rules]
+        productions = {}                # Map: prod-name -> parent rule
 
         for rule, production_list in parsed_rules.items():
             rules.add(rule)
             for production in production_list:
                 if isinstance(production, RuleAliasProduction):
-                    parents = aliases.get(production.name, [])
-                    parents.append(rule)
-                    aliases[production.name] = parents
+                    aliases[production.name].append(rule)
                 elif isinstance(production, NamedProduction):
                     productions[production.name] = rule
                 else:
