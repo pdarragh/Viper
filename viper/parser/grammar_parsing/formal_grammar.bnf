@@ -5,18 +5,15 @@
 <file_lines>    ::= FileNewline NEWLINE
                   | FileStmt stmt:<stmt>
 
-<func_def>      ::= FuncDef 'def' name:NAME @<parameters> '->' func_type:CLASS ':' body:<suite>
-
-<parameters>    ::= Parameters '(' params:<parameter>&{,}? ')'
-<parameter>     ::= Parameter external:NAME? internal:NAME ':' param_type:CLASS
-
 <suite>         ::= SimpleSuite stmt:<simple_stmt>
                   | ComplexSuite NEWLINE INDENT stmt:<stmt> stmts:<stmt>* DEDENT
 
-<stmt>          ::= <simple_stmt>
-                  | <compound_stmt>
+<stmt>          ::= SimpleStmt expr_stmt:<expr_stmt> NEWLINE
+                  | FuncDefStmt @<func_def>
+                  | ClassDefStmt @<class_def>
+                  | InterfaceDefStmt @<interface_def>
+                  | DataDefStmt @<data_def>
 
-<simple_stmt>   ::= SimpleStmt expr_stmt:<expr_stmt> NEWLINE
 <expr_stmt>     ::= PassStmt 'pass'
                   | ReturnStmt 'return' exprs:<op_expr_list>?
                   | ExprListStmt @<op_expr_list>
@@ -33,17 +30,13 @@
 <trailer>       ::= Args '(' @<arg_list> ')'
                   | Field '.' field:NAME
 
-<compound_stmt> ::= <func_def>
-                  | <class_def>
-                  | <interface_def>
-                  | <data_def>
+<func_def>      ::= FuncDef 'def' name:NAME @<parameters> '->' func_type:CLASS ':' body:<suite>
+<parameters>    ::= Parameters '(' params:<parameter>&{,}? ')'
+<parameter>     ::= Parameter external:NAME? internal:NAME ':' param_type:CLASS
 
 <class_def>     ::= ClassDef 'class' @<common_def>
 <interface_def> ::= InterfaceDef 'interface' @<common_def>
 <data_def>      ::= DataDef 'data' @<common_def>
 
 <common_def>    ::= CommonDef name:CLASS args:<arguments>? ':' body:<suite>
-
-<arguments>     ::= Arguments '(' @<arg_list> ')'
-<arg_list>      ::= ArgList args:<argument>&{,}?
-<argument>      ::= <expr>
+<arguments>     ::= Arguments '(' args:<expr>&{,}? ')'
