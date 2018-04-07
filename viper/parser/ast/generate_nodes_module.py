@@ -5,6 +5,9 @@ from ..grammar_parsing.production_part import *
 from typing import Dict, List, Optional
 
 
+# TODO: Address invariant: parameter lifting can only be applied to monoproduction rules.
+
+
 def generate_from_grammar_file(grammar_filename: str, output_filename: str):
     ASTNodeGenerator(grammar_filename).generate(output_filename)
 
@@ -59,7 +62,7 @@ class ASTNodeGenerator:
                 # Auto-generation does not allow aliases.
                 raise RuntimeError  # TODO: Replace with custom error.
             if not isinstance(production, NamedProduction):
-                raise RuntimeError  #TODO: Replace with custom error.
+                raise RuntimeError  # TODO: Replace with custom error.
             class_name = production.name
             args = self.get_args_from_production(production)
             self.make_ast_node_class(class_name, superclass_name, args)
