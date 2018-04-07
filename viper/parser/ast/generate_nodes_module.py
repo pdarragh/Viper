@@ -7,6 +7,7 @@ from typing import Dict, List, Optional, Tuple
 
 
 # TODO: Address invariant: parameter lifting can only be applied to monoproduction rules.
+# ^ is this true? Not certain. Maybe just record each class's parameters and copy them.
     
     
 # Three levels:
@@ -41,6 +42,13 @@ class ASTNodeGenerator:
             "# This module was automatically generated.",
             ""
         ]
+        # Set the depths of the nodes to accommodate parameters.
+        from itertools import chain
+        queue = [self.tree.root]
+        while queue:
+            node = queue.pop(0)
+            node.depth = max(chain([0], (other.depth for other in chain(node.parents, map(lambda n: self.tree[n], node.params))))) + 1
+            queue += node.children
         # Organize nodes by depth in the tree.
         tiers = defaultdict(list)
         queue = [self.tree.root]
@@ -101,6 +109,7 @@ class ASTNodeGenerator:
             self.children = []
             self.lines = []
             self.depth = 0
+            self.params = []
 
         def __repr__(self):
             return self.name
@@ -176,6 +185,7 @@ class ASTNodeGenerator:
 
     def make_ast_node_class(self, class_rule_name: str, args: List[Arg]):
         node = self.tree[class_rule_name]
+        node.params = list(filter(lambda p: p is not None, map(lambda p: p[1], args)))
         lines = node.lines
         class_name = self.convert_name_to_class_name(class_rule_name)
         superclasses = ', '.join([self.convert_name_to_class_name(parent.name) for parent in node.parents])
