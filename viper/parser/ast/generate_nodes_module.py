@@ -38,11 +38,8 @@ class ASTNodeGenerator:
     def make_ast_node_class_from_single_production(self, rule: str, production: Production):
         class_name = self.convert_rule_name_to_class(rule)
         if isinstance(production, RuleAliasProduction):
-            # If the sole production is an alias, we give a type alias.
-            alias_name = self.convert_rule_name_to_class(production.name)
-            self.add_line(f"{class_name} = {alias_name}")
-            self.add_line("")
-            self.add_line("")
+            # Auto-generation does not allow aliases.
+            raise RuntimeError  # TODO: Replace with custom err.r
         elif isinstance(production, NamedProduction):
             args = self.get_args_from_production(production)
             self.make_ast_node_class(class_name, self.BASE_AST_CLASS_NAME, args)
@@ -50,21 +47,17 @@ class ASTNodeGenerator:
             raise RuntimeError  # TODO: Replace with custom error.
 
     def make_ast_node_classes_from_production_list(self, rule: str, production_list: List[Production]):
-        alias_instances = map(lambda p: isinstance(p, RuleAliasProduction), production_list)
-        if any(alias_instances):
-            if all(alias_instances):
-                # No type aliases are created because we cannot guarantee anything about the aliases' types.
-                return
-            else:
-                # We don't support mix-and-match with NamedProductions and RuleAliasProductions.
-                raise RuntimeError  # TODO: Replace with custom error.
         # Make the base class for these productions to inherit from.
         base_class_name = self.convert_rule_name_to_class(rule)
         self.make_ast_node_class(base_class_name, self.BASE_AST_CLASS_NAME, [])
         # Now create each child class.
         for production in production_list:
-            assert isinstance(production, NamedProduction)
-            class_name = self.convert_rule_name_to_class(production.name)
+            if isinstance(production, RuleAliasProduction):
+                # Auto-generation does not allow aliases.
+                raise RuntimeError  # TODO: Replace with custom error.
+            if not isinstance(production, NamedProduction):
+                raise RuntimeError  #TODO: Replace with custom error.
+            class_name = production.name
             args = self.get_args_from_production(production)
             self.make_ast_node_class(class_name, base_class_name, args)
 
