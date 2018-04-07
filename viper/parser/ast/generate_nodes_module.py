@@ -2,7 +2,7 @@ from ..grammar_parsing.parse_grammar import parse_grammar_file
 from ..grammar_parsing.production import *
 from ..grammar_parsing.production_part import *
 
-from typing import List, Optional
+from typing import Dict, List, Optional
 
 
 def generate_from_grammar_file(grammar_filename: str, output_filename: str):
@@ -14,6 +14,7 @@ class ASTNodeGenerator:
 
     def __init__(self, filename: str):
         self.lines: List[str] = []
+        self.class_names: Dict[str, str] = {}
         self.initialize()
         parsed_rules = parse_grammar_file(filename)
         for rule, production_list in parsed_rules.items():
@@ -36,11 +37,12 @@ class ASTNodeGenerator:
             of.writelines(self.lines)
 
     def make_ast_node_class_from_single_production(self, rule: str, production: Production):
-        class_name = self.convert_rule_name_to_class(rule)
         if isinstance(production, RuleAliasProduction):
             # Auto-generation does not allow aliases.
             raise RuntimeError  # TODO: Replace with custom err.r
         elif isinstance(production, NamedProduction):
+            class_name = self.convert_rule_name_to_class(rule)
+            self.class_names[rule] = class_name
             args = self.get_args_from_production(production)
             self.make_ast_node_class(class_name, self.BASE_AST_CLASS_NAME, args)
         else:
@@ -48,8 +50,9 @@ class ASTNodeGenerator:
 
     def make_ast_node_classes_from_production_list(self, rule: str, production_list: List[Production]):
         # Make the base class for these productions to inherit from.
-        base_class_name = self.convert_rule_name_to_class(rule)
-        self.make_ast_node_class(base_class_name, self.BASE_AST_CLASS_NAME, [])
+        superclass_name = self.convert_rule_name_to_class(rule)
+        self.class_names[rule] = superclass_name
+        self.make_ast_node_class(superclass_name, self.BASE_AST_CLASS_NAME, [])
         # Now create each child class.
         for production in production_list:
             if isinstance(production, RuleAliasProduction):
@@ -59,7 +62,7 @@ class ASTNodeGenerator:
                 raise RuntimeError  #TODO: Replace with custom error.
             class_name = production.name
             args = self.get_args_from_production(production)
-            self.make_ast_node_class(class_name, base_class_name, args)
+            self.make_ast_node_class(class_name, superclass_name, args)
 
     def get_args_from_production(self, production: NamedProduction) -> List[str]:
         args: List[str] = []
