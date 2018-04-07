@@ -54,6 +54,23 @@ class ASTNodeGenerator:
                 raise RuntimeError  # TODO: Replace with custom error.
             self._nodes[key] = value
 
+        def add(self, child_name: str, parent_name: str):
+            parent_node = self[parent_name]
+            if child_name in self._nodes:
+                child_node = self[child_name]
+                child_node.parents.append(parent_node)
+                child_node.depth = max(parent.depth for parent in child_node.parents)
+                parent_node.children.append(child_node)
+            else:
+                child_node = ASTNodeGenerator.ClassTreeNode(child_name)
+                child_node.depth = parent_node.depth + 1
+                child_node.parents.append(parent_node)
+                parent_node.children.append(child_node)
+                self[child_name] = child_node
+
+        def add_to_root(self, child_name: str):
+            self.add(child_name, self.root.name)
+
     class ClassTreeNode:
         def __init__(self, name: str):
             self.name = name
@@ -62,12 +79,6 @@ class ASTNodeGenerator:
             self.lines = []
             self.depth = 0
 
-        def add_new_child(self, child_name: str):
-            node = ASTNodeGenerator.ClassTreeNode(child_name)
-            node.depth = self.depth + 1
-            node.parents.append(self)
-            self.children.append(node)
-            return node
 
     def build_rule_tree(self, parsed_rules: Dict[str, List[Production]]):
         self.tree = ASTNodeGenerator.ClassTree()
@@ -87,7 +98,7 @@ class ASTNodeGenerator:
                     raise RuntimeError
 
         for rule in rules:
-            self.tree[rule] = self.tree.root.add_new_child(rule)
+            self.tree.add_to_root(rule)
         for alias, parents in aliases.items():
             node = self.tree[alias]
             for parent in parents:
@@ -96,8 +107,7 @@ class ASTNodeGenerator:
                 parent_node.children.append(node)
             node.depth = max(parent.depth for parent in node.parents)
         for production, parent in productions.items():
-            parent_node = self.tree[parent]
-            self.tree[production] = parent_node.add_new_child(production)
+            self.tree.add(production, parent)
 
     def make_ast_node_class_from_single_production(self, rule: str, production: Production):
         if isinstance(production, RuleAliasProduction):
