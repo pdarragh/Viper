@@ -91,11 +91,15 @@ class ASTNodeGenerator:
 
         for rule, production_list in parsed_rules.items():
             rules.add(rule)
+            solo = False
+            if len(production_list) == 1:
+                solo = True
             for production in production_list:
                 if isinstance(production, RuleAliasProduction):
                     aliases[production.name].append(rule)
                 elif isinstance(production, NamedProduction):
-                    productions[production.name] = rule
+                    if not solo:
+                        productions[production.name] = rule
                 else:
                     raise RuntimeError
 
