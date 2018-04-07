@@ -135,8 +135,8 @@ class ASTNodeGenerator:
     def make_ast_node_class(self, class_rule_name: str, args: List[Arg]):
         node = self.tree[class_rule_name]
         lines = node.lines
-        class_name = self.convert_rule_name_to_class_name(class_rule_name)
-        superclasses = ', '.join([self.convert_rule_name_to_class_name(parent.name) for parent in node.parents])
+        class_name = self.convert_name_to_class_name(class_rule_name)
+        superclasses = ', '.join([self.convert_name_to_class_name(parent.name) for parent in node.parents])
 
         def param_from_arg(arg: Arg) -> str:
             arg_name, arg_type = arg
@@ -151,5 +151,7 @@ class ASTNodeGenerator:
         else:
             lines.append(f"    pass")
 
-    def convert_rule_name_to_class_name(self, rule: str) -> str:
-        return ''.join(map(lambda s: s.title(), rule.split('_')))
+    def convert_name_to_class_name(self, name: str) -> str:
+        if name[0].isupper():
+            return name
+        return ''.join(map(lambda s: s.title(), name.split('_')))
