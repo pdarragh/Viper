@@ -6,8 +6,8 @@ from collections import defaultdict
 from typing import Dict, List, Optional, Tuple
 
 
-# TODO: Address invariant: parameter lifting can only be applied to monoproduction rules.
-# ^ is this true? Not certain. Maybe just record each class's parameters and copy them.
+# TODO: Parameters most be processed prior to line generation so lifting can occur.
+# TODO: Need to handle special tokens such as NAME, CLASS, and NUMBER.
     
     
 # Three levels:
