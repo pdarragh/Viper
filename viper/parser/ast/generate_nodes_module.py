@@ -35,6 +35,29 @@ class ASTNodeGenerator:
             else:
                 self.make_ast_node_classes_from_production_list(rule, production_list)
 
+    def generate_text(self) -> str:
+        # Add the header.
+        lines = [
+            "# This module was automatically generated.",
+            ""
+        ]
+        # Organize nodes by depth in the tree.
+        tiers = defaultdict(list)
+        queue = [self.tree.root]
+        while queue:
+            node = queue.pop(0)
+            tiers[node.depth].append(node)
+            queue += node.children
+        # Iterating by tier, add nodes' lines.
+        for depth in sorted(tiers.keys()):
+            tier = tiers[depth]
+            for node in tier:
+                lines += node.lines
+                lines += ["", ""]
+        # Remove extra blank line at the end and return.
+        del(lines[-1])
+        return '\n'.join(lines)
+
     class ClassTree:
         def __init__(self):
             self._nodes = {}
