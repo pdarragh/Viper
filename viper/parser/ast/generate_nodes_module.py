@@ -79,6 +79,8 @@ class ASTNodeGenerator:
             self.lines = []
             self.depth = 0
 
+        def __repr__(self):
+            return self.name
 
     def build_rule_tree(self, parsed_rules: Dict[str, List[Production]]):
         self.tree = ASTNodeGenerator.ClassTree()
