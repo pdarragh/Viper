@@ -182,7 +182,7 @@ class ASTNodeGenerator:
 
         def param_from_arg(arg: Arg) -> str:
             arg_name, arg_type = arg
-            return arg_name if arg_type is None else arg_name + ": {" + arg_type + "}"
+            return arg_name if arg_type is None else arg_name + ": " + self.convert_name_to_class_name(arg_type)
 
         params = ', '.join(map(param_from_arg, [('self', None)] + args))
         lines.append(f"class {class_name}({superclasses}):")
