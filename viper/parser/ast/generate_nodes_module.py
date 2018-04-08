@@ -162,6 +162,7 @@ class ASTNodeGenerator:
             self.tree.add_to_root(rule)
         for alias, parents in aliases.items():
             node = self.tree[alias]
+            node.parents = []
             for parent in parents:
                 parent_node = self.tree[parent]
                 node.parents.append(parent_node)
