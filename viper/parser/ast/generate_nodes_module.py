@@ -111,11 +111,15 @@ class ASTNodeGenerator:
             self._nodes[key] = value
 
         def add(self, child_name: str, parent_name: str):
+            if child_name in self._nodes:
+                raise RuntimeError  # TODO: Replace with custom error.
+            if parent_name not in self._nodes:
+                raise RuntimeError  # TODO: Replace with custom error.
             parent_node = self[parent_name]
-            child_node = self._nodes.get(child_name, ASTNodeGenerator.ClassTreeNode(child_name))
+            child_node = ASTNodeGenerator.ClassTreeNode(child_name)
             child_node.parents.append(parent_node)
             parent_node.children.append(child_node)
-            child_node.depth = max(parent.depth for parent in child_node.parents) + 1
+            child_node.depth = parent_node.depth + 1
             self[child_name] = child_node
 
         def add_to_root(self, child_name: str):
