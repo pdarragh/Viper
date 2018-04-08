@@ -21,6 +21,12 @@ from typing import Dict, List, Optional, Tuple
 Param = Tuple[str, Optional[str]]
 
 
+def generate_from_grammar_file(grammar_filename: str, output_filename: str):
+    text = ASTNodeGenerator(grammar_filename).generate_text()
+    with open(output_filename, 'w') as of:
+        of.write(text)
+
+
 class Arg:
     def __init__(self, name: Optional[str], type: Optional[str], wrappers=None):
         self.name = name
