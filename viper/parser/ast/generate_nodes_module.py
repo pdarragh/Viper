@@ -29,9 +29,9 @@ def generate_from_grammar_file(grammar_filename: str, output_filename: str):
 
 
 class Arg:
-    def __init__(self, name: Optional[str], type: Optional[str], wrappers=None):
+    def __init__(self, name: Optional[str], type_: Optional[str], wrappers=None):
         self.name = name
-        self.type = type
+        self.type = type_
         if wrappers:
             self.wrappers = wrappers
         else:
