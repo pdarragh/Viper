@@ -73,12 +73,12 @@ class ASTNodeGenerator:
                     node.depth = new_depth
                     needs_update = True
                 queue += node.children
-        # Organize nodes by depth in the tree.
-        tiers = defaultdict(list)
+        # Organize nodes by depth in the tree without including duplicates.
+        tiers = defaultdict(set)
         queue = [self.tree.root]
         while queue:
             node = queue.pop(0)
-            tiers[node.depth].append(node)
+            tiers[node.depth].add(node)
             queue += node.children
         # Iterating by tier, add nodes' lines.
         for depth in sorted(tiers.keys()):
