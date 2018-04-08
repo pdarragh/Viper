@@ -3,6 +3,7 @@ from ..grammar_parsing.production import *
 from ..grammar_parsing.production_part import *
 
 from collections import defaultdict
+from itertools import chain
 from typing import Dict, List, Optional, Tuple
 
 
@@ -59,13 +60,19 @@ class ASTNodeGenerator:
             "",
             "",
         ]
-        # Set the depths of the nodes to accommodate parameters.
-        from itertools import chain
-        queue = [self.tree.root]
-        while queue:
-            node = queue.pop(0)
-            node.depth = max(chain([0], (other.depth for other in chain(node.parents, map(lambda n: self.tree[n], node.params))))) + 1
-            queue += node.children
+        # Set the depths of the nodes to accommodate parameters. Repeat until no updates are performed.
+        # TODO: How likely is it that this will repeat many times? Should a fix-point be computed differently?
+        needs_update = True
+        while needs_update:
+            needs_update = False
+            queue = [self.tree.root]
+            while queue:
+                node = queue.pop(0)
+                new_depth = max(chain([0], (self.tree[param].depth + 1 for param in node.params)))
+                if new_depth > node.depth:
+                    node.depth = new_depth
+                    needs_update = True
+                queue += node.children
         # Organize nodes by depth in the tree.
         tiers = defaultdict(list)
         queue = [self.tree.root]
