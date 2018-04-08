@@ -80,12 +80,12 @@ class ASTNodeGenerator:
     class ClassTree:
         def __init__(self):
             self._nodes = {}
-            root = ASTNodeGenerator.ClassTreeNode('AST')
+            root = ASTNodeGenerator.ClassTreeNode(ASTNodeGenerator.BASE_AST_CLASS_NAME)
             root.lines = [
-                'class AST:',
+                'class ' + root.name + ':',
                 '    pass'
             ]
-            self._nodes['AST'] = root
+            self._nodes[ASTNodeGenerator.BASE_AST_CLASS_NAME] = root
             self.root = root
 
         def __getitem__(self, item):
