@@ -104,17 +104,11 @@ class ASTNodeGenerator:
 
         def add(self, child_name: str, parent_name: str):
             parent_node = self[parent_name]
-            if child_name in self._nodes:
-                child_node = self[child_name]
-                child_node.parents.append(parent_node)
-                child_node.depth = max(parent.depth for parent in child_node.parents)
-                parent_node.children.append(child_node)
-            else:
-                child_node = ASTNodeGenerator.ClassTreeNode(child_name)
-                child_node.depth = parent_node.depth + 1
-                child_node.parents.append(parent_node)
-                parent_node.children.append(child_node)
-                self[child_name] = child_node
+            child_node = self._nodes.get(child_name, ASTNodeGenerator.ClassTreeNode(child_name))
+            child_node.parents.append(parent_node)
+            parent_node.children.append(child_node)
+            child_node.depth = max(parent.depth for parent in child_node.parents) + 1
+            self[child_name] = child_node
 
         def add_to_root(self, child_name: str):
             self.add(child_name, self.root.name)
