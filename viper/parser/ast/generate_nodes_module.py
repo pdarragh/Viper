@@ -263,7 +263,8 @@ class ASTNodeGenerator:
             else:
                 raise RuntimeError(f"Unexpected production part type: {type(part)}")  # TODO: Replace with custom error.
 
-    def convert_name_to_class_name(self, name: str) -> str:
+    @staticmethod
+    def convert_name_to_class_name(name: str) -> str:
         if name[0].isupper():
             return name
         return ''.join(map(lambda s: s.title(), name.split('_')))
