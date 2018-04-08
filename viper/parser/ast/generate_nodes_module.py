@@ -68,7 +68,8 @@ class ASTNodeGenerator:
             queue = [self.tree.root]
             while queue:
                 node = queue.pop(0)
-                new_depth = max(chain([0], (self.tree[param].depth + 1 for param in node.params)))
+                new_depth = max(chain([node.depth], (parent.depth + 1 for parent in node.parents)))
+                new_depth = max(chain([new_depth], (self.tree[param].depth + 1 for param in node.params)))
                 if new_depth > node.depth:
                     node.depth = new_depth
                     needs_update = True
