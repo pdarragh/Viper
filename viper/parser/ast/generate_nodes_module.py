@@ -144,7 +144,7 @@ class ASTNodeGenerator:
                     if not solo:
                         productions[production.name] = rule
                 else:
-                    raise RuntimeError
+                    raise RuntimeError  # TODO: Replace with custom class.
 
         for rule in rules:
             self.tree.add_to_root(rule)
@@ -206,7 +206,7 @@ class ASTNodeGenerator:
         joined_params = ', '.join(map(param_to_str, params))
         lines.append(f"class {class_name}({superclasses}):")
         if has_args:
-            lines.append(f"    def__init__({joined_params}):")
+            lines.append(f"    def __init__({joined_params}):")
             for name in (name for name, _ in params if name != 'self'):
                 lines.append(f"        self.{name} = {name}")
         else:
