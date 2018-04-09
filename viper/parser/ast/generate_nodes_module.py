@@ -19,7 +19,7 @@ from typing import Dict, List, Optional, Tuple
 #
 # Classes in (1) must be written first, then (2), then (3).
 
-Param = Tuple[str, Optional[str]]
+Param = Tuple[str, Optional[str], Optional[str]]
 
 
 def generate_from_grammar_file(grammar_filename: str, output_filename: str):
@@ -69,7 +69,9 @@ class ASTNodeGenerator:
             while queue:
                 node = queue.pop(0)
                 new_depth = max(chain([node.depth], (parent.depth + 1 for parent in node.parents)))
-                new_depth = max(chain([new_depth], (self.tree[param].depth + 1 for param in node.params)))
+                new_depth = max(chain([new_depth],
+                                      (self.tree[param].depth + 1
+                                       for _, param, _ in node.params if param is not None)))
                 if new_depth > node.depth:
                     node.depth = new_depth
                     needs_update = True
@@ -128,11 +130,11 @@ class ASTNodeGenerator:
     class ClassTreeNode:
         def __init__(self, name: str):
             self.name = name
-            self.parents = []
-            self.children = []
-            self.lines = []
+            self.parents: List[ASTNodeGenerator.ClassTreeNode] = []
+            self.children: List[ASTNodeGenerator.ClassTreeNode] = []
+            self.lines: List[str] = []
+            self.params: List[Param] = []
             self.depth = 0
-            self.params = []
 
         def __repr__(self):
             return self.name
@@ -159,68 +161,76 @@ class ASTNodeGenerator:
                     raise RuntimeError  # TODO: Replace with custom class.
 
         for rule in rules:
-            self.tree.add_to_root(rule)
+            self.tree.add_to_root(self.convert_name_to_class_name(rule))
         for alias, parents in aliases.items():
-            node = self.tree[alias]
+            node = self.tree[self.convert_name_to_class_name(alias)]
             node.parents = []
             for parent in parents:
-                parent_node = self.tree[parent]
+                parent_node = self.tree[self.convert_name_to_class_name(parent)]
                 node.parents.append(parent_node)
                 parent_node.children.append(node)
             node.depth = max(parent.depth for parent in node.parents)
         for production, parent in productions.items():
-            self.tree.add(production, parent)
+            self.tree.add(self.convert_name_to_class_name(production), self.convert_name_to_class_name(parent))
 
     def make_ast_node_class_from_single_production(self, rule: str, production: Production):
         if isinstance(production, RuleAliasProduction):
             # This was handled in pre-processing.
             return
         elif isinstance(production, NamedProduction):
-            self.make_ast_node_class(rule, production.parts)
+            class_name = self.convert_name_to_class_name(rule)
+            self.process_parameters(class_name, production.parts)
+            self.make_ast_node_class(class_name)
         else:
             raise RuntimeError  # TODO: Replace with custom error.
 
     def make_ast_node_classes_from_production_list(self, rule: str, production_list: List[Production]):
         # Make the base class for these productions to inherit from.
-        self.make_ast_node_class(rule, [])
+        self.make_ast_node_class(self.convert_name_to_class_name(rule))
         # Now create each child class.
         for production in production_list:
             if isinstance(production, NamedProduction):
-                class_name = production.name
-                self.make_ast_node_class(class_name, production.parts)
+                class_name = self.convert_name_to_class_name(production.name)
+                self.process_parameters(class_name, production.parts)
+                self.make_ast_node_class(class_name)
+            elif isinstance(production, RuleAliasProduction):
+                continue
+            else:
+                raise RuntimeError  # TODO: Replace with custom error.
 
-    def make_ast_node_class(self, class_rule_name: str, parts: List[ProductionPart]):
-        node = self.tree[class_rule_name]
-        lines = node.lines
-        class_name = self.convert_name_to_class_name(class_rule_name)
-        superclasses = ', '.join([self.convert_name_to_class_name(parent.name) for parent in node.parents])
-
-        has_args = False
-        params = [('self', None)]
+    def process_parameters(self, class_name: str, parts: List[ProductionPart]):
+        node = self.tree[class_name]
         for part in parts:
             arg = self.get_arg_from_production_part(part)
             if arg is None or arg.name is None:
                 continue
             if arg.type is None:
-                arg_type = None
+                param = (arg.name, None, None)
             else:
-                has_args = True
-                node.params.append(arg.type)
-                arg_type = self.convert_name_to_class_name(arg.type)
+                base_arg_type = self.convert_name_to_class_name(arg.type)
+                arg_type = base_arg_type
                 for wrapper in reversed(arg.wrappers):
-                    arg_type = wrapper + '[' + arg_type + ']'
-            pair = (arg.name, arg_type)
-            params.append(pair)
+                    arg_type = wrapper + '[' + base_arg_type + ']'
+                param = (arg.name, base_arg_type, arg_type)
+            node.params.append(param)
+
+    def make_ast_node_class(self, class_name: str):
+        node = self.tree[class_name]
+        lines = node.lines
+        superclasses = ', '.join([parent.name for parent in node.parents])
 
         def param_to_str(param: Param) -> str:
-            param_name, param_type = param
+            param_name, _, param_type = param
             return param_name if param_type is None else param_name + ": " + self.convert_name_to_class_name(param_type)
 
-        joined_params = ', '.join(map(param_to_str, params))
+        has_params = len(node.params) > 0
+        params = [('self', None, None)] + node.params
+
         lines.append(f"class {class_name}({superclasses}):")
-        if has_args:
+        if has_params:
+            joined_params = ', '.join(map(param_to_str, params))
             lines.append(f"    def __init__({joined_params}):")
-            for name in (name for name, _ in params if name != 'self'):
+            for name in (name for name, _, _ in params if name != 'self'):
                 lines.append(f"        self.{name} = {name}")
         else:
             lines.append(f"    pass")
