@@ -9,15 +9,30 @@ from typing import Dict, List, Optional, Tuple
 
 # TODO: Parameters most be processed prior to line generation so lifting can occur.
 # TODO: Need to handle special tokens such as NAME, CLASS, and NUMBER.
-    
-    
-# Three levels:
-#
-#   1. Rules that are superclasses of other rules (through aliasing).
-#   2. Rules that are superclasses only of productions.
-#   3. Productions.
-#
-# Classes in (1) must be written first, then (2), then (3).
+
+"""
+Three levels:
+
+    1. Rules that are superclasses of other rules (through aliasing).
+    2. Rules that are superclasses only of productions.
+    3. Productions.
+
+Classes in (1) must be written first, then (2), then (3).
+
+To successfully generate the output file:
+
+    1. Initialize nodes with obvious parent.
+        - Solo productions do not create parent classes.
+        - Non-solo productions create a parent base class (rule name).
+    2. Process unlifted parameters.
+        - Record lifted parameters for later.
+    3. Process lifted parameters.
+    4. Generate lines for each node.
+    5. Adjust nodes' depths based on lowest parent/parameter.
+    6. Generate text via BFS.
+    7. Write text to file.
+"""
+
 
 Param = Tuple[str, Optional[str], Optional[str]]
 
