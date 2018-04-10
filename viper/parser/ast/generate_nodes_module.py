@@ -44,16 +44,9 @@ class ASTNodeGenerator:
                 self.make_ast_node_class_from_single_production(rule, production_list[0])
             else:
                 self.make_ast_node_classes_from_production_list(rule, production_list)
+        self.adjust_node_depths()
 
-    def generate_text(self) -> str:
-        # Add the header.
-        lines = [
-            "# This module was automatically generated.",
-            "",
-            "from typing import List, Optional",
-            "",
-            "",
-        ]
+    def adjust_node_depths(self):
         # Set the depths of the nodes to accommodate parameters. Repeat until no updates are performed.
         # TODO: How likely is it that this will repeat many times? Should a fix-point be computed differently?
         needs_update = True
@@ -70,6 +63,16 @@ class ASTNodeGenerator:
                     node.depth = new_depth
                     needs_update = True
                 queue += node.children
+
+    def generate_text(self) -> str:
+        # Add the header.
+        lines = [
+            "# This module was automatically generated.",
+            "",
+            "from typing import List, Optional",
+            "",
+            "",
+        ]
         # Organize nodes by depth in the tree without including duplicates.
         tiers = defaultdict(set)
         queue = [self.tree.root]
