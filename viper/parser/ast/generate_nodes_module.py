@@ -16,6 +16,12 @@ def generate_from_grammar_file(grammar_filename: str, output_filename: str):
         of.write(text)
 
 
+def convert_name_to_class_name(name: str) -> str:
+    if name[0].isupper():
+        return name
+    return ''.join(map(lambda s: s.title(), name.split('_')))
+
+
 class Arg:
     def __init__(self, name: Optional[str], type_: Optional[str], wrappers=None):
         self.name = name
@@ -149,24 +155,24 @@ class ASTNodeGenerator:
                     raise RuntimeError  # TODO: Replace with custom class.
 
         for rule in rules:
-            self.tree.add_to_root(self.convert_name_to_class_name(rule))
+            self.tree.add_to_root(convert_name_to_class_name(rule))
         for alias, parents in aliases.items():
-            node = self.tree[self.convert_name_to_class_name(alias)]
+            node = self.tree[convert_name_to_class_name(alias)]
             node.parents = []
             for parent in parents:
-                parent_node = self.tree[self.convert_name_to_class_name(parent)]
+                parent_node = self.tree[convert_name_to_class_name(parent)]
                 node.parents.append(parent_node)
                 parent_node.children.append(node)
             node.depth = max(parent.depth for parent in node.parents)
         for production, parent in productions.items():
-            self.tree.add(self.convert_name_to_class_name(production), self.convert_name_to_class_name(parent))
+            self.tree.add(convert_name_to_class_name(production), convert_name_to_class_name(parent))
 
     def make_ast_node_class_from_single_production(self, rule: str, production: Production):
         if isinstance(production, RuleAliasProduction):
             # This was handled in pre-processing.
             return
         elif isinstance(production, NamedProduction):
-            class_name = self.convert_name_to_class_name(rule)
+            class_name = convert_name_to_class_name(rule)
             self.process_parameters(class_name, production.parts)
             self.make_ast_node_class(class_name)
         else:
@@ -174,11 +180,11 @@ class ASTNodeGenerator:
 
     def make_ast_node_classes_from_production_list(self, rule: str, production_list: List[Production]):
         # Make the base class for these productions to inherit from.
-        self.make_ast_node_class(self.convert_name_to_class_name(rule))
+        self.make_ast_node_class(convert_name_to_class_name(rule))
         # Now create each child class.
         for production in production_list:
             if isinstance(production, NamedProduction):
-                class_name = self.convert_name_to_class_name(production.name)
+                class_name = convert_name_to_class_name(production.name)
                 self.process_parameters(class_name, production.parts)
                 self.make_ast_node_class(class_name)
             elif isinstance(production, RuleAliasProduction):
@@ -195,7 +201,7 @@ class ASTNodeGenerator:
             if arg.type is None:
                 param = (arg.name, None, 'str')
             else:
-                base_arg_type = self.convert_name_to_class_name(arg.type)
+                base_arg_type = convert_name_to_class_name(arg.type)
                 arg_type = base_arg_type
                 for wrapper in reversed(arg.wrappers):
                     arg_type = wrapper + '[' + base_arg_type + ']'
@@ -259,8 +265,3 @@ class ASTNodeGenerator:
             else:
                 raise RuntimeError(f"Unexpected production part type: {type(part)}")  # TODO: Replace with custom error.
 
-    @staticmethod
-    def convert_name_to_class_name(name: str) -> str:
-        if name[0].isupper():
-            return name
-        return ''.join(map(lambda s: s.title(), name.split('_')))
