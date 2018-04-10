@@ -59,11 +59,3 @@ class ParameterPart(ProductionPart):
 
     def __repr__(self):
         return self.name + ": " + repr(self.part)
-
-
-class LiftedParameterPart(ProductionPart):
-    def __init__(self, rule_part: ProductionPart):
-        self.rule = rule_part
-
-    def __repr__(self):
-        return "@" + repr(self.rule)

@@ -26,10 +26,6 @@ class OptionalToken(AltToken):
     pass
 
 
-class LiftedParameterToken(AltToken):
-    pass
-
-
 class SeparatedRepeatToken(AltToken):
     pass
 

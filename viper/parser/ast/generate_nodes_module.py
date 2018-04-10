@@ -6,8 +6,6 @@ from collections import defaultdict
 from itertools import chain
 from typing import Dict, List, Optional, Tuple
 
-
-# TODO: Parameters most be processed prior to line generation so lifting can occur.
 # TODO: Need to handle special tokens such as NAME, CLASS, and NUMBER.
 
 """
@@ -283,8 +281,6 @@ class ASTNodeGenerator:
                 if part_arg is None:
                     return Arg(part.name, None)
                 return Arg(part.name, part_arg.type, part_arg.wrappers)
-            elif isinstance(part, LiftedParameterPart):
-                ...
             else:
                 raise RuntimeError(f"Unexpected production part type: {type(part)}")  # TODO: Replace with custom error.
 

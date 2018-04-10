@@ -171,8 +171,5 @@ def linguify_production_part(part: ProductionPart, rule_dict: RuleDict) -> PartT
     elif isinstance(part, ParameterPart):
         inner_part = linguify_production_part(part.part, rule_dict)
         return PartTuple(inner_part.lang, part.name, False)
-    elif isinstance(part, LiftedParameterPart):
-        inner_part = linguify_production_part(part.rule, rule_dict)
-        return PartTuple(inner_part.lang, inner_part.name, True)
     else:
         raise LinguifierError(f"Cannot linguify unknown production part: {part}")
