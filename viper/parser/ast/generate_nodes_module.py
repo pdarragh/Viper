@@ -193,7 +193,7 @@ class ASTNodeGenerator:
             if arg is None or arg.name is None:
                 continue
             if arg.type is None:
-                param = (arg.name, None, None)
+                param = (arg.name, None, 'str')
             else:
                 base_arg_type = self.convert_name_to_class_name(arg.type)
                 arg_type = base_arg_type
@@ -209,7 +209,7 @@ class ASTNodeGenerator:
 
         def param_to_str(param: Param) -> str:
             param_name, _, param_type = param
-            return param_name if param_type is None else param_name + ": " + self.convert_name_to_class_name(param_type)
+            return param_name if param_type is None else param_name + ": " + param_type
 
         has_params = len(node.params) > 0
         params = [('self', None, None)] + node.params
