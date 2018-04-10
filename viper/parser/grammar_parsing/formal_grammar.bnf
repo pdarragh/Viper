@@ -12,14 +12,14 @@
                   | <compound_stmt>
 
 <simple_stmt>   ::= SimpleStmt expr_stmt:<expr_stmt> NEWLINE
-<compound_stmt> ::= FuncDefStmt @<func_def>
-                  | ClassDefStmt @<class_def>
-                  | InterfaceDefStmt @<interface_def>
-                  | DataDefStmt @<data_def>
+<compound_stmt> ::= <func_def>
+                  | <class_def>
+                  | <interface_def>
+                  | <data_def>
 
 <expr_stmt>     ::= PassStmt 'pass'
                   | ReturnStmt 'return' exprs:<op_expr_list>?
-                  | ExprListStmt @<op_expr_list>
+                  | <op_expr_list>
 <op_expr_list>  ::= OpExprList op_exprs:<op_expr>&{,}
 <op_expr>       ::= OpExpr left_ops:OPERATOR* expr:<expr> sub_op_exprs:<sub_op_expr>* right_ops:OPERATOR*
 <sub_op_expr>   ::= SubOpExpr first_op:OPERATOR ops:OPERATOR* expr:<expr>
@@ -30,16 +30,14 @@
                   | Name name:NAME
                   | Number num:NUMBER
                   | Ellipsis '...'
-<trailer>       ::= Args '(' @<arg_list> ')'
+<trailer>       ::= Args '(' args:<arguments> ')'
                   | Field '.' field:NAME
 
-<func_def>      ::= FuncDef 'def' name:NAME @<parameters> '->' func_type:CLASS ':' body:<suite>
-<parameters>    ::= Parameters '(' params:<parameter>&{,}? ')'
+<func_def>      ::= FuncDef 'def' name:NAME '(' params:<parameter>&{,}? ')' '->' func_type:CLASS ':' body:<suite>
 <parameter>     ::= Parameter external:NAME? internal:NAME ':' param_type:CLASS
 
-<class_def>     ::= ClassDef 'class' @<common_def>
-<interface_def> ::= InterfaceDef 'interface' @<common_def>
-<data_def>      ::= DataDef 'data' @<common_def>
+<class_def>     ::= ClassDef 'class' name:CLASS args:<arguments>? ':' body:<suite>
+<interface_def> ::= InterfaceDef 'interface' name:CLASS args:<arguments>? ':' body:<suite>
+<data_def>      ::= DataDef 'data' name:CLASS args:<arguments>? ':' body:<suite>
 
-<common_def>    ::= CommonDef name:CLASS args:<arguments>? ':' body:<suite>
 <arguments>     ::= Arguments '(' args:<expr>&{,}? ')'
