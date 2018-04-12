@@ -35,6 +35,14 @@ class RepeatPart(ProductionPart):
         return repr(self.part) + "*"
 
 
+class MinimumRepeatPart(ProductionPart):
+    def __init__(self, repeated_part: ProductionPart):
+        self.part = repeated_part
+
+    def __repr__(self):
+        return repr(self.part) + "+"
+
+
 class SeparatedRepeatPart(ProductionPart):
     def __init__(self, separator: ProductionPart, rule_part: ProductionPart):
         self.separator = separator

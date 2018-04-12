@@ -217,6 +217,8 @@ def tokenize_dequoted_subalternate(token: DequotedSubalternate) -> AltToken:
             return LiteralToken(text)
     elif text == '*':
         return RepeatToken(text)
+    elif text == '+':
+        return MinimumRepeatToken(text)
     elif text == '?':
         return OptionalToken(text)
     elif text == '&':

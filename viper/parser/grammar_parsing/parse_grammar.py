@@ -108,6 +108,8 @@ def parse_possible_repeatable_or_optional(token_list: List[AltToken], index: int
         return parse_separated_repeat_token(token_list, index + 1, enclosed_part)
     elif isinstance(token, RepeatToken):
         return TokenParse(RepeatPart(enclosed_part), index + 1)
+    elif isinstance(token, MinimumRepeatToken):
+        return TokenParse(MinimumRepeatPart(enclosed_part), index + 1)
     else:
         return parse_possible_optional(token_list, index, enclosed_part)
 

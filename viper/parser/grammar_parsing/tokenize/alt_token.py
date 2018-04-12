@@ -22,6 +22,10 @@ class RepeatToken(AltToken):
     pass
 
 
+class MinimumRepeatToken(AltToken):
+    pass
+
+
 class OptionalToken(AltToken):
     pass
 

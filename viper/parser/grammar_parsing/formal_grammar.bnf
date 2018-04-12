@@ -6,7 +6,7 @@
                   | FileStmt stmt:<stmt>
 
 <suite>         ::= SimpleSuite stmt:<simple_stmt>
-                  | ComplexSuite NEWLINE INDENT stmt:<stmt> stmts:<stmt>* DEDENT
+                  | ComplexSuite NEWLINE INDENT stmts:<stmt>+ DEDENT
 
 <stmt>          ::= <simple_stmt>
                   | <compound_stmt>

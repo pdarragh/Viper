@@ -205,6 +205,13 @@ def get_arg_from_production_part(part: ProductionPart) -> Optional[Arg]:
             arg = Arg(part_arg.name, part_arg.type, part_arg.wrappers)
             arg.wrappers.append('List')
             return arg
+        elif isinstance(part, MinimumRepeatPart):
+            part_arg = get_arg_from_production_part(part.part)
+            if part_arg is None:
+                return None
+            arg = Arg(part_arg.name, part_arg.type, part_arg.wrappers)
+            arg.wrappers.append('List')
+            return arg
         elif isinstance(part, SeparatedRepeatPart):
             part_arg = get_arg_from_production_part(part.rule)
             if part_arg is None:
