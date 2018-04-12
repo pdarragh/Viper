@@ -1,4 +1,4 @@
-from .ast_node import ASTNode
+from .ast.nodes import AST
 from .languages import ParseTreeChar, make_sppf
 from .linguify_grammar import linguify_grammar_file
 
@@ -13,7 +13,7 @@ class Grammar:
         self.file = grammar_filename
         self.rules = linguify_grammar_file(self.file)
 
-    def parse_rule(self, rule: str, lexemes: List[Lexeme]) -> ASTNode:
+    def parse_rule(self, rule: str, lexemes: List[Lexeme]) -> AST:
         lang = self.rules[rule]
         sppf = make_sppf(lang, lexemes)
         if len(sppf) == 0:
@@ -23,7 +23,7 @@ class Grammar:
             if not isinstance(child, ParseTreeChar):
                 raise RuntimeError(f"Invalid parse result: {child}")
             result = child.token
-            if not isinstance(result, ASTNode):
+            if not isinstance(result, AST):
                 raise RuntimeError(f"Invalid parse result: {result}")
             return result
         else:
