@@ -94,7 +94,7 @@ def parse_parameter(token_list: List[AltToken], index: int) -> TokenParse:
         match_parse = parse_rule_literal(token_list, index)
     else:
         raise GrammarParserError(f"Expected special token or rule as argument of parameter {parameter_name}; "
-                                 f"instead got {match_token}")
+                                 f"instead got {match_token} of type {type(match_token)}")
     match_parse = parse_possible_repeatable_or_optional(token_list, match_parse.idx, match_parse.part)
     return TokenParse(ParameterPart(parameter_name, match_parse.part), match_parse.idx)
 
