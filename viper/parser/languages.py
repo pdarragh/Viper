@@ -152,6 +152,44 @@ class ListRepRedFunc(RedFunc):
             raise RuntimeError("Too many children from list-rep reduction.")
 
 
+class MinRepRedFunc(RedFunc):
+    def make_nice_string(self, start_column: int) -> str:
+        return "+"
+
+    def __call__(self, sppf: SPPF) -> SPPF:
+        if len(sppf) == 0:
+            return SPPF()
+        elif len(sppf) == 1:
+            child = sppf[0]
+            if not isinstance(child, ParseTreePair):
+                raise RuntimeError("Invalid min-rep child.")
+            left_sppf = child.left
+            if len(left_sppf) == 0:
+                return SPPF()
+            elif len(left_sppf) == 1:
+                left_child = left_sppf[0]
+                if not isinstance(left_child, ParseTreeChar):
+                    raise RuntimeError("Invalid left child of min-rep reduction.")
+                left = left_child.token
+            else:
+                raise RuntimeError("Too many children in left child of min-rep reduction.")
+            right_sppf = child.right
+            # The right child should always reduce to a list.
+            if len(right_sppf) == 0:
+                # There was only one element in the list.
+                return SPPF(ParseTreeChar([left]))
+            elif len(right_sppf) == 1:
+                right_child = right_sppf[0]
+                if not isinstance(right_child, ParseTreeChar):
+                    raise RuntimeError("Invalid right child of min-rep reduction.")
+                right = right_child.token
+            else:
+                raise RuntimeError("Too many children in right child of min-rep reduction.")
+            return SPPF(ParseTreeChar([left] + right))
+        else:
+            raise RuntimeError("Too many children for min-rep reduction.")
+
+
 class SepRepEpsRedFunc(RedFunc):
     def make_nice_string(self, start_column: int) -> str:
         return "sep-rep epsilon"
@@ -495,6 +533,21 @@ def rep(lang: Language) -> Language:
 
 def list_rep(lang: Language) -> Language:
     return red(Rep(linguify(lang)), ListRepRedFunc())
+
+
+def min_rep(lang: Language) -> Language:
+    """
+    A minimum-repeat, i.e. l+.
+
+    Constructed as:
+
+          ◦
+         / \
+        w   *
+            |
+            w
+    """
+    return red(concat(lang, list_rep(lang)), MinRepRedFunc())
 
 
 def sep_rep(sep_lang: Language, lang: Language) -> Language:
