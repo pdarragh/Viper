@@ -7,15 +7,7 @@ class AST:
     pass
 
 
-class Stmt(AST):
-    pass
-
-
-class Atom(AST):
-    pass
-
-
-class SingleInput(AST):
+class ExprStmt(AST):
     pass
 
 
@@ -27,11 +19,11 @@ class Suite(AST):
     pass
 
 
-class FileLines(AST):
+class SingleInput(AST):
     pass
 
 
-class ExprStmt(AST):
+class Stmt(AST):
     pass
 
 
@@ -42,23 +34,36 @@ class Parameter(AST):
         self.param_type = param_type
 
 
+class FileLines(AST):
+    pass
+
+
+class Atom(AST):
+    pass
+
+
 class SimpleStmt(Stmt):
     def __init__(self, expr_stmt: ExprStmt):
         self.expr_stmt = expr_stmt
 
 
-class CompoundStmt(Stmt):
+class Name(Atom):
+    def __init__(self, name: str):
+        self.name = name
+
+
+class PassStmt(ExprStmt):
     pass
 
 
-class FileInput(AST):
-    def __init__(self, lines: List[FileLines]):
-        self.lines = lines
+class FileNewline(FileLines):
+    pass
 
 
-class Field(Trailer):
-    def __init__(self, field: str):
-        self.field = field
+class Expr(AST):
+    def __init__(self, atom: Atom, trailers: List[Trailer]):
+        self.atom = atom
+        self.trailers = trailers
 
 
 class Ellipsis(Atom):
@@ -71,31 +76,16 @@ class FileStmt(FileLines):
 
 
 class ComplexSuite(Suite):
-    def __init__(self, stmt: Stmt, stmts: List[Stmt]):
-        self.stmt = stmt
+    def __init__(self, stmts: List[Stmt]):
         self.stmts = stmts
 
 
-class PassStmt(ExprStmt):
-    pass
+class FileInput(AST):
+    def __init__(self, lines: List[FileLines]):
+        self.lines = lines
 
 
-class SingleNewline(SingleInput):
-    pass
-
-
-class Expr(AST):
-    def __init__(self, atom: Atom, trailers: List[Trailer]):
-        self.atom = atom
-        self.trailers = trailers
-
-
-class Name(Atom):
-    def __init__(self, name: str):
-        self.name = name
-
-
-class FileNewline(FileLines):
+class CompoundStmt(Stmt):
     pass
 
 
@@ -104,14 +94,13 @@ class Number(Atom):
         self.num = num
 
 
-class ComplexLine(SingleInput):
-    def __init__(self, line: CompoundStmt):
-        self.line = line
+class Field(Trailer):
+    def __init__(self, field: str):
+        self.field = field
 
 
-class SimpleLine(SingleInput):
-    def __init__(self, line: SimpleStmt):
-        self.line = line
+class SingleNewline(SingleInput):
+    pass
 
 
 class SubOpExpr(AST):
@@ -119,6 +108,16 @@ class SubOpExpr(AST):
         self.first_op = first_op
         self.ops = ops
         self.expr = expr
+
+
+class ComplexLine(SingleInput):
+    def __init__(self, line: CompoundStmt):
+        self.line = line
+
+
+class SimpleSuite(Suite):
+    def __init__(self, stmt: SimpleStmt):
+        self.stmt = stmt
 
 
 class FuncDef(CompoundStmt):
@@ -129,9 +128,9 @@ class FuncDef(CompoundStmt):
         self.body = body
 
 
-class SimpleSuite(Suite):
-    def __init__(self, stmt: SimpleStmt):
-        self.stmt = stmt
+class SimpleLine(SingleInput):
+    def __init__(self, line: SimpleStmt):
+        self.line = line
 
 
 class ExprList(AST):
@@ -141,25 +140,6 @@ class ExprList(AST):
 
 class Arguments(AST):
     def __init__(self, args: List[Expr]):
-        self.args = args
-
-
-class ClassDef(CompoundStmt):
-    def __init__(self, name: str, args: Optional[Arguments], body: Suite):
-        self.name = name
-        self.args = args
-        self.body = body
-
-
-class InterfaceDef(CompoundStmt):
-    def __init__(self, name: str, args: Optional[Arguments], body: Suite):
-        self.name = name
-        self.args = args
-        self.body = body
-
-
-class Args(Trailer):
-    def __init__(self, args: Arguments):
         self.args = args
 
 
@@ -178,16 +158,35 @@ class DataDef(CompoundStmt):
         self.body = body
 
 
+class InterfaceDef(CompoundStmt):
+    def __init__(self, name: str, args: Optional[Arguments], body: Suite):
+        self.name = name
+        self.args = args
+        self.body = body
+
+
+class ClassDef(CompoundStmt):
+    def __init__(self, name: str, args: Optional[Arguments], body: Suite):
+        self.name = name
+        self.args = args
+        self.body = body
+
+
+class Args(Trailer):
+    def __init__(self, args: Arguments):
+        self.args = args
+
+
 class OpExprList(ExprStmt):
     def __init__(self, op_exprs: List[OpExpr]):
         self.op_exprs = op_exprs
 
 
-class ParenExpr(Atom):
-    def __init__(self, expr_list: Optional[OpExprList]):
-        self.expr_list = expr_list
-
-
 class ReturnStmt(ExprStmt):
     def __init__(self, exprs: Optional[OpExprList]):
         self.exprs = exprs
+
+
+class ParenExpr(Atom):
+    def __init__(self, expr_list: Optional[OpExprList]):
+        self.expr_list = expr_list
