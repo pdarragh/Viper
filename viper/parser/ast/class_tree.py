@@ -11,6 +11,7 @@ BASE_AST_CLASS_NAME = 'AST'
 Param = Tuple[str, Optional[str], Optional[str]]
 RuleSet = Set[str]
 AliasDict = Dict[str, List[str]]
+SoloAliasDict = Dict[str, str]
 ProdDict = Dict[str, str]
 
 
@@ -73,16 +74,17 @@ class ClassTreeNode:
 
 
 def build_class_tree(parsed_rules: Dict[str, List[Production]]) -> ClassTree:
-    rules, aliases, productions = identify_rules_and_classes(parsed_rules)
+    rules, aliases, solo_aliases, productions = identify_rules_and_classes(parsed_rules)
     tree = construct_bare_tree(rules, aliases, productions)
-    make_ast_nodes_from_rules(parsed_rules, tree)
+    make_ast_nodes_from_rules(parsed_rules, tree, solo_aliases)
     update_node_depths(tree)
     return tree
 
 
-def identify_rules_and_classes(parsed_rules: Dict[str, List[Production]]) -> Tuple[RuleSet, AliasDict, ProdDict]:
+def identify_rules_and_classes(parsed_rules: Dict[str, List[Production]]) -> Tuple[RuleSet, AliasDict, SoloAliasDict, ProdDict]:
     rules = set()                   # All rules.
     aliases = defaultdict(list)     # Map: aliased-rule -> [parent rules]
+    solo_aliases = {}               # Map: parent rule -> production name
     productions = {}                # Map: prod-name -> parent rule
     for rule, production_list in parsed_rules.items():
         rules.add(rule)
@@ -93,11 +95,13 @@ def identify_rules_and_classes(parsed_rules: Dict[str, List[Production]]) -> Tup
             if isinstance(production, RuleAliasProduction):
                 aliases[production.name].append(rule)
             elif isinstance(production, NamedProduction):
-                if not solo:
+                if solo:
+                    solo_aliases[convert_name_to_class_name(rule)] = convert_name_to_class_name(production.name)
+                else:
                     productions[production.name] = rule
             else:
                 raise RuntimeError  # TODO: Replace with custom class.
-    return rules, aliases, productions
+    return rules, aliases, solo_aliases, productions
 
 
 def construct_bare_tree(rules: RuleSet, aliases: AliasDict, productions: ProdDict) -> ClassTree:
@@ -117,35 +121,35 @@ def construct_bare_tree(rules: RuleSet, aliases: AliasDict, productions: ProdDic
     return tree
 
 
-def make_ast_nodes_from_rules(parsed_rules: Dict[str, List[Production]], tree: ClassTree):
+def make_ast_nodes_from_rules(parsed_rules: Dict[str, List[Production]], tree: ClassTree, solo_aliases: SoloAliasDict):
     for rule, production_list in parsed_rules.items():
         if len(production_list) == 1:
-            make_ast_node_class_from_single_production(rule, production_list[0], tree)
+            make_ast_node_class_from_single_production(rule, production_list[0], tree, solo_aliases)
         else:
-            make_ast_node_classes_from_production_list(rule, production_list, tree)
+            make_ast_node_classes_from_production_list(rule, production_list, tree, solo_aliases)
 
 
-def make_ast_node_class_from_single_production(rule: str, production: Production, tree: ClassTree):
+def make_ast_node_class_from_single_production(rule: str, production: Production, tree: ClassTree, solo_aliases: SoloAliasDict):
     if isinstance(production, RuleAliasProduction):
         # This was handled in pre-processing.
         return
     elif isinstance(production, NamedProduction):
         class_name = convert_name_to_class_name(rule)
         process_parameters_for_class(class_name, production.parts, tree)
-        make_ast_node_class(class_name, tree)
+        make_ast_node_class(class_name, tree, solo_aliases)
     else:
         raise RuntimeError  # TODO: Replace with custom error.
 
 
-def make_ast_node_classes_from_production_list(rule: str, production_list: List[Production], tree: ClassTree):
+def make_ast_node_classes_from_production_list(rule: str, production_list: List[Production], tree: ClassTree, solo_aliases: SoloAliasDict):
     # Make the base class for these productions to inherit from.
-    make_ast_node_class(convert_name_to_class_name(rule), tree)
+    make_ast_node_class(convert_name_to_class_name(rule), tree, solo_aliases)
     # Now create each child class.
     for production in production_list:
         if isinstance(production, NamedProduction):
             class_name = convert_name_to_class_name(production.name)
             process_parameters_for_class(class_name, production.parts, tree)
-            make_ast_node_class(class_name, tree)
+            make_ast_node_class(class_name, tree, solo_aliases)
         elif isinstance(production, RuleAliasProduction):
             continue
         else:
@@ -174,7 +178,7 @@ def param_to_str(param: Param) -> str:
     return param_name if param_type is None else param_name + ": " + param_type
 
 
-def make_ast_node_class(class_name: str, tree: ClassTree):
+def make_ast_node_class(class_name: str, tree: ClassTree, solo_aliases: SoloAliasDict):
     node = tree[class_name]
     lines = node.lines
     superclasses = ', '.join([parent.name for parent in node.parents])
@@ -189,6 +193,13 @@ def make_ast_node_class(class_name: str, tree: ClassTree):
             lines.append(f"        self.{name} = {name}")
     else:
         lines.append(f"    pass")
+    # If this rule has a single production, create an alias.
+    if class_name in solo_aliases:
+        alias = solo_aliases[class_name]
+        if alias != class_name:
+            lines.append("")
+            lines.append("")
+            lines.append(f"{alias} = {class_name}")
 
 
 def get_arg_from_production_part(part: ProductionPart) -> Optional[Arg]:
