@@ -198,7 +198,7 @@ def tokenize_subalternate(subalt: DequotedSubalternate) -> List[DequotedSubalter
             add_token(start_index, i + 1)
             start_index = i
             continue_until = None
-        elif c in ('@', '&', '*', '?', ':'):
+        elif c in ('*', '+', '&', '?', ':'):
             # These characters can only exist independently.
             add_token(start_index, i)
             add_token(i - 1, i + 1)
