@@ -52,3 +52,40 @@ def test_atom(line: str, ast: AST):
 def test_expr(line: str, ast: AST):
     lexemes = lex_line(line)
     assert ast == GRAMMAR.parse_rule('expr', lexemes)
+
+
+@pytest.mark.parametrize('line,ast', [
+    ('foo bar: Baz',
+     Parameter(vl.Name('foo'), vl.Name('bar'), vl.Class('Baz'))),
+    ('bar: Baz',
+     Parameter(None, vl.Name('bar'), vl.Class('Baz'))),
+])
+def test_parameter(line: str, ast: AST):
+    lexemes = lex_line(line)
+    assert ast == GRAMMAR.parse_rule('parameter', lexemes)
+
+
+@pytest.mark.parametrize('line,ast', [
+    ('def foo() -> Bar: pass',
+     FuncDef(vl.Name('foo'), None, vl.Class('Bar'), SimpleSuite(SimpleStmt(PassStmt())))),
+    ('def foo(bar: Baz) -> Qux: pass',
+     FuncDef(vl.Name('foo'),
+             [
+                 Parameter(None, vl.Name('bar'), vl.Class('Baz'))
+             ],
+             vl.Class('Qux'),
+             SimpleSuite(SimpleStmt(PassStmt())))),
+    ('def foo(a b: C, d: E, f g: H) -> I: pass',
+     FuncDef(vl.Name('foo'),
+             [
+                 Parameter(vl.Name('a'), vl.Name('b'), vl.Class('C')),
+                 Parameter(None, vl.Name('d'), vl.Class('E')),
+                 Parameter(vl.Name('f'), vl.Name('g'), vl.Class('H'))
+             ],
+             vl.Class('I'),
+             SimpleSuite(SimpleStmt(PassStmt())))),
+])
+def test_func_def(line: str, ast: AST):
+    lexemes = lex_line(line)
+    lexemes.append(vl.NEWLINE)
+    assert ast == GRAMMAR.parse_rule('func_def', lexemes)
