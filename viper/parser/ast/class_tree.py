@@ -1,3 +1,4 @@
+from .ordered_set import OrderedSet
 from ..grammar_parsing.production import *
 from ..grammar_parsing.production_part import *
 
@@ -80,7 +81,7 @@ class ClassTree:
             "",
         ]
         # Organize nodes by depth in the tree without including duplicates.
-        tiers = defaultdict(set)
+        tiers = defaultdict(OrderedSet)
         queue = [self.root]
         while queue:
             node = queue.pop(0)
@@ -119,7 +120,7 @@ def build_class_tree(parsed_rules: Dict[str, List[Production]]) -> ClassTree:
 
 
 def identify_rules_and_classes(parsed_rules: Dict[str, List[Production]]) -> Tuple[RuleSet, AliasDict, SoloAliasDict, ProdDict]:
-    rules = set()                   # All rules.
+    rules = OrderedSet()            # All rules.
     aliases = defaultdict(list)     # Map: aliased-rule -> [parent rules]
     solo_aliases = {}               # Map: parent rule -> production name
     productions = {}                # Map: prod-name -> parent rule
