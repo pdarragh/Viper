@@ -537,7 +537,7 @@ def list_rep(lang: Language) -> Language:
 
 def min_rep(lang: Language) -> Language:
     """
-    A minimum-repeat, i.e. l+.
+    A minimum-repeat, i.e. w+.
 
     Constructed as:
 
