@@ -197,18 +197,23 @@ def make_ast_node_classes_from_production_list(rule: str, production_list: List[
 
 
 def process_parameters_for_class(class_name: str, parts: List[ProductionPart], tree: ClassTree):
+
+    def wrap_type(arg_type: str, wrappers: List[str]) -> str:
+        for wrapper in wrappers:
+            arg_type = wrapper + '[' + arg_type + ']'
+        return arg_type
+
     node = tree[class_name]
     for part in parts:
         arg = get_arg_from_production_part(part)
         if arg is None or arg.name is None or arg.type is None:
             continue
         elif arg.type_is_node is False:
-            param = (arg.name, None, arg.type)
+            arg_type = wrap_type(arg.type, arg.wrappers)
+            param = (arg.name, None, arg_type)
         else:
             base_arg_type = convert_name_to_class_name(arg.type)
-            arg_type = base_arg_type
-            for wrapper in reversed(arg.wrappers):
-                arg_type = wrapper + '[' + base_arg_type + ']'
+            arg_type = wrap_type(base_arg_type, arg.wrappers)
             param = (arg.name, base_arg_type, arg_type)
         node.params.append(param)
 

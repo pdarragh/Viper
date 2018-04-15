@@ -38,7 +38,7 @@ class Trailer(AST):
 
 
 class Parameter(AST):
-    def __init__(self, external: vl.Name, internal: vl.Name, param_type: vl.Class):
+    def __init__(self, external: Optional[vl.Name], internal: vl.Name, param_type: vl.Class):
         self.external = external
         self.internal = internal
         self.param_type = param_type
@@ -106,8 +106,7 @@ class Field(Trailer):
 
 
 class SubOpExpr(AST):
-    def __init__(self, first_op: vl.Operator, ops: vl.Operator, expr: Expr):
-        self.first_op = first_op
+    def __init__(self, ops: List[vl.Operator], expr: Expr):
         self.ops = ops
         self.expr = expr
 
@@ -118,7 +117,7 @@ class ExprList(AST):
 
 
 class FuncDef(CompoundStmt):
-    def __init__(self, name: vl.Name, params: List[Parameter], func_type: vl.Class, body: Suite):
+    def __init__(self, name: vl.Name, params: Optional[List[Parameter]], func_type: vl.Class, body: Suite):
         self.name = name
         self.params = params
         self.func_type = func_type
@@ -126,7 +125,7 @@ class FuncDef(CompoundStmt):
 
 
 class Arguments(AST):
-    def __init__(self, args: List[Expr]):
+    def __init__(self, args: Optional[List[Expr]]):
         self.args = args
 
 
@@ -146,7 +145,7 @@ class SimpleSuite(Suite):
 
 
 class OpExpr(AST):
-    def __init__(self, left_ops: vl.Operator, expr: Expr, sub_op_exprs: List[SubOpExpr], right_ops: vl.Operator):
+    def __init__(self, left_ops: List[vl.Operator], expr: Expr, sub_op_exprs: List[SubOpExpr], right_ops: List[vl.Operator]):
         self.left_ops = left_ops
         self.expr = expr
         self.sub_op_exprs = sub_op_exprs
