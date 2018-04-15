@@ -4,10 +4,12 @@ from ..grammar_parsing.production_part import *
 
 from collections import defaultdict
 from itertools import chain
-from typing import Dict, List, Optional, Set, Tuple
+from typing import Dict, List, Optional, MutableSet, Tuple
 
 
 BASE_AST_CLASS_NAME = 'AST'
+
+Set = MutableSet
 
 Param = Tuple[str, Optional[str], Optional[str]]
 RuleSet = Set[str]

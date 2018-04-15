@@ -2,7 +2,7 @@ from collections import OrderedDict
 from typing import Iterator, MutableSet, Set
 
 
-class OrderedSet(MutableSet, Set):
+class OrderedSet(MutableSet):
     def __init__(self):
         self._dict = OrderedDict()
 
