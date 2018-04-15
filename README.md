@@ -15,7 +15,7 @@ called).
 
 ## Features
 
-Viper has:
+Viper has (or, rather, will have):
 
 * Static typing, without inference
   - Inference may come later... undecided as yet
