@@ -15,10 +15,19 @@ SoloAliasDict = Dict[str, str]
 ProdDict = Dict[str, str]
 
 
+SPECIAL_TYPES = {
+    'NAME': 'vl.Name',
+    'CLASS': 'vl.Class',
+    'NUMBER': 'vl.Number',
+    'OPERATOR': 'vl.Operator',
+}
+
+
 class Arg:
-    def __init__(self, name: Optional[str], type_: Optional[str], wrappers=None):
+    def __init__(self, name: Optional[str], type_: Optional[str], wrappers=None, type_is_node=True):
         self.name = name
         self.type = type_
+        self.type_is_node = type_is_node
         if wrappers is None:
             self.wrappers = []
         else:
@@ -160,10 +169,10 @@ def process_parameters_for_class(class_name: str, parts: List[ProductionPart], t
     node = tree[class_name]
     for part in parts:
         arg = get_arg_from_production_part(part)
-        if arg is None or arg.name is None:
+        if arg is None or arg.name is None or arg.type is None:
             continue
-        if arg.type is None:
-            param = (arg.name, None, 'str')
+        elif arg.type_is_node is False:
+            param = (arg.name, None, arg.type)
         else:
             base_arg_type = convert_name_to_class_name(arg.type)
             arg_type = base_arg_type
@@ -206,42 +215,46 @@ def get_arg_from_production_part(part: ProductionPart) -> Optional[Arg]:
         if isinstance(part, LiteralPart):
             return None
         elif isinstance(part, SpecialPart):
-            return None
+            arg_type = SPECIAL_TYPES.get(part.token)
+            if arg_type is None:
+                return None
+            else:
+                return Arg(None, SPECIAL_TYPES[part.token], type_is_node=False)
         elif isinstance(part, RulePart):
             return Arg(None, part.name)
         elif isinstance(part, RepeatPart):
             part_arg = get_arg_from_production_part(part.part)
             if part_arg is None:
                 return None
-            arg = Arg(part_arg.name, part_arg.type, part_arg.wrappers)
+            arg = Arg(part_arg.name, part_arg.type, part_arg.wrappers, part_arg.type_is_node)
             arg.wrappers.append('List')
             return arg
         elif isinstance(part, MinimumRepeatPart):
             part_arg = get_arg_from_production_part(part.part)
             if part_arg is None:
                 return None
-            arg = Arg(part_arg.name, part_arg.type, part_arg.wrappers)
+            arg = Arg(part_arg.name, part_arg.type, part_arg.wrappers, part_arg.type_is_node)
             arg.wrappers.append('List')
             return arg
         elif isinstance(part, SeparatedRepeatPart):
             part_arg = get_arg_from_production_part(part.rule)
             if part_arg is None:
                 return None
-            arg = Arg(part_arg.name, part_arg.type, part_arg.wrappers)
+            arg = Arg(part_arg.name, part_arg.type, part_arg.wrappers, part_arg.type_is_node)
             arg.wrappers.append('List')
             return arg
         elif isinstance(part, OptionPart):
             part_arg = get_arg_from_production_part(part.part)
             if part_arg is None:
                 return None
-            arg = Arg(part_arg.name, part_arg.type, part_arg.wrappers)
+            arg = Arg(part_arg.name, part_arg.type, part_arg.wrappers, part_arg.type_is_node)
             arg.wrappers.append('Optional')
             return arg
         elif isinstance(part, ParameterPart):
             part_arg = get_arg_from_production_part(part.part)
             if part_arg is None:
                 return Arg(part.name, None)
-            return Arg(part.name, part_arg.type, part_arg.wrappers)
+            return Arg(part.name, part_arg.type, part_arg.wrappers, part_arg.type_is_node)
         else:
             raise RuntimeError(f"Unexpected production part type: {type(part)}")  # TODO: Replace with custom error.
 
