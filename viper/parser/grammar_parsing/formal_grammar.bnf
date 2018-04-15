@@ -30,7 +30,7 @@
                   | Name name:NAME
                   | Number num:NUMBER
                   | Ellipsis '...'
-<trailer>       ::= Args '(' args:<arguments> ')'
+<trailer>       ::= Call '(' args:<expr>&{,}? ')'
                   | Field '.' field:NAME
 
 <func_def>      ::= FuncDef 'def' name:NAME '(' params:<parameter>&{,}? ')' '->' func_type:CLASS ':' body:<suite>
@@ -40,4 +40,4 @@
 <interface_def> ::= InterfaceDef 'interface' name:CLASS args:<arguments>? ':' body:<suite>
 <data_def>      ::= DataDef 'data' name:CLASS args:<arguments>? ':' body:<suite>
 
-<arguments>     ::= Arguments '(' args:<expr>&{,}? ')'
+<arguments>     ::= Arguments '(' args:<expr>&{,} ')'

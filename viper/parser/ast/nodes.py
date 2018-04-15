@@ -135,7 +135,7 @@ class FuncDef(CompoundStmt):
 
 
 class Arguments(AST):
-    def __init__(self, args: Optional[List[Expr]]):
+    def __init__(self, args: List[Expr]):
         self.args = args
 
 
@@ -152,6 +152,11 @@ class ComplexLine(SingleInput):
 class SimpleSuite(Suite):
     def __init__(self, stmt: SimpleStmt):
         self.stmt = stmt
+
+
+class Call(Trailer):
+    def __init__(self, args: Optional[List[Expr]]):
+        self.args = args
 
 
 class OpExpr(AST):
@@ -181,11 +186,6 @@ class DataDef(CompoundStmt):
         self.name = name
         self.args = args
         self.body = body
-
-
-class Args(Trailer):
-    def __init__(self, args: Arguments):
-        self.args = args
 
 
 class OpExprList(ExprStmt):
