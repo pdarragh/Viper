@@ -116,7 +116,7 @@ class ListRepRedFunc(RedFunc):
         elif len(sppf) == 1:
             child = sppf[0]
             if isinstance(child, ParseTreeEps):
-                return SPPF()
+                return SPPF(ParseTreeChar([]))
             elif isinstance(child, ParseTreeChar):
                 return SPPF(ParseTreeChar([child.token]))
             elif isinstance(child, ParseTreePair):
