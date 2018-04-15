@@ -124,7 +124,7 @@ class ASTNodeRedFunc(RedFunc):
                 curr = child.right
             else:
                 raise LinguifierError("Invalid child node.")
-            if to_add is not None:
+            if name is not None:
                 params[name] = to_add
         class_name = convert_name_to_class_name(self.name)
         print(f"{class_name}: {params}")
