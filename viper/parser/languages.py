@@ -106,9 +106,13 @@ class RightEpsRedFunc(RedFunc):
         return SPPF(ParseTreePair(left, self.right))
 
 
-class ListRepRedFunc(RedFunc):
+class RepRedFunc(RedFunc):
     def make_nice_string(self, start_column: int) -> str:
-        return "*"
+        return self.repr_string
+
+    def __init__(self, eps_func: EpsFunc, repr_string: str):
+        self.eps_func = eps_func
+        self.repr_string = repr_string
 
     def __call__(self, sppf: SPPF) -> SPPF:
         if len(sppf) == 0:
@@ -116,7 +120,7 @@ class ListRepRedFunc(RedFunc):
         elif len(sppf) == 1:
             child = sppf[0]
             if isinstance(child, ParseTreeEps):
-                return SPPF(ParseTreeChar([]))
+                return self.eps_func()
             elif isinstance(child, ParseTreeChar):
                 return SPPF(ParseTreeChar([child.token]))
             elif isinstance(child, ParseTreePair):
@@ -150,6 +154,16 @@ class ListRepRedFunc(RedFunc):
                 raise RuntimeError("Invalid list-rep reduction target.")
         else:
             raise RuntimeError("Too many children from list-rep reduction.")
+
+
+class SepRepRedFunc(RepRedFunc):
+    def __init__(self):
+        super().__init__(lambda: SPPF(), '&')
+
+
+class ListRepRedFunc(RepRedFunc):
+    def __init__(self):
+        super().__init__(lambda: SPPF(ParseTreeChar([])), '*')
 
 
 class MinRepRedFunc(RedFunc):
@@ -572,7 +586,7 @@ def sep_rep(sep_lang: Language, lang: Language) -> Language:
     """
     return red(alt(red(eps(lambda: SPPF(ParseTreeEps())), SepRepEpsRedFunc()),
                    concat(lang, rep(red(concat(sep_lang, lang), SepRepConcatRedFunc())))),
-               ListRepRedFunc())
+               SepRepRedFunc())
 
 
 def opt(lang: Language) -> Language:
