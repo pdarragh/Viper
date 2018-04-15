@@ -68,6 +68,34 @@ class ClassTree:
     def add_to_root(self, child_name: str):
         self.add(child_name, self.root.name)
 
+    def generate_text(self) -> str:
+        # Add the header.
+        lines = [
+            "# This module was automatically generated.",
+            "",
+            "import viper.lexer as vl",
+            "",
+            "from typing import List, Optional",
+            "",
+            "",
+        ]
+        # Organize nodes by depth in the tree without including duplicates.
+        tiers = defaultdict(set)
+        queue = [self.root]
+        while queue:
+            node = queue.pop(0)
+            tiers[node.depth].add(node)
+            queue += node.children
+        # Iterating by tier, add nodes' lines.
+        for depth in sorted(tiers.keys()):
+            tier = tiers[depth]
+            for node in tier:
+                lines += node.lines
+                lines += ["", ""]
+        # Remove extra blank line at the end and return.
+        del (lines[-1])
+        return '\n'.join(lines)
+
 
 class ClassTreeNode:
     def __init__(self, name: str):
