@@ -42,8 +42,18 @@ class ClassTree:
         self._nodes = {}
         root = ClassTreeNode(BASE_AST_CLASS_NAME)
         root.lines = [
-            'class ' + root.name + ':',
-            '    pass'
+            "class " + root.name + ":",
+            "    def __eq__(self, other):",
+            "        if not type(other) == type(self):",
+            "            return False",
+            "        my_vars = vars(self)",
+            "        other_vars = vars(other)",
+            "        for var, val in my_vars.items():",
+            "            if not var in other_vars:",
+            "                return False",
+            "            if val != other_vars[var]:",
+            "                return False",
+            "        return True",
         ]
         self._nodes[BASE_AST_CLASS_NAME] = root
         self.root = root
