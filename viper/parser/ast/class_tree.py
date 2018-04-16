@@ -219,12 +219,18 @@ def process_parameters_for_class(class_name: str, parts: List[ProductionPart], t
         if arg is None or arg.name is None or arg.type is None:
             continue
         elif arg.type_is_node is False:
+            arg_name = arg.name
+            base_arg_type = None
             arg_type = wrap_type(arg.type, arg.wrappers)
-            param = (arg.name, None, arg_type)
         else:
+            arg_name = arg.name
             base_arg_type = convert_name_to_class_name(arg.type)
-            arg_type = wrap_type(base_arg_type, arg.wrappers)
-            param = (arg.name, base_arg_type, arg_type)
+            if base_arg_type == node.name:
+                wrapped_type = '\'' + base_arg_type + '\''
+            else:
+                wrapped_type = base_arg_type
+            arg_type = wrap_type(wrapped_type, arg.wrappers)
+        param = (arg_name, base_arg_type, arg_type)
         node.params.append(param)
 
 
@@ -317,7 +323,7 @@ def update_node_depths(tree: ClassTree):
             new_depth = max(chain([node.depth], (parent.depth + 1 for parent in node.parents)))
             new_depth = max(chain([new_depth],
                                   (tree[param].depth + 1
-                                   for _, param, _ in node.params if param is not None)))
+                                   for _, param, _ in node.params if param is not None and param != node.name)))
             if new_depth > node.depth:
                 node.depth = new_depth
                 needs_update = True
