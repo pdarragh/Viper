@@ -18,6 +18,13 @@ class AST:
                 return False
         return True
 
+    def __repr__(self):
+        my_vars = vars(self)
+        return self.__class__.__name__ + '(' + ', '.join(k + '=' + repr(v) for k, v in my_vars.items()) + ')'
+
+    def __str__(self):
+        return repr(self)
+
 
 class SingleInput(AST):
     pass
