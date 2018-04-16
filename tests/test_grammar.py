@@ -55,6 +55,49 @@ def test_expr(line: str, ast: AST):
 
 
 @pytest.mark.parametrize('line,ast', [
+    ('foo',
+     OpExpr([], Expr(Name(vl.Name('foo')), []), [], [])),
+    ('++ foo',
+     OpExpr([vl.Operator('++')], Expr(Name(vl.Name('foo')), []), [], [])),
+    ('++ foo --',
+     OpExpr([vl.Operator('++')], Expr(Name(vl.Name('foo')), []), [], [vl.Operator('--')])),
+    ('++ foo || bar --',
+     OpExpr(
+         [vl.Operator('++')],
+         Expr(Name(vl.Name('foo')), []),
+         [SubOpExpr([vl.Operator('||')], Expr(Name(vl.Name('bar')), []))],
+         [vl.Operator('--')]
+     )),
+    ('++ foo ** bar || baz // qux',
+     OpExpr(
+         [vl.Operator('++')],
+         Expr(Name(vl.Name('foo')), []),
+         [
+             SubOpExpr([vl.Operator('**')], Expr(Name(vl.Name('bar')), [])),
+             SubOpExpr([vl.Operator('||')], Expr(Name(vl.Name('baz')), [])),
+             SubOpExpr([vl.Operator('//')], Expr(Name(vl.Name('qux')), []))
+         ],
+         []
+     )),
+])
+def test_op_expr(line: str, ast: AST):
+    lexemes = lex_line(line)
+    assert ast == GRAMMAR.parse_rule('op_expr', lexemes)
+
+
+@pytest.mark.parametrize('line,ast', [
+    ('pass',
+     SimpleSuite(SimpleStmt(PassStmt()))),
+    ('return',
+     SimpleSuite(SimpleStmt(ReturnStmt(None)))),
+])
+def test_simple_suite(line: str, ast: AST):
+    lexemes = lex_line(line)
+    lexemes.append(vl.NEWLINE)
+    assert ast == GRAMMAR.parse_rule('suite', lexemes)
+
+
+@pytest.mark.parametrize('line,ast', [
     ('foo bar: Baz',
      Parameter(vl.Name('foo'), vl.Name('bar'), vl.Class('Baz'))),
     ('bar: Baz',
