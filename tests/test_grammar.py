@@ -17,7 +17,7 @@ import pytest
     ('()',
      ParenExpr(None)),
     ('(foo)',
-     ParenExpr(OpExprList([OpExpr([], Expr(Name(vl.Name('foo')), []), [], [])]))),
+     ParenExpr(OpExprList([OpExpr(None, Expr(Name(vl.Name('foo')), []), [], None)]))),
 ])
 def test_atom(line: str, ast: AST):
     lexemes = lex_line(line)
@@ -56,28 +56,31 @@ def test_expr(line: str, ast: AST):
 
 @pytest.mark.parametrize('line,ast', [
     ('foo',
-     OpExpr([], Expr(Name(vl.Name('foo')), []), [], [])),
+     OpExpr(None, Expr(Name(vl.Name('foo')), []), [], None)),
     ('++ foo',
-     OpExpr([vl.Operator('++')], Expr(Name(vl.Name('foo')), []), [], [])),
+     OpExpr(vl.Operator('++'), Expr(Name(vl.Name('foo')), []), [], None)),
     ('++ foo --',
-     OpExpr([vl.Operator('++')], Expr(Name(vl.Name('foo')), []), [], [vl.Operator('--')])),
+     OpExpr(vl.Operator('++'), Expr(Name(vl.Name('foo')), []), [], vl.Operator('--'))),
     ('++ foo || bar --',
      OpExpr(
-         [vl.Operator('++')],
+         vl.Operator('++'),
          Expr(Name(vl.Name('foo')), []),
-         [SubOpExpr([vl.Operator('||')], Expr(Name(vl.Name('bar')), []))],
-         [vl.Operator('--')]
+         [SubOpExpr(
+             vl.Operator('||'),
+             Expr(Name(vl.Name('bar')), [])
+         )],
+         vl.Operator('--')
      )),
     ('++ foo ** bar || baz // qux',
      OpExpr(
-         [vl.Operator('++')],
+         vl.Operator('++'),
          Expr(Name(vl.Name('foo')), []),
          [
-             SubOpExpr([vl.Operator('**')], Expr(Name(vl.Name('bar')), [])),
-             SubOpExpr([vl.Operator('||')], Expr(Name(vl.Name('baz')), [])),
-             SubOpExpr([vl.Operator('//')], Expr(Name(vl.Name('qux')), []))
+             SubOpExpr(vl.Operator('**'), Expr(Name(vl.Name('bar')), [])),
+             SubOpExpr(vl.Operator('||'), Expr(Name(vl.Name('baz')), [])),
+             SubOpExpr(vl.Operator('//'), Expr(Name(vl.Name('qux')), []))
          ],
-         []
+         None
      )),
 ])
 def test_op_expr(line: str, ast: AST):

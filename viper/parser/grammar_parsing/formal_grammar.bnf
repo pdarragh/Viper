@@ -21,8 +21,8 @@
                   | ReturnStmt 'return' exprs:<op_expr_list>?
                   | <op_expr_list>
 <op_expr_list>  ::= OpExprList op_exprs:<op_expr>&{,}
-<op_expr>       ::= OpExpr left_ops:OPERATOR* expr:<expr> sub_op_exprs:<sub_op_expr>* right_ops:OPERATOR*
-<sub_op_expr>   ::= SubOpExpr ops:OPERATOR+ expr:<expr>
+<op_expr>       ::= OpExpr left_op:OPERATOR? expr:<expr> sub_op_exprs:<sub_op_expr>* right_op:OPERATOR?
+<sub_op_expr>   ::= SubOpExpr op:OPERATOR expr:<expr>
 
 <expr_list>     ::= ExprList exprs:<expr>&{,}
 <expr>          ::= Expr atom:<atom> trailers:<trailer>*

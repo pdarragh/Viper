@@ -116,8 +116,8 @@ class Field(Trailer):
 
 
 class SubOpExpr(AST):
-    def __init__(self, ops: List[vl.Operator], expr: Expr):
-        self.ops = ops
+    def __init__(self, op: vl.Operator, expr: Expr):
+        self.op = op
         self.expr = expr
 
 
@@ -160,11 +160,11 @@ class Call(Trailer):
 
 
 class OpExpr(AST):
-    def __init__(self, left_ops: List[vl.Operator], expr: Expr, sub_op_exprs: List[SubOpExpr], right_ops: List[vl.Operator]):
-        self.left_ops = left_ops
+    def __init__(self, left_op: Optional[vl.Operator], expr: Expr, sub_op_exprs: List[SubOpExpr], right_op: Optional[vl.Operator]):
+        self.left_op = left_op
         self.expr = expr
         self.sub_op_exprs = sub_op_exprs
-        self.right_ops = right_ops
+        self.right_op = right_op
 
 
 class ClassDef(CompoundStmt):
