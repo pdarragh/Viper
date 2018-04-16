@@ -134,7 +134,7 @@ class ExprList(AST):
 
 
 class FuncDef(CompoundStmt):
-    def __init__(self, name: vl.Name, params: Optional[List[Parameter]], func_type: vl.Class, body: Suite):
+    def __init__(self, name: vl.Name, params: List[Parameter], func_type: vl.Class, body: Suite):
         self.name = name
         self.params = params
         self.func_type = func_type
@@ -162,7 +162,7 @@ class SimpleSuite(Suite):
 
 
 class Call(Trailer):
-    def __init__(self, args: Optional[List[Expr]]):
+    def __init__(self, args: List[Expr]):
         self.args = args
 
 

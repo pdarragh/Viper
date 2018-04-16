@@ -30,10 +30,10 @@
                   | Name name:NAME
                   | Number num:NUMBER
                   | Ellipsis '...'
-<trailer>       ::= Call '(' args:<expr>&{,}? ')'
+<trailer>       ::= Call '(' args:<expr>&{,} ')'
                   | Field '.' field:NAME
 
-<func_def>      ::= FuncDef 'def' name:NAME '(' params:<parameter>&{,}? ')' '->' func_type:CLASS ':' body:<suite>
+<func_def>      ::= FuncDef 'def' name:NAME '(' params:<parameter>&{,} ')' '->' func_type:CLASS ':' body:<suite>
 <parameter>     ::= Parameter external:NAME? internal:NAME ':' param_type:CLASS
 
 <class_def>     ::= ClassDef 'class' name:CLASS args:<arguments>? ':' body:<suite>

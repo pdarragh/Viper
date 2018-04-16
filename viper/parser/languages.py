@@ -110,8 +110,7 @@ class RepRedFunc(RedFunc):
     def make_nice_string(self, start_column: int) -> str:
         return self.repr_string
 
-    def __init__(self, eps_func: EpsFunc, repr_string: str):
-        self.eps_func = eps_func
+    def __init__(self, repr_string: str):
         self.repr_string = repr_string
 
     def __call__(self, sppf: SPPF) -> SPPF:
@@ -120,7 +119,7 @@ class RepRedFunc(RedFunc):
         elif len(sppf) == 1:
             child = sppf[0]
             if isinstance(child, ParseTreeEps):
-                return self.eps_func()
+                return SPPF(ParseTreeChar([]))
             elif isinstance(child, ParseTreeChar):
                 return SPPF(ParseTreeChar([child.token]))
             elif isinstance(child, ParseTreePair):
@@ -158,12 +157,12 @@ class RepRedFunc(RedFunc):
 
 class SepRepRedFunc(RepRedFunc):
     def __init__(self):
-        super().__init__(lambda: SPPF(), '&')
+        super().__init__('&')
 
 
 class ListRepRedFunc(RepRedFunc):
     def __init__(self):
-        super().__init__(lambda: SPPF(ParseTreeChar([])), '*')
+        super().__init__('*')
 
 
 class MinRepRedFunc(RedFunc):
@@ -568,7 +567,7 @@ def sep_rep(sep_lang: Language, lang: Language) -> Language:
     """
     A separated-repeat, e.g. for matching things like:
 
-        wswsw
+        w s w s w
 
     (where "w" is the item to be matched and "s" is a separator to be discarded).
 
