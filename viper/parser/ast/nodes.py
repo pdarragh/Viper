@@ -201,10 +201,10 @@ class OpExprList(ExprStmt):
 
 
 class ReturnStmt(ExprStmt):
-    def __init__(self, exprs: Optional[OpExprList]):
+    def __init__(self, exprs: OpExprList):
         self.exprs = exprs
 
 
 class ParenExpr(Atom):
-    def __init__(self, expr_list: Optional[OpExprList]):
+    def __init__(self, expr_list: OpExprList):
         self.expr_list = expr_list

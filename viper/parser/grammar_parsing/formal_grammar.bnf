@@ -18,7 +18,7 @@
                   | <data_def>
 
 <expr_stmt>     ::= PassStmt 'pass'
-                  | ReturnStmt 'return' exprs:<op_expr_list>?
+                  | ReturnStmt 'return' exprs:<op_expr_list>
                   | <op_expr_list>
 <op_expr_list>  ::= OpExprList op_exprs:<op_expr>&{,}
 <op_expr>       ::= OpExpr left_op:OPERATOR? expr:<expr> sub_op_exprs:<sub_op_expr>* right_op:OPERATOR?
@@ -26,7 +26,7 @@
 
 <expr_list>     ::= ExprList exprs:<expr>&{,}
 <expr>          ::= Expr atom:<atom> trailers:<trailer>*
-<atom>          ::= ParenExpr '(' expr_list:<op_expr_list>? ')'
+<atom>          ::= ParenExpr '(' expr_list:<op_expr_list> ')'
                   | Name name:NAME
                   | Number num:NUMBER
                   | Ellipsis '...'
