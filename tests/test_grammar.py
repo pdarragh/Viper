@@ -93,6 +93,14 @@ def test_op_expr(line: str, ast: AST):
      SimpleSuite(SimpleStmt(PassStmt()))),
     ('return',
      SimpleSuite(SimpleStmt(ReturnStmt(None)))),
+    ('return foo',
+     SimpleSuite(SimpleStmt(ReturnStmt(OpExprList([OpExpr(None, Expr(Name(vl.Name('foo')), []), [], None)]))))),
+    ('foo, ~bar, baz !',
+     SimpleSuite(SimpleStmt(OpExprList([
+         OpExpr(None, Expr(Name(vl.Name('foo')), []), [], None),
+         OpExpr(vl.Operator('~'), Expr(Name(vl.Name('bar')), []), [], None),
+         OpExpr(None, Expr(Name(vl.Name('baz')), []), [], vl.Operator('!'))
+     ])))),
 ])
 def test_simple_suite(line: str, ast: AST):
     lexemes = lex_line(line)
