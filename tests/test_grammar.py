@@ -7,6 +7,10 @@ import viper.lexer as vl
 import pytest
 
 
+def run_test(rule: str, ast: AST, lexemes: List[vl.Lexeme], prepend: List[vl.Lexeme], append: List[vl.Lexeme]):
+    assert ast == GRAMMAR.parse_rule(rule, prepend + lexemes + append)
+
+
 @pytest.mark.parametrize('line,ast', [
     ('foo',
      Name(vl.Name('foo'))),
@@ -21,7 +25,7 @@ import pytest
 ])
 def test_atom(line: str, ast: AST):
     lexemes = lex_line(line)
-    assert ast == GRAMMAR.parse_rule('atom', lexemes)
+    run_test('atom', ast, lexemes, [], [])
 
 
 @pytest.mark.parametrize('line,ast', [
@@ -51,7 +55,7 @@ def test_atom(line: str, ast: AST):
 ])
 def test_expr(line: str, ast: AST):
     lexemes = lex_line(line)
-    assert ast == GRAMMAR.parse_rule('expr', lexemes)
+    run_test('expr', ast, lexemes, [], [])
 
 
 @pytest.mark.parametrize('line,ast', [
@@ -85,7 +89,7 @@ def test_expr(line: str, ast: AST):
 ])
 def test_op_expr(line: str, ast: AST):
     lexemes = lex_line(line)
-    assert ast == GRAMMAR.parse_rule('op_expr', lexemes)
+    run_test('op_expr', ast, lexemes, [], [])
 
 
 @pytest.mark.parametrize('line,ast', [
@@ -104,8 +108,7 @@ def test_op_expr(line: str, ast: AST):
 ])
 def test_simple_suite(line: str, ast: AST):
     lexemes = lex_line(line)
-    lexemes.append(vl.NEWLINE)
-    assert ast == GRAMMAR.parse_rule('suite', lexemes)
+    run_test('suite', ast, lexemes, [], [vl.NEWLINE])
 
 
 @pytest.mark.parametrize('line,ast', [
@@ -116,7 +119,7 @@ def test_simple_suite(line: str, ast: AST):
 ])
 def test_parameter(line: str, ast: AST):
     lexemes = lex_line(line)
-    assert ast == GRAMMAR.parse_rule('parameter', lexemes)
+    run_test('parameter', ast, lexemes, [], [])
 
 
 @pytest.mark.parametrize('line,ast', [
@@ -141,5 +144,4 @@ def test_parameter(line: str, ast: AST):
 ])
 def test_func_def(line: str, ast: AST):
     lexemes = lex_line(line)
-    lexemes.append(vl.NEWLINE)
-    assert ast == GRAMMAR.parse_rule('func_def', lexemes)
+    run_test('func_def', ast, lexemes, [], [vl.NEWLINE])
