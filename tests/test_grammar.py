@@ -15,7 +15,7 @@ import pytest
     ('...',
      Ellipsis()),
     ('()',
-     ParenExpr(None)),
+     ParenExpr(OpExprList([]))),
     ('(foo)',
      ParenExpr(OpExprList([OpExpr(None, Expr(Name(vl.Name('foo')), []), [], None)]))),
 ])
@@ -43,7 +43,7 @@ def test_atom(line: str, ast: AST):
          Field(vl.Name('bar')),
          Call([
              Expr(Name(vl.Name('baz')), []),
-             Expr(Name(vl.Name('qux')), [Field(vl.Name('quum')), Call(None)])
+             Expr(Name(vl.Name('qux')), [Field(vl.Name('quum')), Call([])])
          ])
      ])),
     ('2.foo',
@@ -92,7 +92,7 @@ def test_op_expr(line: str, ast: AST):
     ('pass',
      SimpleSuite(SimpleStmt(PassStmt()))),
     ('return',
-     SimpleSuite(SimpleStmt(ReturnStmt(None)))),
+     SimpleSuite(SimpleStmt(ReturnStmt(OpExprList([]))))),
     ('return foo',
      SimpleSuite(SimpleStmt(ReturnStmt(OpExprList([OpExpr(None, Expr(Name(vl.Name('foo')), []), [], None)]))))),
     ('foo, ~bar, baz !',
@@ -121,7 +121,7 @@ def test_parameter(line: str, ast: AST):
 
 @pytest.mark.parametrize('line,ast', [
     ('def foo() -> Bar: pass',
-     FuncDef(vl.Name('foo'), None, vl.Class('Bar'), SimpleSuite(SimpleStmt(PassStmt())))),
+     FuncDef(vl.Name('foo'), [], vl.Class('Bar'), SimpleSuite(SimpleStmt(PassStmt())))),
     ('def foo(bar: Baz) -> Qux: pass',
      FuncDef(vl.Name('foo'),
              [
