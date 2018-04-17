@@ -17,7 +17,7 @@ class Grammar:
         lang = self.rules[rule]
         sppf = make_sppf(lang, lexemes)
         if len(sppf) == 0:
-            raise RuntimeError("Invalid parse.")
+            raise RuntimeError("No parse.")
         elif len(sppf) == 1:
             child = sppf[0]
             if not isinstance(child, ParseTreeChar):
