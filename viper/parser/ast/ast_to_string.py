@@ -3,6 +3,12 @@ from .nodes import AST
 from typing import List
 
 
+FINAL_FIRST = '└─'
+FINAL_REST = '  '
+INTMD_FIRST = '├─'
+INTMD_REST = '│ '
+
+
 def ast_to_string(ast: AST, condensed=True) -> str:
     if condensed:
         lines = node_to_lines_condensed(ast)
@@ -18,11 +24,11 @@ def node_to_lines_condensed(node: AST) -> List[str]:
     for param, val in params.items():
         i += 1
         if i == len(params):
-            first = '└─'
-            rest = '  '
+            first = FINAL_FIRST
+            rest = FINAL_REST
         else:
-            first = '├─'
-            rest = '│ '
+            first = INTMD_FIRST
+            rest = INTMD_REST
         val_lines = handle_sub_node_condensed(val, first, rest)
         lines += val_lines
     return lines
@@ -45,11 +51,11 @@ def handle_sub_node_condensed(val, first, rest) -> List[str]:
         for sub_val in val:
             i += 1
             if i == len(val):
-                sub_first = rest + '└─'
-                sub_rest = rest + '  '
+                sub_first = rest + FINAL_FIRST
+                sub_rest = rest + FINAL_REST
             else:
-                sub_first = rest + '├─'
-                sub_rest = rest + '│ '
+                sub_first = rest + INTMD_FIRST
+                sub_rest = rest + INTMD_REST
             val_lines += handle_sub_node_condensed(sub_val, sub_first, sub_rest)
         return val_lines
     else:
