@@ -10,14 +10,35 @@ INTMD_REST = '│ '
 
 
 def ast_to_string(ast: AST, condensed=True) -> str:
-    if condensed:
-        lines = node_to_lines_condensed(ast)
-    else:
-        lines = node_to_lines_full(ast)
+    lines = node_to_lines(ast, condensed)
     return '\n'.join(lines)
 
 
+def node_to_lines(node: AST, condensed: bool) -> List[str]:
+    if condensed:
+        return node_to_lines_condensed(node)
+    else:
+        return node_to_lines_full(node)
+
+
 def node_to_lines_condensed(node: AST) -> List[str]:
+    lines = [node.__class__.__name__]
+    params = vars(node)
+    i = 0
+    for val in params.values():
+        i += 1
+        if i == len(params):
+            first = FINAL_FIRST
+            rest = FINAL_REST
+        else:
+            first = INTMD_FIRST
+            rest = INTMD_REST
+        val_lines = handle_sub_node(val, first, rest, True)
+        lines += val_lines
+    return lines
+
+
+def node_to_lines_full(node: AST) -> List[str]:
     lines = [node.__class__.__name__]
     params = vars(node)
     i = 0
@@ -29,18 +50,17 @@ def node_to_lines_condensed(node: AST) -> List[str]:
         else:
             first = INTMD_FIRST
             rest = INTMD_REST
-        val_lines = handle_sub_node_condensed(val, first, rest)
+        lines += [first + param + ':']
+        val_lines = handle_sub_node(val, first, rest, False)
+        for j in range(len(val_lines)):
+            val_lines[j] = rest + val_lines[j]
         lines += val_lines
     return lines
 
 
-def node_to_lines_full(node: AST) -> List[str]:
-    pass
-
-
-def handle_sub_node_condensed(val, first, rest) -> List[str]:
+def handle_sub_node(val, first: str, rest: str, condensed: bool) -> List[str]:
     if isinstance(val, AST):
-        val_lines = node_to_lines_condensed(val)
+        val_lines = node_to_lines(val, condensed)
         val_lines[0] = first + val_lines[0]
         for i in range(1, len(val_lines)):
             val_lines[i] = rest + val_lines[i]
@@ -56,7 +76,7 @@ def handle_sub_node_condensed(val, first, rest) -> List[str]:
             else:
                 sub_first = rest + INTMD_FIRST
                 sub_rest = rest + INTMD_REST
-            val_lines += handle_sub_node_condensed(sub_val, sub_first, sub_rest)
+            val_lines += handle_sub_node(sub_val, sub_first, sub_rest, condensed)
         return val_lines
     else:
         return [first + repr(val)]
