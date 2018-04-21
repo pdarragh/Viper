@@ -29,6 +29,9 @@ class Grammar:
         else:
             raise RuntimeError("Ambiguous parse.")
 
+    def parse_file(self, lexemes: List[Lexeme]) -> AST:
+        return self.parse_rule('file_input', lexemes)
+
 
 GRAMMAR_FILE = join(dirname(__file__), join('grammar_parsing', 'formal_grammar.bnf'))
 GRAMMAR = Grammar(GRAMMAR_FILE)

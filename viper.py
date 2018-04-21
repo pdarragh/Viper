@@ -2,7 +2,7 @@
 
 from viper.interactive import *
 from viper.lexer import lex_file, NewLine
-from viper.parser import GRAMMAR
+from viper.parser import GRAMMAR, ast_to_string
 
 
 if __name__ == '__main__':
@@ -11,8 +11,10 @@ if __name__ == '__main__':
     parser.add_argument('-L', '--interactive-lexer', action='store_true', help='lexes input')
     parser.add_argument('-l', '--file-lexer', help='produces lexemes for given file input')
     parser.add_argument('-S', '--interactive-sppf', action='store_true', help='lexes input and produces SPPF')
-    parser.add_argument('-s', '--file-sppf', help='produces SPPF for given input')
-    parser.add_argument('-r', '--parser-rule', default='single_line', help='parser rule from which to start parsing')
+    parser.add_argument('-s', '--file-sppf', help='produces SPPF for given input file')
+    parser.add_argument('-G', '--interactive-grammar', action='store_true', help='lexes input and produces AST')
+    parser.add_argument('-g', '--file-grammar', help='produces AST for given input file')
+    parser.add_argument('-r', '--parser-rule', default='single_input', help='parser rule from which to start parsing')
     args = parser.parse_args()
 
     if args.interactive_lexer:
@@ -34,3 +36,9 @@ if __name__ == '__main__':
         lexemes = lex_file(args.file_sppf)
         sppf = GRAMMAR.parse_file(lexemes)
         print(sppf)
+    elif args.interactive_grammar:
+        InteractiveGrammar(args.grammar_rule).cmdloop()
+    elif args.file_grammar:
+        lexemes = lex_file(args.file_grammar)
+        ast = GRAMMAR.parse_file(lexemes)
+        print(ast_to_string(ast))
