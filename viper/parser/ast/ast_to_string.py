@@ -15,30 +15,6 @@ def ast_to_string(ast: AST, condensed=True) -> str:
 
 
 def node_to_lines(node: AST, condensed: bool) -> List[str]:
-    if condensed:
-        return node_to_lines_condensed(node)
-    else:
-        return node_to_lines_full(node)
-
-
-def node_to_lines_condensed(node: AST) -> List[str]:
-    lines = [node.__class__.__name__]
-    params = vars(node)
-    i = 0
-    for val in params.values():
-        i += 1
-        if i == len(params):
-            first = FINAL_FIRST
-            rest = FINAL_REST
-        else:
-            first = INTMD_FIRST
-            rest = INTMD_REST
-        val_lines = handle_sub_node(val, first, rest, True)
-        lines += val_lines
-    return lines
-
-
-def node_to_lines_full(node: AST) -> List[str]:
     lines = [node.__class__.__name__]
     params = vars(node)
     i = 0
@@ -50,10 +26,9 @@ def node_to_lines_full(node: AST) -> List[str]:
         else:
             first = INTMD_FIRST
             rest = INTMD_REST
-        lines += [first + param + ':']
-        val_lines = handle_sub_node(val, first, rest, False)
-        for j in range(len(val_lines)):
-            val_lines[j] = rest + val_lines[j]
+        if not condensed:
+            first = first + param + ': '
+        val_lines = handle_sub_node(val, first, rest, condensed)
         lines += val_lines
     return lines
 
