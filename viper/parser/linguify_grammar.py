@@ -127,7 +127,6 @@ class ASTNodeRedFunc(RedFunc):
             if name is not None:
                 params[name] = to_add
         class_name = convert_name_to_class_name(self.name)
-        print(f"{class_name}: {params}")
         class_obj = getattr(vn, class_name)
         return SPPF(ParseTreeChar(class_obj(**params)))
 
