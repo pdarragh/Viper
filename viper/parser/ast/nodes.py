@@ -55,6 +55,11 @@ class CompoundStmt(Stmt):
     pass
 
 
+class ElseExpr(AST):
+    def __init__(self, false_body: Suite):
+        self.false_body = false_body
+
+
 class Value(AST):
     def __init__(self, atom: Atom, trailers: List[Trailer]):
         self.atom = atom
@@ -211,7 +216,7 @@ class Test(AST):
 
 
 class IfExpr(CompoundStmt):
-    def __init__(self, cond: Test, true_body: Suite, false_body: Suite):
+    def __init__(self, cond: Test, true_body: Suite, else_expr: Optional[ElseExpr]):
         self.cond = cond
         self.true_body = true_body
-        self.false_body = false_body
+        self.else_expr = else_expr

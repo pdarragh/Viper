@@ -18,7 +18,8 @@
                   | <data_def>
                   | <if_expr>
 
-<if_expr>       ::= IfExpr 'if' cond:<test> ':' true_body:<suite> 'else' ':' false_body:<suite>
+<if_expr>       ::= IfExpr 'if' cond:<test> ':' true_body:<suite> else_expr:<else_expr>?
+<else_expr>     ::= ElseExpr 'else' ':' false_body:<suite>
 
 <expr_stmt>     ::= PassStmt 'pass'
                   | ReturnStmt 'return' exprs:<op_expr_list>
