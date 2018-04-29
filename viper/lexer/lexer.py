@@ -1,3 +1,4 @@
+from .reserved_tokens import *
 from viper.error import ViperError
 from viper.lexer.lexemes import *
 
@@ -61,24 +62,6 @@ class RegexMatcher:
 # Lexer errors.
 class LexerError(ViperError):
     pass
-
-
-# Reserved words.
-RESERVED_NAMES = {
-    'def',
-    'pass',
-    'return',
-    'class',
-    'interface',
-    'data',
-    'if',
-    'else',
-    'or',
-    'and',
-    'not',
-}
-
-RESERVED_CLASSES = set()
 
 
 # Lexer implementation.
