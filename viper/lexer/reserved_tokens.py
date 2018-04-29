@@ -6,6 +6,7 @@ RESERVED_NAMES = {
     'interface',
     'data',
     'if',
+    'elif',
     'else',
     'or',
     'and',

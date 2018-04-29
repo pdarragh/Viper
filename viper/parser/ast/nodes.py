@@ -56,8 +56,8 @@ class CompoundStmt(Stmt):
 
 
 class ElseExpr(AST):
-    def __init__(self, false_body: Suite):
-        self.false_body = false_body
+    def __init__(self, else_body: Suite):
+        self.else_body = else_body
 
 
 class Value(AST):
@@ -215,8 +215,15 @@ class Test(AST):
         self.test = test
 
 
-class IfExpr(CompoundStmt):
-    def __init__(self, cond: Test, true_body: Suite, else_expr: Optional[ElseExpr]):
+class ElifExpr(AST):
+    def __init__(self, cond: Test, elif_body: Suite):
         self.cond = cond
-        self.true_body = true_body
+        self.elif_body = elif_body
+
+
+class IfExpr(CompoundStmt):
+    def __init__(self, cond: Test, if_body: Suite, elif_exprs: List[ElifExpr], else_expr: Optional[ElseExpr]):
+        self.cond = cond
+        self.if_body = if_body
+        self.elif_exprs = elif_exprs
         self.else_expr = else_expr
