@@ -1,4 +1,5 @@
 [run]
+branch = True
 omit =
     viper/interactive/*
     viper/parser/ast/ast_to_string.py
