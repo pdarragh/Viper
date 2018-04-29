@@ -1,3 +1,18 @@
 [run]
 omit =
     viper/interactive/*
+    viper/parser/ast/ast_to_string.py
+    viper/parser/ast/class_treey.py
+    viper/parser/ast/generate_nodes_module.py
+    viper/parser/ast/ordered_set.py
+
+[report]
+exclude_lines =
+    # Re-enable this.
+    pragma: no cover
+
+    # Ignore printing code.
+    def __repr__
+
+    # Don't check code that's not meant to run.
+    if __name__ == .__main__.:
