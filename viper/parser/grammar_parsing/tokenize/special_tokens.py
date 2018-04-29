@@ -12,6 +12,7 @@ COMMA = GrammarToken(vl.Comma, vl.COMMA.text)
 OPEN_PAREN = GrammarToken(vl.OpenParen, vl.OPEN_PAREN.text)
 CLOSE_PAREN = GrammarToken(vl.CloseParen, vl.CLOSE_PAREN.text)
 COLON = GrammarToken(vl.Colon, vl.COLON.text)
+L_ARROW = GrammarToken(vl.LeftArrow, vl.L_ARROW.text)
 R_ARROW = GrammarToken(vl.RightArrow, vl.R_ARROW.text)
 ELLIPSIS = GrammarToken(vl.Ellipsis, vl.ELLIPSIS.text)
 NUMBER = GrammarToken(vl.Number)
@@ -35,6 +36,8 @@ SPECIAL_TOKENS = {
     ')':           CLOSE_PAREN,
     'COLON':       COLON,
     ':':           COLON,
+    'L_ARROW':     L_ARROW,
+    '<-':          L_ARROW,
     'R_ARROW':     R_ARROW,
     '->':          R_ARROW,
     'ELLIPSIS':    ELLIPSIS,

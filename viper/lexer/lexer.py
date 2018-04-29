@@ -167,6 +167,8 @@ class Lexer:
                 lexemes.append(CLOSE_PAREN)
             elif symbol == COLON.text:
                 lexemes.append(COLON)
+            elif symbol == L_ARROW.text:
+                lexemes.append(L_ARROW)
             elif symbol == R_ARROW.text:
                 lexemes.append(R_ARROW)
             elif symbol == ELLIPSIS.text:
