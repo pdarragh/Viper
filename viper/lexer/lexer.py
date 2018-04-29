@@ -87,7 +87,6 @@ class Lexer:
     @classmethod
     def lex_lines(cls, text: str) -> List[Lexeme]:
         all_lexemes: List[Lexeme] = []
-        # indents: List[int] = []
         prev_indents = 0
         lines = text.splitlines()
         for i, line in enumerate(lines):
@@ -99,6 +98,9 @@ class Lexer:
             rest = rest.strip()
             if not rest:
                 # Don't use blank lines to handle indentation.
+                continue
+            if rest.startswith('#'):
+                # Skip comments.
                 continue
             lexemes = cls.lex_line(rest)
             curr_indents = len(indentation) // INDENT_SIZE
