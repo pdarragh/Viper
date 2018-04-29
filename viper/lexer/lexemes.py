@@ -86,7 +86,7 @@ class Colon(Lexeme):
         super().__init__(':', False)
 
 
-class Arrow(Lexeme):
+class RightArrow(Lexeme):
     def __init__(self):
         super().__init__('->', False)
 
@@ -129,5 +129,5 @@ COMMA = Comma()
 OPEN_PAREN = OpenParen()
 CLOSE_PAREN = CloseParen()
 COLON = Colon()
-ARROW = Arrow()
+R_ARROW = RightArrow()
 ELLIPSIS = Ellipsis()

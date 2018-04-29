@@ -1,6 +1,6 @@
 from viper.lexer import (
     NEWLINE as NL, INDENT as IND, DEDENT as DED, COLON as COL, OPEN_PAREN as OP, CLOSE_PAREN as CP, ENDMARKER as EM,
-    ARROW as ARR,
+    R_ARROW as ARR,
     Number as Num,
     Name as N, ReservedName as RN,
     Class as C,

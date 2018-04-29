@@ -12,7 +12,7 @@ COMMA = GrammarToken(vl.Comma, vl.COMMA.text)
 OPEN_PAREN = GrammarToken(vl.OpenParen, vl.OPEN_PAREN.text)
 CLOSE_PAREN = GrammarToken(vl.CloseParen, vl.CLOSE_PAREN.text)
 COLON = GrammarToken(vl.Colon, vl.COLON.text)
-ARROW = GrammarToken(vl.Arrow, vl.ARROW.text)
+R_ARROW = GrammarToken(vl.RightArrow, vl.R_ARROW.text)
 ELLIPSIS = GrammarToken(vl.Ellipsis, vl.ELLIPSIS.text)
 NUMBER = GrammarToken(vl.Number)
 NAME = GrammarToken(vl.Name)
@@ -21,26 +21,26 @@ OPERATOR = GrammarToken(vl.Operator)
 
 
 SPECIAL_TOKENS = {
-    'INDENT':       INDENT,
-    'DEDENT':       DEDENT,
-    'ENDMARKER':    ENDMARKER,
-    'NEWLINE':      NEWLINE,
-    'PERIOD':       PERIOD,
-    '.':            PERIOD,
-    'COMMA':        COMMA,
-    ',':            COMMA,
-    'OPEN_PAREN':   OPEN_PAREN,
-    '(':            OPEN_PAREN,
-    'CLOSE_PAREN':  CLOSE_PAREN,
-    ')':            CLOSE_PAREN,
-    'COLON':        COLON,
-    ':':            COLON,
-    'ARROW':        ARROW,
-    '->':           ARROW,
-    'ELLIPSIS':     ELLIPSIS,
-    '...':          ELLIPSIS,
-    'NUMBER':       NUMBER,
-    'NAME':         NAME,
-    'CLASS':        CLASS,
-    'OPERATOR':     OPERATOR,
+    'INDENT':      INDENT,
+    'DEDENT':      DEDENT,
+    'ENDMARKER':   ENDMARKER,
+    'NEWLINE':     NEWLINE,
+    'PERIOD':      PERIOD,
+    '.':           PERIOD,
+    'COMMA':       COMMA,
+    ',':           COMMA,
+    'OPEN_PAREN':  OPEN_PAREN,
+    '(':           OPEN_PAREN,
+    'CLOSE_PAREN': CLOSE_PAREN,
+    ')':           CLOSE_PAREN,
+    'COLON':       COLON,
+    ':':           COLON,
+    'R_ARROW':     R_ARROW,
+    '->':          R_ARROW,
+    'ELLIPSIS':    ELLIPSIS,
+    '...':         ELLIPSIS,
+    'NUMBER':      NUMBER,
+    'NAME':        NAME,
+    'CLASS':       CLASS,
+    'OPERATOR':    OPERATOR,
 }

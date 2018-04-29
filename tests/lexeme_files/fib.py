@@ -1,5 +1,5 @@
 from viper.lexer import (
-    NEWLINE as NL, INDENT as IND, DEDENT as DED, COLON, OPEN_PAREN as OP, CLOSE_PAREN as CP, ARROW, ENDMARKER as EM,
+    NEWLINE as NL, INDENT as IND, DEDENT as DED, COLON, OPEN_PAREN as OP, CLOSE_PAREN as CP, R_ARROW, ENDMARKER as EM,
     Number as Num,
     Name as N, ReservedName as RN,
     Class as C,
@@ -8,7 +8,7 @@ from viper.lexer import (
 
 
 lexemes = [
-    RN('def'), N('fib'), OP, N('n'), COLON, C('Int'), CP, ARROW, C('Int'), COLON,
+    RN('def'), N('fib'), OP, N('n'), COLON, C('Int'), CP, R_ARROW, C('Int'), COLON,
     NL, IND,
         RN('if'), N('n'), Op('=='), Num('1'), RN('or'), N('n'), Op('=='), Num('2'), COLON,
         NL, IND,
