@@ -26,11 +26,15 @@ class MinimumRepeatToken(AltToken):
     pass
 
 
-class OptionalToken(AltToken):
+class SeparatedRepeatToken(AltToken):
     pass
 
 
-class SeparatedRepeatToken(AltToken):
+class MinimumSeparatedRepeatToken(AltToken):
+    pass
+
+
+class OptionalToken(AltToken):
     pass
 
 

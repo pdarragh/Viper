@@ -198,6 +198,12 @@ def tokenize_subalternate(subalt: DequotedSubalternate) -> List[DequotedSubalter
             add_token(start_index, i + 1)
             start_index = i
             continue_until = None
+        elif c == '&':
+            # Add what we've got until this point and grab an extra character.
+            add_token(start_index, i)
+            add_token(i - 1, i + 2)
+            i += 1
+            start_index = i
         elif c in ('*', '+', '&', '?', ':'):
             # These characters can only exist independently.
             add_token(start_index, i)
@@ -221,8 +227,10 @@ def tokenize_dequoted_subalternate(token: DequotedSubalternate) -> AltToken:
         return MinimumRepeatToken(text)
     elif text == '?':
         return OptionalToken(text)
-    elif text == '&':
+    elif text == '&*':
         return SeparatedRepeatToken(text)
+    elif text == '&+':
+        return MinimumSeparatedRepeatToken(text)
     elif text == ':':
         return ColonToken(text)
     elif text.startswith('{') and text.endswith('}'):

@@ -5,7 +5,7 @@ from .tokenize.tokenize_grammar import tokenize_grammar_file
 
 from viper.error import ViperError
 
-from typing import Dict, List, NamedTuple
+from typing import ClassVar, Dict, List, NamedTuple
 
 TokenParse = NamedTuple('TokenParse', [('part', ProductionPart), ('idx', int)])
 
@@ -104,22 +104,31 @@ def parse_possible_repeatable_or_optional(token_list: List[AltToken], index: int
     if index >= len(token_list):
         return TokenParse(enclosed_part, index)
     token = token_list[index]
-    if isinstance(token, SeparatedRepeatToken):
-        return parse_separated_repeat_token(token_list, index + 1, enclosed_part)
-    elif isinstance(token, RepeatToken):
+    if isinstance(token, RepeatToken):
         return TokenParse(RepeatPart(enclosed_part), index + 1)
     elif isinstance(token, MinimumRepeatToken):
         return TokenParse(MinimumRepeatPart(enclosed_part), index + 1)
+    elif isinstance(token, SeparatedRepeatToken):
+        return parse_separated_repeat_token(token_list, index + 1, enclosed_part)
+    elif isinstance(token, MinimumSeparatedRepeatToken):
+        return parse_minimum_separated_repeat_token(token_list, index + 1, enclosed_part)
     else:
         return parse_possible_optional(token_list, index, enclosed_part)
 
 
 def parse_separated_repeat_token(token_list: List[AltToken], index: int, enclosed_part: ProductionPart) -> TokenParse:
+    return _parse_separated_repeat_token(token_list, index, enclosed_part, "sep-rep '&*'", SeparatedRepeatPart)
+
+
+def parse_minimum_separated_repeat_token(token_list: List[AltToken], index: int, enclosed_part: ProductionPart) -> TokenParse:
+    return _parse_separated_repeat_token(token_list, index, enclosed_part, "min-sep-rep '&+'", MinimumSeparatedRepeatPart)
+
+
+def _parse_separated_repeat_token(token_list: List[AltToken], index: int, enclosed_part: ProductionPart, name: str, part_class: ClassVar) -> TokenParse:
     if index >= len(token_list) or not isinstance(token_list[index], BracedToken):
-        raise GrammarParserError(f"Expected braced token after rep-sep '&'; instead got {token_list[index]}")
+        raise GrammarParserError(f"Expected braced token after {name}; instead got {token_list[index]}")
     token: BracedToken = token_list[index]
-    part = TokenParse(SeparatedRepeatPart(LiteralPart(token.text), enclosed_part), index + 1)
-    return parse_possible_optional(token_list, part.idx, part.part)
+    return TokenParse(part_class(LiteralPart(token.text), enclosed_part), index + 1)
 
 
 def parse_possible_optional(token_list: List[AltToken], index: int, enclosed_part: ProductionPart) -> TokenParse:

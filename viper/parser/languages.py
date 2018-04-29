@@ -588,6 +588,24 @@ def sep_rep(sep_lang: Language, lang: Language) -> Language:
                SepRepRedFunc())
 
 
+def min_sep_rep(sep_lang: Language, lang: Language) -> Language:
+    """
+    Like a sep-rep, but requires at least one instance of `lang`.
+
+    Constructed as:
+
+        ◦
+       / \
+      w   *
+          |
+          ◦
+         / \
+        s   w
+    """
+    return red(concat(lang, rep(red(concat(sep_lang, lang), SepRepConcatRedFunc()))),
+               SepRepRedFunc())
+
+
 def opt(lang: Language) -> Language:
     return alt(lang, eps(lambda: SPPF(ParseTreeEps())))
 

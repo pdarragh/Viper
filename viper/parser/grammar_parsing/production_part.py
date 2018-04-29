@@ -49,7 +49,13 @@ class SeparatedRepeatPart(ProductionPart):
         self.rule = rule_part
 
     def __repr__(self):
-        return repr(self.rule) + "{" + repr(self.separator) + "}&"
+        return repr(self.rule) + "{" + repr(self.separator) + "}&*"
+
+
+class MinimumSeparatedRepeatPart(ProductionPart):
+    def __init__(self, separator: ProductionPart, rule_part: ProductionPart):
+        self.separator = separator
+        self.rule = rule_part
 
 
 class OptionPart(ProductionPart):
