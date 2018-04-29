@@ -16,28 +16,35 @@
                   | <class_def>
                   | <interface_def>
                   | <data_def>
+                  | <if_expr>
+
+<if_expr>       ::= IfExpr 'if' cond:<test> ':' true_body:<suite> 'else' ':' false_body:<suite>
 
 <expr_stmt>     ::= PassStmt 'pass'
                   | ReturnStmt 'return' exprs:<op_expr_list>
-                  | <op_expr_list>
-<op_expr_list>  ::= OpExprList op_exprs:<op_expr>&{,}
-<op_expr>       ::= OpExpr left_op:OPERATOR? expr:<expr> sub_op_exprs:<sub_op_expr>* right_op:OPERATOR?
-<sub_op_expr>   ::= SubOpExpr op:OPERATOR expr:<expr>
+                  | PlainExpr expr:<op_expr>
+<test>          ::= Test test:<or_test>
+<or_test>       ::= OrTest tests:<and_test>&+{or}
+<and_test>      ::= AndTest tests:<not_test>&+{and}
+<not_test>      ::= NotTest tests:<op_expr>&+{not}
 
-<expr_list>     ::= ExprList exprs:<expr>&{,}
-<expr>          ::= Expr atom:<atom> trailers:<trailer>*
+<op_expr_list>  ::= OpExprList op_exprs:<op_expr>&*{,}
+<op_expr>       ::= OpExpr left_op:OPERATOR? expr:<value> sub_op_exprs:<sub_op_expr>* right_op:OPERATOR?
+<sub_op_expr>   ::= SubOpExpr op:OPERATOR expr:<value>
+
+<value>         ::= Value atom:<atom> trailers:<trailer>*
 <atom>          ::= ParenExpr '(' expr_list:<op_expr_list> ')'
                   | Name name:NAME
                   | Number num:NUMBER
                   | Ellipsis '...'
-<trailer>       ::= Call '(' args:<expr>&{,} ')'
+<trailer>       ::= Call '(' args:<value>&*{,} ')'
                   | Field '.' field:NAME
 
-<func_def>      ::= FuncDef 'def' name:NAME '(' params:<parameter>&{,} ')' '->' func_type:CLASS ':' body:<suite>
+<func_def>      ::= FuncDef 'def' name:NAME '(' params:<parameter>&*{,} ')' '->' func_type:CLASS ':' body:<suite>
 <parameter>     ::= Parameter external:NAME? internal:NAME ':' param_type:CLASS
 
 <class_def>     ::= ClassDef 'class' name:CLASS args:<arguments>? ':' body:<suite>
 <interface_def> ::= InterfaceDef 'interface' name:CLASS args:<arguments>? ':' body:<suite>
 <data_def>      ::= DataDef 'data' name:CLASS args:<arguments>? ':' body:<suite>
 
-<arguments>     ::= Arguments '(' args:<expr>&{,} ')'
+<arguments>     ::= Arguments '(' args:<value>&*{,} ')'

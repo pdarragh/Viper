@@ -71,6 +71,8 @@ RESERVED_NAMES = {
     'class',
     'interface',
     'data',
+    'if',
+    'else',
 }
 
 RESERVED_CLASSES = set()

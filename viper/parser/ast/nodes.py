@@ -1,29 +1,9 @@
 # This module was automatically generated.
 
+
 import viper.lexer as vl
-
+from .ast import AST
 from typing import List, Optional
-
-
-class AST:
-    def __eq__(self, other):
-        if not type(other) == type(self):
-            return False
-        my_vars = vars(self)
-        other_vars = vars(other)
-        for var, val in my_vars.items():
-            if not var in other_vars:
-                return False
-            if val != other_vars[var]:
-                return False
-        return True
-
-    def __repr__(self):
-        my_vars = vars(self)
-        return self.__class__.__name__ + '(' + ', '.join(k + '=' + repr(v) for k, v in my_vars.items()) + ')'
-
-    def __str__(self):
-        return repr(self)
 
 
 class SingleInput(AST):
@@ -75,7 +55,7 @@ class CompoundStmt(Stmt):
     pass
 
 
-class Expr(AST):
+class Value(AST):
     def __init__(self, atom: Atom, trailers: List[Trailer]):
         self.atom = atom
         self.trailers = trailers
@@ -123,14 +103,9 @@ class Field(Trailer):
 
 
 class SubOpExpr(AST):
-    def __init__(self, op: vl.Operator, expr: Expr):
+    def __init__(self, op: vl.Operator, expr: Value):
         self.op = op
         self.expr = expr
-
-
-class ExprList(AST):
-    def __init__(self, exprs: List[Expr]):
-        self.exprs = exprs
 
 
 class FuncDef(CompoundStmt):
@@ -142,7 +117,7 @@ class FuncDef(CompoundStmt):
 
 
 class Arguments(AST):
-    def __init__(self, args: List[Expr]):
+    def __init__(self, args: List[Value]):
         self.args = args
 
 
@@ -162,12 +137,12 @@ class SimpleSuite(Suite):
 
 
 class Call(Trailer):
-    def __init__(self, args: List[Expr]):
+    def __init__(self, args: List[Value]):
         self.args = args
 
 
 class OpExpr(AST):
-    def __init__(self, left_op: Optional[vl.Operator], expr: Expr, sub_op_exprs: List[SubOpExpr], right_op: Optional[vl.Operator]):
+    def __init__(self, left_op: Optional[vl.Operator], expr: Value, sub_op_exprs: List[SubOpExpr], right_op: Optional[vl.Operator]):
         self.left_op = left_op
         self.expr = expr
         self.sub_op_exprs = sub_op_exprs
@@ -195,9 +170,24 @@ class DataDef(CompoundStmt):
         self.body = body
 
 
-class OpExprList(ExprStmt):
+class NotTest(AST):
+    def __init__(self, tests: List[OpExpr]):
+        self.tests = tests
+
+
+class OpExprList(AST):
     def __init__(self, op_exprs: List[OpExpr]):
         self.op_exprs = op_exprs
+
+
+class PlainExpr(ExprStmt):
+    def __init__(self, expr: OpExpr):
+        self.expr = expr
+
+
+class AndTest(AST):
+    def __init__(self, tests: List[NotTest]):
+        self.tests = tests
 
 
 class ReturnStmt(ExprStmt):
@@ -208,3 +198,20 @@ class ReturnStmt(ExprStmt):
 class ParenExpr(Atom):
     def __init__(self, expr_list: OpExprList):
         self.expr_list = expr_list
+
+
+class OrTest(AST):
+    def __init__(self, tests: List[AndTest]):
+        self.tests = tests
+
+
+class Test(AST):
+    def __init__(self, test: OrTest):
+        self.test = test
+
+
+class IfExpr(CompoundStmt):
+    def __init__(self, cond: Test, true_body: Suite, false_body: Suite):
+        self.cond = cond
+        self.true_body = true_body
+        self.false_body = false_body
