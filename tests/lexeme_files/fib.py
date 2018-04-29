@@ -10,7 +10,7 @@ from viper.lexer import (
 lexemes = [
     RN('def'), N('fib'), OP, N('n'), COLON, C('Int'), CP, ARROW, C('Int'), COLON,
     NL, IND,
-        RN('if'), N('n'), Op('=='), Num('1'), N('or'), N('n'), Op('=='), Num('2'), COLON,
+        RN('if'), N('n'), Op('=='), Num('1'), RN('or'), N('n'), Op('=='), Num('2'), COLON,
         NL, IND,
             RN('return'), Num('1'), NL,
         DED,

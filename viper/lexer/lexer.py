@@ -73,6 +73,9 @@ RESERVED_NAMES = {
     'data',
     'if',
     'else',
+    'or',
+    'and',
+    'not',
 }
 
 RESERVED_CLASSES = set()
