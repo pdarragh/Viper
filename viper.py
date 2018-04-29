@@ -2,8 +2,7 @@
 
 from viper.interactive import *
 from viper.lexer import lex_file, NewLine
-from viper.parser import GRAMMAR, ast_to_string
-from viper.parser.grammar import NoParse, SingleParse, MultipleParse
+from viper.parser import *
 
 if __name__ == '__main__':
     import argparse
@@ -15,6 +14,7 @@ if __name__ == '__main__':
     parser.add_argument('-G', '--interactive-grammar', action='store_true', help='lexes input and produces AST')
     parser.add_argument('-g', '--file-grammar', help='produces AST for given input file')
     parser.add_argument('-r', '--grammar-rule', default='single_input', help='parser rule from which to start parsing')
+    parser.add_argument('-m', '--multiline', action='store_true', help='enable multi-line processing in interactive mode')
     args = parser.parse_args()
 
     if args.interactive_lexer:
@@ -37,7 +37,7 @@ if __name__ == '__main__':
         sppf = GRAMMAR.sppf_from_rule(lexemes)
         print(sppf)
     elif args.interactive_grammar:
-        InteractiveGrammar(args.grammar_rule).cmdloop()
+        InteractiveGrammar(args.grammar_rule, args.multiline).cmdloop()
     elif args.file_grammar:
         lexemes = lex_file(args.file_grammar)
         parse = GRAMMAR.parse_file(lexemes)
