@@ -9,7 +9,8 @@ from typing import List
 
 
 class Parse:
-    pass
+    def repr(self):
+        return self.__class__.__name__
 
 
 class NoParse(Parse):
