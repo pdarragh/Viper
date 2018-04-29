@@ -221,6 +221,13 @@ class ElifExpr(AST):
         self.elif_body = elif_body
 
 
+class ForLoop(CompoundStmt):
+    def __init__(self, exprs: OpExprList, source: Test, body: Suite):
+        self.exprs = exprs
+        self.source = source
+        self.body = body
+
+
 class IfExpr(CompoundStmt):
     def __init__(self, cond: Test, if_body: Suite, elif_exprs: List[ElifExpr], else_expr: Optional[ElseExpr]):
         self.cond = cond

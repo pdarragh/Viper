@@ -17,10 +17,13 @@
                   | <interface_def>
                   | <data_def>
                   | <if_expr>
+                  | <for_loop>
 
 <if_expr>       ::= IfExpr 'if' cond:<test> ':' if_body:<suite> elif_exprs:<elif_expr>* else_expr:<else_expr>?
 <elif_expr>     ::= ElifExpr 'elif' cond:<test> ':' elif_body:<suite>
 <else_expr>     ::= ElseExpr 'else' ':' else_body:<suite>
+
+<for_loop>      ::= ForLoop 'for' exprs:<op_expr_list> '<-' source:<test> ':' body:<suite>
 
 <expr_stmt>     ::= PassStmt 'pass'
                   | ReturnStmt 'return' exprs:<op_expr_list>
