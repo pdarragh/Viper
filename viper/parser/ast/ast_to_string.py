@@ -1,4 +1,4 @@
-from .nodes import AST
+from .ast import AST
 
 from typing import List
 

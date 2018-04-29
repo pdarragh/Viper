@@ -41,28 +41,6 @@ class ClassTree:
     def __init__(self):
         self._nodes = {}
         root = ClassTreeNode(BASE_AST_CLASS_NAME)
-        root.lines = [
-            "class " + root.name + ":",
-            "    def __eq__(self, other):",
-            "        if not type(other) == type(self):",
-            "            return False",
-            "        my_vars = vars(self)",
-            "        other_vars = vars(other)",
-            "        for var, val in my_vars.items():",
-            "            if not var in other_vars:",
-            "                return False",
-            "            if val != other_vars[var]:",
-            "                return False",
-            "        return True",
-            "",
-            "    def __repr__(self):",
-            "        my_vars = vars(self)",
-            "        return self.__class__.__name__ + '(' + "
-                                                    "', '.join(k + '=' + repr(v) for k, v in my_vars.items()) + ')'",
-            "",
-            "    def __str__(self):",
-            "        return repr(self)",
-        ]
         self._nodes[BASE_AST_CLASS_NAME] = root
         self.root = root
 
@@ -76,9 +54,9 @@ class ClassTree:
 
     def add(self, child_name: str, parent_name: str):
         if child_name in self._nodes:
-            raise RuntimeError  # TODO: Replace with custom error.
+            raise RuntimeError(f"Child {child_name} already in nodes.")  # TODO: Replace with custom error.
         if parent_name not in self._nodes:
-            raise RuntimeError  # TODO: Replace with custom error.
+            raise RuntimeError(f"Parent {parent_name} already in nodes.")  # TODO: Replace with custom error.
         parent_node = self[parent_name]
         child_node = ClassTreeNode(child_name)
         child_node.parents.append(parent_node)
@@ -94,8 +72,9 @@ class ClassTree:
         lines = [
             "# This module was automatically generated.",
             "",
-            "import viper.lexer as vl",
             "",
+            "import viper.lexer as vl",
+            "from .ast import AST",
             "from typing import List, Optional",
             "",
             "",
@@ -111,8 +90,9 @@ class ClassTree:
         for depth in sorted(tiers.keys()):
             tier = tiers[depth]
             for node in tier:
-                lines += node.lines
-                lines += ["", ""]
+                if node.lines:
+                    lines += node.lines
+                    lines += ["", ""]
         # Remove extra blank line at the end and return.
         del (lines[-1])
         return '\n'.join(lines)
@@ -297,6 +277,13 @@ def get_arg_from_production_part(part: ProductionPart) -> Optional[Arg]:
             arg.wrappers.append('List')
             return arg
         elif isinstance(part, SeparatedRepeatPart):
+            part_arg = get_arg_from_production_part(part.rule)
+            if part_arg is None:
+                return None
+            arg = Arg(part_arg.name, part_arg.type, part_arg.wrappers, part_arg.type_is_node)
+            arg.wrappers.append('List')
+            return arg
+        elif isinstance(part, MinimumSeparatedRepeatPart):
             part_arg = get_arg_from_production_part(part.rule)
             if part_arg is None:
                 return None
