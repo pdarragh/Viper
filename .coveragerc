@@ -3,7 +3,7 @@ branch = True
 omit =
     viper/interactive/*
     viper/parser/ast/ast_to_string.py
-    viper/parser/ast/class_treey.py
+    viper/parser/ast/class_tree.py
     viper/parser/ast/generate_nodes_module.py
     viper/parser/ast/ordered_set.py
 
