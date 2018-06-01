@@ -67,9 +67,9 @@ class InteractiveGrammar(cmd.Cmd):  # pragma: no cover
         elif isinstance(parse, vp.SingleParse):
             print(vp.ast_to_string(parse.ast))
         elif isinstance(parse, vp.MultipleParse):
-            print(f"Produced {len(parse.parses)} parses.")
+            print(f"Produced {len(parse.asts)} parses.")
             for i, ast in enumerate(parse.asts):
-                print(f"Parse {i}:")
+                print(f"Parse {i + 1}:")
                 print(vp.ast_to_string(ast))
         else:
             raise RuntimeError(f"Invalid return result: {parse}")
