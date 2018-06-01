@@ -94,7 +94,7 @@ class ASTNodeRedFunc(RedFunc):
                 return SPPF()
             if len(curr) > 1:
                 # TODO: Not sure if this is correct.
-                raise LinguifierError(f"SPPF has too many children: {curr}")
+                raise LinguifierError(f"SPPF has too many children:\n{curr}")
             child = curr[0]
             to_add = None
             if isinstance(child, ParseTreeEmpty):
@@ -111,7 +111,7 @@ class ASTNodeRedFunc(RedFunc):
             elif isinstance(child, ParseTreePair):
                 param_sppf = child.left
                 if len(param_sppf) != 1:
-                    raise LinguifierError(f"Invalid child SPPF: {param_sppf}")
+                    raise LinguifierError(f"Invalid child SPPF:\n{param_sppf}")
                 if name is not None:
                     # TODO: This should be checked more safely.
                     param_child = param_sppf[0]
@@ -120,7 +120,7 @@ class ASTNodeRedFunc(RedFunc):
                     elif isinstance(param_child, ParseTreeChar):
                         to_add = param_child.token
                     else:
-                        raise LinguifierError(f"Invalid child SPPF child: {param_child}")
+                        raise LinguifierError(f"Invalid child SPPF child:\n{param_child}")
                 curr = child.right
             else:
                 raise LinguifierError("Invalid child node.")
