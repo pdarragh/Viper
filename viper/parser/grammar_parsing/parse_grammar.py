@@ -61,7 +61,7 @@ def parse_production(token_list: List[AltToken]) -> NamedProduction:
         elif isinstance(token, ParameterNameToken):
             parse = parse_parameter(token_list, i)
         else:
-            raise GrammarParserError(f"Unexpected token in production: {token}")
+            raise GrammarParserError(f"Unexpected token {token} in production: {token_list}")
         parts.append(parse.part)
         i = parse.idx
     return NamedProduction(name, parts)
