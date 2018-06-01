@@ -8,6 +8,7 @@ DEDENT = GrammarToken(vl.Dedent)
 ENDMARKER = GrammarToken(vl.EndMarker)
 NEWLINE = GrammarToken(vl.NewLine)
 PERIOD = GrammarToken(vl.Period, vl.PERIOD.text)
+EQUALS = GrammarToken(vl.Equals, vl.EQUALS.text)
 COMMA = GrammarToken(vl.Comma, vl.COMMA.text)
 OPEN_PAREN = GrammarToken(vl.OpenParen, vl.OPEN_PAREN.text)
 CLOSE_PAREN = GrammarToken(vl.CloseParen, vl.CLOSE_PAREN.text)
@@ -27,6 +28,8 @@ SPECIAL_TOKENS = {
     'ENDMARKER':   ENDMARKER,
     'NEWLINE':     NEWLINE,
     'PERIOD':      PERIOD,
+    '=':           EQUALS,
+    'ASSIGN':      EQUALS,
     '.':           PERIOD,
     'COMMA':       COMMA,
     ',':           COMMA,

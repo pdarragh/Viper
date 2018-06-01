@@ -66,6 +66,11 @@ class Period(Lexeme):
         super().__init__('.', False)
 
 
+class Equals(Lexeme):
+    def __init__(self):
+        super().__init__('=', False)
+
+
 class Comma(Lexeme):
     def __init__(self):
         super().__init__(',', False)
@@ -130,6 +135,7 @@ DEDENT = Dedent()
 ENDMARKER = EndMarker()
 NEWLINE = NewLine()
 PERIOD = Period()
+EQUALS = Equals()
 COMMA = Comma()
 OPEN_PAREN = OpenParen()
 CLOSE_PAREN = CloseParen()

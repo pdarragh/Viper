@@ -161,6 +161,8 @@ class Lexer:
             symbol = matcher.group(0)
             if symbol == PERIOD.text:
                 lexemes.append(PERIOD)
+            elif symbol == EQUALS.text:
+                lexemes.append(EQUALS)
             elif symbol == OPEN_PAREN.text:
                 lexemes.append(OPEN_PAREN)
             elif symbol == CLOSE_PAREN.text:

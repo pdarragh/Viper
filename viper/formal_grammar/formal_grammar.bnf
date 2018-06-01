@@ -1,0 +1,72 @@
+<single_input>  ::= SingleNewline NEWLINE
+                  | SingleLine line:<term>
+<term>          ::= <stmt>
+                  | <expr>
+
+<file_input>    ::= FileInput lines:<file_line>* ENDMARKER
+<file_line>     ::= FileNewline NEWLINE
+                  | FileStmt stmt:<stmt>
+
+# STATEMENTS
+
+<stmt>          ::= <return_stmt>
+                  | <assign_stmt>
+                  | <if_stmt>
+                  | <definition>
+
+<return_stmt>   ::= ReturnStmt 'return' exprs:<op_expr>&*{,}
+
+<assign_stmt>   ::= AssignStmt name:NAME '=' expr:<expr>
+
+<if_stmt>       ::= IfStmt 'if' cond:<test_expr> ':' then_body:<stmt_block> elif_stmts:<elif_stmt>* else_stmt:<else_stmt>?
+<elif_stmt>     ::= ElifStmt 'elif' cond:<test_expr> ':' elif_body:<stmt_block>
+<else_stmt>     ::= ElseStmt 'else' ':' else_body:<stmt_block>
+
+<definition>    ::= <func_def>
+                  | <class_def>
+                  | <interface_def>
+                  | <data_def>
+
+<func_def>      ::= FuncDef 'def' name:NAME '(' params:<parameter>&*{,} ')' '->' func_type:CLASS ':' body:<stmt_block>
+<parameter>     ::= Parameter external:NAME? internal:NAME ':' param_type:CLASS
+
+<class_def>     ::= ClassDef 'class' name:CLASS args:<arguments>? ':' body:<stmt_block>
+
+<interface_def> ::= InterfaceDef 'interface' name:CLASS args:<arguments>? ':' body:<stmt_block>
+
+<data_def>      ::= DataDef 'data' name:CLASS args:<arguments>? ':' body:<stmt_block>
+
+<arguments>     ::= Arguments '(' args:<atom_expr>&*{,} ')'
+
+<stmt_block>    ::= EmptyStmtBlock 'pass'
+                  | SimpleStmtBlock stmt:<stmt>
+                  | CompoundStmtBlock NEWLINE INDENT stmts:<stmt>+ DEDENT
+
+# EXPRESSIONS
+
+<expr>          ::= <if_expr>
+                  | <test_expr>
+
+<if_expr>       ::= IfExpr 'if' cond:<test_expr> ':' then_body:<expr_block> elif_exprs:<elif_expr>* else_expr:<else_expr>?
+<elif_expr>     ::= ElifExpr 'elif' cond:<test_expr> ':' elif_body:<expr_block>
+<else_expr>     ::= ElseExpr 'else' ':' else_body:<expr_block>
+
+<test_expr>     ::= TestExpr test:<or_test_expr>
+<or_test_expr>  ::= OrTestExpr tests:<and_test_expr>&+{or}
+<and_test_expr> ::= AndTestExpr tests:<not_test_expr>&+{and}
+<not_test_expr> ::= NotTestExpr tests:<op_expr>&+{not}
+
+<op_expr>       ::= OpExpr left_op:OPERATOR? atom:<atom_expr> sub_op_exprs:<sub_op_expr>* right_op:OPERATOR?
+<sub_op_expr>   ::= SubOpExpr op:OPERATOR atom:<atom_expr>
+
+<atom_expr>     ::= AtomExpr atom:<atom> trailers:<trailer>*
+<atom>          ::= ParenAtom '(' exprs:<op_expr>&*{,} ')'
+                  | NameAtom name:NAME
+                  | NumberAtom num:NUMBER
+                  | EllipsisAtom '...'
+<trailer>       ::= Call '(' args:<atom_expr>&*{,} ')'
+                  | Field '.' field:NAME
+
+<expr_block>    ::= EmptyExprBlock 'pass'
+                  | SimpleExprBlock expr:<expr>
+                  | CompoundExprBlock NEWLINE INDENT stmts:<stmt>+ expr:<expr> DEDENT

@@ -2,9 +2,9 @@ from .ast import AST
 from .languages import ParseTreeChar, make_sppf, SPPF
 from .linguify_grammar import linguify_grammar_file
 
+from viper.formal_grammar import GRAMMAR_FILE
 from viper.lexer import Lexeme
 
-from os.path import join, dirname
 from typing import List
 
 
@@ -57,5 +57,4 @@ class Grammar:
         return self.parse_rule('file_input', lexemes)
 
 
-GRAMMAR_FILE = join(dirname(__file__), join('grammar_parsing', 'formal_grammar.bnf'))
 GRAMMAR = Grammar(GRAMMAR_FILE)
