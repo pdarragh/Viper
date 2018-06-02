@@ -9,7 +9,7 @@ from typing import List
 
 
 class Parse:
-    def repr(self):
+    def __repr__(self):
         return self.__class__.__name__
 
 
