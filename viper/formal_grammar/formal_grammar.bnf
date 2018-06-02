@@ -9,13 +9,13 @@
 
 # STATEMENTS
 
-<stmt>          ::= <return_stmt>
-                  | <assign_stmt>
+<stmt>          ::= SimpleStmt stmt:<plain_stmt> NEWLINE
                   | <if_stmt>
                   | <definition>
 
+<plain_stmt>   ::= <return_stmt>
+                  | <assign_stmt>
 <return_stmt>   ::= ReturnStmt 'return' exprs:<op_expr>&*{,}
-
 <assign_stmt>   ::= AssignStmt name:NAME '=' expr:<expr>
 
 <if_stmt>       ::= IfStmt 'if' cond:<test_expr> ':' then_body:<stmt_block> elif_stmts:<elif_stmt>* else_stmt:<else_stmt>?
@@ -38,9 +38,10 @@
 
 <arguments>     ::= Arguments '(' args:<atom_expr>&*{,} ')'
 
-<stmt_block>    ::= EmptyStmtBlock 'pass'
+<stmt_block>    ::= EmptyStmtBlock 'pass' NEWLINE
                   | SimpleStmtBlock stmt:<stmt>
                   | CompoundStmtBlock NEWLINE INDENT stmts:<stmt>+ DEDENT
+                  | EmptyCompoundStmtBlock NEWLINE INDENT 'pass' DEDENT
 
 # EXPRESSIONS
 

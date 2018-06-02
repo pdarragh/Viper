@@ -18,6 +18,10 @@ class FileLine(AST):
     pass
 
 
+class PlainStmt(AST):
+    pass
+
+
 class Parameter(AST):
     def __init__(self, external: Optional[vl.Name], internal: vl.Name, param_type: vl.Class):
         self.external = external
@@ -87,6 +91,10 @@ class EmptyStmtBlock(StmtBlock):
     pass
 
 
+class EmptyCompoundStmtBlock(StmtBlock):
+    pass
+
+
 class NameAtom(Atom):
     def __init__(self, name: vl.Name):
         self.name = name
@@ -110,7 +118,7 @@ class EmptyExprBlock(ExprBlock):
     pass
 
 
-class AssignStmt(Stmt):
+class AssignStmt(PlainStmt):
     def __init__(self, name: vl.Name, expr: Expr):
         self.name = name
         self.expr = expr
@@ -133,6 +141,11 @@ class SubOpExpr(AST):
 
 class FileStmt(FileLine):
     def __init__(self, stmt: Stmt):
+        self.stmt = stmt
+
+
+class SimpleStmt(Stmt):
+    def __init__(self, stmt: PlainStmt):
         self.stmt = stmt
 
 
@@ -199,7 +212,7 @@ class OpExpr(AST):
         self.right_op = right_op
 
 
-class ReturnStmt(Stmt):
+class ReturnStmt(PlainStmt):
     def __init__(self, exprs: List[OpExpr]):
         self.exprs = exprs
 
