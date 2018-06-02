@@ -21,6 +21,9 @@ class SingleParse(Parse):
     def __init__(self, parse: AST):
         self.ast = parse
 
+    def __repr__(self):
+        return super().__repr__() + ': ' + str(self.ast)
+
 
 class MultipleParse(Parse):
     def __init__(self, parses: List[AST]):
