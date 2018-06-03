@@ -247,7 +247,86 @@ def test_class_def(line: str, tree: AST):
                        ns.AtomExpr(ns.NumberAtom(vl.Number('42')), []),
                        [],
                        None)]))])))),
+    ([
+        'if x == y: pass',
+        'else:',
+        '    return 42'
+     ],
+     ns.IfStmt(
+         ns.TestExpr(ns.OrTestExpr([ns.AndTestExpr([ns.NotTestExpr([
+             ns.OpExpr(None,
+                       ns.AtomExpr(ns.NameAtom(vl.Name('x')), []),
+                       [ns.SubOpExpr(vl.Operator('=='),
+                                     ns.AtomExpr(ns.NameAtom(vl.Name('y')), []))],
+                       None)])])])),
+         ns.SimpleStmtBlock(ns.SimpleStmt(ns.EmptyStmt())),
+         [],
+         ns.ElseStmt(ns.CompoundStmtBlock([ns.SimpleStmt(ns.ReturnStmt([
+             ns.OpExpr(None,
+                       ns.AtomExpr(ns.NumberAtom(vl.Number('42')), []),
+                       [],
+                       None)]))])))),
+    ([
+        'if x == y: pass',
+        'else: return 42'
+     ],
+     ns.IfStmt(
+         ns.TestExpr(ns.OrTestExpr([ns.AndTestExpr([ns.NotTestExpr([
+             ns.OpExpr(None,
+                       ns.AtomExpr(ns.NameAtom(vl.Name('x')), []),
+                       [ns.SubOpExpr(vl.Operator('=='),
+                                     ns.AtomExpr(ns.NameAtom(vl.Name('y')), []))],
+                       None)])])])),
+         ns.SimpleStmtBlock(ns.SimpleStmt(ns.EmptyStmt())),
+         [],
+         ns.ElseStmt(ns.SimpleStmtBlock(ns.SimpleStmt(ns.ReturnStmt([
+             ns.OpExpr(None,
+                       ns.AtomExpr(ns.NumberAtom(vl.Number('42')), []),
+                       [],
+                       None)])))))),
 ])
 def test_if_stmt(lines: List[str], tree: AST):
     lexemes = lex_lines('\n'.join(lines))[:-1]
     run_test('if_stmt', tree, lexemes, [], [])
+
+
+@pytest.mark.parametrize('lines,tree', [
+    ([
+        'if x == y:',
+        '    42'
+     ],
+     ns.IfExpr(
+         ns.TestExpr(ns.OrTestExpr([ns.AndTestExpr([ns.NotTestExpr([
+             ns.OpExpr(None,
+                       ns.AtomExpr(ns.NameAtom(vl.Name('x')), []),
+                       [ns.SubOpExpr(vl.Operator('=='),
+                                     ns.AtomExpr(ns.NameAtom(vl.Name('y')), []))],
+                       None)])])])),
+         ns.IndentedExprBlock(ns.TestExpr(ns.OrTestExpr([ns.AndTestExpr([ns.NotTestExpr([
+             ns.OpExpr(None,
+                       ns.AtomExpr(ns.NumberAtom(vl.Number('42')), []),
+                       [],
+                       None)])])]))),
+         [],
+         None)),
+    ([
+        'if x == y: 42'
+     ],
+     ns.IfExpr(
+         ns.TestExpr(ns.OrTestExpr([ns.AndTestExpr([ns.NotTestExpr([
+             ns.OpExpr(None,
+                       ns.AtomExpr(ns.NameAtom(vl.Name('x')), []),
+                       [ns.SubOpExpr(vl.Operator('=='),
+                                     ns.AtomExpr(ns.NameAtom(vl.Name('y')), []))],
+                       None)])])])),
+         ns.SimpleExprBlock(ns.TestExpr(ns.OrTestExpr([ns.AndTestExpr([ns.NotTestExpr([
+             ns.OpExpr(None,
+                       ns.AtomExpr(ns.NumberAtom(vl.Number('42')), []),
+                       [],
+                       None)])])]))),
+         [],
+         None)),
+])
+def test_if_expr(lines: List[str], tree: AST):
+    lexemes = lex_lines('\n'.join(lines))[:-1]
+    run_test('if_expr', tree, lexemes, [], [])
