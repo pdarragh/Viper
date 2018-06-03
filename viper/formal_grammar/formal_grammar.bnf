@@ -15,8 +15,10 @@
 
 <plain_stmt>   ::= <return_stmt>
                   | <assign_stmt>
+                  | <empty_stmt>
 <return_stmt>   ::= ReturnStmt 'return' exprs:<op_expr>&*{,}
 <assign_stmt>   ::= AssignStmt name:NAME '=' expr:<expr>
+<empty_stmt>    ::= EmptyStmt 'pass'
 
 <if_stmt>       ::= IfStmt 'if' cond:<test_expr> ':' then_body:<stmt_block> elif_stmts:<elif_stmt>* else_stmt:<else_stmt>?
 <elif_stmt>     ::= ElifStmt 'elif' cond:<test_expr> ':' elif_body:<stmt_block>
@@ -38,10 +40,8 @@
 
 <arguments>     ::= Arguments '(' args:<atom_expr>&*{,} ')'
 
-<stmt_block>    ::= EmptyStmtBlock 'pass' NEWLINE
-                  | SimpleStmtBlock stmt:<stmt>
+<stmt_block>    ::= SimpleStmtBlock stmt:<stmt>
                   | CompoundStmtBlock NEWLINE INDENT stmts:<stmt>+ DEDENT
-                  | EmptyCompoundStmtBlock NEWLINE INDENT 'pass' DEDENT
 
 # EXPRESSIONS
 

@@ -54,6 +54,10 @@ class Stmt(Term):
     pass
 
 
+class EmptyStmt(PlainStmt):
+    pass
+
+
 class ElseStmt(AST):
     def __init__(self, else_body: StmtBlock):
         self.else_body = else_body
@@ -84,14 +88,6 @@ class SingleLine(SingleInput):
 
 
 class FileNewline(FileLine):
-    pass
-
-
-class EmptyStmtBlock(StmtBlock):
-    pass
-
-
-class EmptyCompoundStmtBlock(StmtBlock):
     pass
 
 
