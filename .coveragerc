@@ -14,6 +14,7 @@ exclude_lines =
 
     # Ignore printing code.
     def __repr__
+    def __str__
 
     # Don't check code that's not meant to run.
     if __name__ == .__main__.:
