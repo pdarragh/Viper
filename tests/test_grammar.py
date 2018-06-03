@@ -330,3 +330,102 @@ def test_if_stmt(lines: List[str], tree: AST):
 def test_if_expr(lines: List[str], tree: AST):
     lexemes = lex_lines('\n'.join(lines))[:-1]
     run_test('if_expr', tree, lexemes, [], [])
+
+
+@pytest.mark.parametrize('lines,tree', [
+    ([
+        'z = if x == y:',
+        '    42'
+     ],
+     ns.AssignStmt(
+         vl.Name('z'),
+         ns.IfExpr(
+             ns.TestExpr(ns.OrTestExpr([ns.AndTestExpr([ns.NotTestExpr([
+                 ns.OpExpr(None,
+                           ns.AtomExpr(ns.NameAtom(vl.Name('x')), []),
+                           [ns.SubOpExpr(vl.Operator('=='),
+                                         ns.AtomExpr(ns.NameAtom(vl.Name('y')), []))],
+                           None)])])])),
+             ns.IndentedExprBlock(ns.TestExpr(ns.OrTestExpr([ns.AndTestExpr([ns.NotTestExpr([
+                 ns.OpExpr(None,
+                           ns.AtomExpr(ns.NumberAtom(vl.Number('42')), []),
+                           [],
+                           None)])])]))),
+             [],
+             None))),
+    ([
+        'z = if x == y: 42'
+     ],
+     ns.AssignStmt(
+         vl.Name('z'),
+         ns.IfExpr(
+             ns.TestExpr(ns.OrTestExpr([ns.AndTestExpr([ns.NotTestExpr([
+                 ns.OpExpr(None,
+                           ns.AtomExpr(ns.NameAtom(vl.Name('x')), []),
+                           [ns.SubOpExpr(vl.Operator('=='),
+                                         ns.AtomExpr(ns.NameAtom(vl.Name('y')), []))],
+                           None)])])])),
+             ns.SimpleExprBlock(ns.TestExpr(ns.OrTestExpr([ns.AndTestExpr([ns.NotTestExpr([
+                 ns.OpExpr(None,
+                           ns.AtomExpr(ns.NumberAtom(vl.Number('42')), []),
+                           [],
+                           None)])])]))),
+             [],
+             None))),
+    ([
+        'z = if x == y:',
+        '    42',
+        'elif x > y:',
+        '    19',
+        'elif x < 0: 2',
+        'else:',
+        '    13'
+     ],
+     ns.AssignStmt(
+         vl.Name('z'),
+         ns.IfExpr(
+             ns.TestExpr(ns.OrTestExpr([ns.AndTestExpr([ns.NotTestExpr([
+                  ns.OpExpr(None,
+                            ns.AtomExpr(ns.NameAtom(vl.Name('x')), []),
+                            [ns.SubOpExpr(vl.Operator('=='),
+                                          ns.AtomExpr(ns.NameAtom(vl.Name('y')), []))],
+                            None)])])])),
+             ns.IndentedExprBlock(ns.TestExpr(ns.OrTestExpr([ns.AndTestExpr([ns.NotTestExpr([
+                 ns.OpExpr(None,
+                           ns.AtomExpr(ns.NumberAtom(vl.Number('42')), []),
+                           [],
+                           None)])])]))),
+             [ns.ElifExpr(
+                 ns.TestExpr(ns.OrTestExpr([ns.AndTestExpr([ns.NotTestExpr([
+                     ns.OpExpr(None,
+                               ns.AtomExpr(ns.NameAtom(vl.Name('x')), []),
+                               [ns.SubOpExpr(vl.Operator('>'),
+                                             ns.AtomExpr(ns.NameAtom(vl.Name('y')), []))],
+                               None)])])])),
+                 ns.IndentedExprBlock(ns.TestExpr(ns.OrTestExpr([ns.AndTestExpr([ns.NotTestExpr([
+                     ns.OpExpr(None,
+                               ns.AtomExpr(ns.NumberAtom(vl.Number('19')), []),
+                               [],
+                               None)])])])))),
+              ns.ElifExpr(
+                  ns.TestExpr(ns.OrTestExpr([ns.AndTestExpr([ns.NotTestExpr([
+                      ns.OpExpr(None,
+                                ns.AtomExpr(ns.NameAtom(vl.Name('x')), []),
+                                [ns.SubOpExpr(vl.Operator('<'),
+                                              ns.AtomExpr(ns.NumberAtom(vl.Number('0')), []))],
+                                None)])])])),
+                  ns.SimpleExprBlock(ns.TestExpr(ns.OrTestExpr([ns.AndTestExpr([ns.NotTestExpr([
+                      ns.OpExpr(None,
+                                ns.AtomExpr(ns.NumberAtom(vl.Number('2')), []),
+                                [],
+                                None)])])]))))],
+             ns.ElseExpr(
+                 ns.IndentedExprBlock(ns.TestExpr(ns.OrTestExpr([ns.AndTestExpr([ns.NotTestExpr([
+                     ns.OpExpr(None,
+                               ns.AtomExpr(ns.NumberAtom(vl.Number('13')), []),
+                               [],
+                               None)])])]))))))),
+])
+def test_assign_stmt(lines: List[str], tree: AST):
+    lexemes = lex_lines('\n'.join(lines))[:-1]
+    run_test('assign_stmt', tree, lexemes, [], [])
