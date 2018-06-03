@@ -110,10 +110,6 @@ class Field(Trailer):
         self.field = field
 
 
-class EmptyExprBlock(ExprBlock):
-    pass
-
-
 class AssignStmt(PlainStmt):
     def __init__(self, name: vl.Name, expr: Expr):
         self.name = name
@@ -165,9 +161,8 @@ class SimpleExprBlock(ExprBlock):
         self.expr = expr
 
 
-class CompoundExprBlock(ExprBlock):
-    def __init__(self, stmts: List[Stmt], expr: Expr):
-        self.stmts = stmts
+class IndentedExprBlock(ExprBlock):
+    def __init__(self, expr: Expr):
         self.expr = expr
 
 
