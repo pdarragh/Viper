@@ -112,7 +112,7 @@ def test_op_expr(line: str, ast: AST):
 
 @pytest.mark.parametrize('line,ast', [
     ('pass',
-     ns.EmptyStmtBlock()),
+     ns.SimpleStmtBlock(ns.SimpleStmt(ns.EmptyStmt()))),
     ('return',
      ns.SimpleStmtBlock(ns.SimpleStmt(ns.ReturnStmt([])))),
     ('return foo',
@@ -146,14 +146,14 @@ def test_parameter(line: str, ast: AST):
 
 @pytest.mark.parametrize('line,ast', [
     ('def foo() -> Bar: pass',
-     ns.FuncDef(vl.Name('foo'), [], vl.Class('Bar'), ns.EmptyStmtBlock())),
+     ns.FuncDef(vl.Name('foo'), [], vl.Class('Bar'), ns.SimpleStmtBlock(ns.SimpleStmt(ns.EmptyStmt())))),
     ('def foo(bar: Baz) -> Qux: pass',
      ns.FuncDef(vl.Name('foo'),
                 [
                     ns.Parameter(None, vl.Name('bar'), vl.Class('Baz'))
                 ],
                 vl.Class('Qux'),
-                ns.EmptyStmtBlock())),
+                ns.SimpleStmtBlock(ns.SimpleStmt(ns.EmptyStmt())))),
     ('def foo(a b: C, d: E, f g: H) -> I: pass',
      ns.FuncDef(vl.Name('foo'),
                 [
@@ -162,7 +162,7 @@ def test_parameter(line: str, ast: AST):
                     ns.Parameter(vl.Name('f'), vl.Name('g'), vl.Class('H'))
                 ],
                 vl.Class('I'),
-                ns.EmptyStmtBlock())),
+                ns.SimpleStmtBlock(ns.SimpleStmt(ns.EmptyStmt())))),
 ])
 def test_func_def(line: str, ast: AST):
     lexemes = lex_line(line)
@@ -171,7 +171,7 @@ def test_func_def(line: str, ast: AST):
 
 @pytest.mark.parametrize('line,ast', [
     ('class Foo: pass',
-     ns.ClassDef(vl.Class('Foo'), None, ns.EmptyStmtBlock())),
+     ns.ClassDef(vl.Class('Foo'), None, ns.SimpleStmtBlock(ns.SimpleStmt(ns.EmptyStmt())))),
 ])
 def test_class_def(line: str, ast: AST):
     lexemes = lex_line(line)
@@ -228,6 +228,27 @@ def test_class_def(line: str, ast: AST):
         [],
         None)
     ),
+    ([
+        'if x == y:',
+        '    pass',
+        'else:',
+        '    return 42'
+    ],
+    ns.IfStmt(
+        ns.TestExpr(ns.OrTestExpr([ns.AndTestExpr([ns.NotTestExpr([
+            ns.OpExpr(None,
+                      ns.AtomExpr(ns.NameAtom(vl.Name('x')), []),
+                      [ns.SubOpExpr(vl.Operator('=='),
+                                    ns.AtomExpr(ns.NameAtom(vl.Name('y')), []))],
+                      None)])])])),
+        ns.CompoundStmtBlock([ns.SimpleStmt(ns.EmptyStmt())]),
+        [],
+        ns.ElseStmt(ns.CompoundStmtBlock([ns.SimpleStmt(ns.ReturnStmt([
+            ns.OpExpr(None,
+                      ns.AtomExpr(ns.NumberAtom(vl.Number('42')), []),
+                      [],
+                      None)]))])))
+    )
 ])
 def test_if_stmt(lines: List[str], ast: AST):
     lexemes = lex_lines('\n'.join(lines))[:-1]
