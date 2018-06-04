@@ -203,19 +203,9 @@ class OpExpr(AST):
         self.right_op = right_op
 
 
-class ReturnStmt(PlainStmt):
-    def __init__(self, exprs: List[OpExpr]):
-        self.exprs = exprs
-
-
 class NotTestExpr(AST):
     def __init__(self, tests: List[OpExpr]):
         self.tests = tests
-
-
-class ParenAtom(Atom):
-    def __init__(self, exprs: List[OpExpr]):
-        self.exprs = exprs
 
 
 class AndTestExpr(AST):
@@ -228,7 +218,7 @@ class OrTestExpr(AST):
         self.tests = tests
 
 
-class TestExpr(Expr):
+class TestExpr(AST):
     def __init__(self, test: OrTestExpr):
         self.test = test
 
@@ -245,6 +235,16 @@ class ElifExpr(AST):
         self.elif_body = elif_body
 
 
+class TestExprList(Expr):
+    def __init__(self, tests: List[TestExpr]):
+        self.tests = tests
+
+
+class ReturnStmt(PlainStmt):
+    def __init__(self, tests: Optional[TestExprList]):
+        self.tests = tests
+
+
 class IfStmt(Stmt):
     def __init__(self, cond: TestExpr, then_body: StmtBlock, elif_stmts: List[ElifStmt], else_stmt: Optional[ElseStmt]):
         self.cond = cond
@@ -259,3 +259,8 @@ class IfExpr(Expr):
         self.then_body = then_body
         self.elif_exprs = elif_exprs
         self.else_expr = else_expr
+
+
+class ParenAtom(Atom):
+    def __init__(self, tests: Optional[TestExprList]):
+        self.tests = tests

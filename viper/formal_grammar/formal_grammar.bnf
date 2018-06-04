@@ -16,7 +16,7 @@
 <plain_stmt>   ::= <return_stmt>
                   | <assign_stmt>
                   | <empty_stmt>
-<return_stmt>   ::= ReturnStmt 'return' exprs:<op_expr>&*{,}
+<return_stmt>   ::= ReturnStmt 'return' tests:<test_expr_list>?
 <assign_stmt>   ::= AssignStmt name:NAME '=' expr:<expr>
 <empty_stmt>    ::= EmptyStmt 'pass'
 
@@ -46,11 +46,13 @@
 # EXPRESSIONS
 
 <expr>          ::= <if_expr>
-                  | <test_expr>
+                  | <test_expr_list>
 
 <if_expr>       ::= IfExpr 'if' cond:<test_expr> ':' then_body:<expr_block> elif_exprs:<elif_expr>* else_expr:<else_expr>?
 <elif_expr>     ::= ElifExpr 'elif' cond:<test_expr> ':' elif_body:<expr_block>
 <else_expr>     ::= ElseExpr 'else' ':' else_body:<expr_block>
+
+<test_expr_list>::= TestExprList tests:<test_expr>&+{,}
 
 <test_expr>     ::= TestExpr test:<or_test_expr>
 <or_test_expr>  ::= OrTestExpr tests:<and_test_expr>&+{or}
@@ -61,7 +63,7 @@
 <sub_op_expr>   ::= SubOpExpr op:OPERATOR atom:<atom_expr>
 
 <atom_expr>     ::= AtomExpr atom:<atom> trailers:<trailer>*
-<atom>          ::= ParenAtom '(' exprs:<op_expr>&*{,} ')'
+<atom>          ::= ParenAtom '(' tests:<test_expr_list>? ')'
                   | NameAtom name:NAME
                   | NumberAtom num:NUMBER
                   | EllipsisAtom '...'
