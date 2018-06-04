@@ -72,3 +72,13 @@
 
 <expr_block>        ::= SimpleExprBlock expr:<expr> NEWLINE
                       | IndentedExprBlock NEWLINE INDENT expr:<expr> NEWLINE DEDENT
+
+# PATTERNS
+
+<pattern>           ::= NamedPattern name:NAME ':' pat_type:CLASS
+                      | NamelessPattern '_' ':' pat_type:CLASS
+                      | <simple_pattern>
+<simple_pattern>    ::= SimpleNamedPattern name:NAME
+                      | SimpleNamelessPattern '_'
+                      | SimpleParenPattern '(' pattern_list:<pattern_list>? ')'
+<pattern_list>      ::= PatternList patterns:<pattern>&+{,}

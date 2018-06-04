@@ -45,6 +45,10 @@ class ExprBlock(AST):
     pass
 
 
+class Pattern(AST):
+    pass
+
+
 class FileInput(AST):
     def __init__(self, lines: List[FileLine]):
         self.lines = lines
@@ -78,6 +82,15 @@ class AtomExpr(AST):
         self.trailers = trailers
 
 
+class SimplePattern(Pattern):
+    pass
+
+
+class PatternList(AST):
+    def __init__(self, patterns: List[Pattern]):
+        self.patterns = patterns
+
+
 class SingleNewline(SingleInput):
     pass
 
@@ -108,6 +121,17 @@ class EllipsisAtom(Atom):
 class Field(Trailer):
     def __init__(self, field: vl.Name):
         self.field = field
+
+
+class NamedPattern(Pattern):
+    def __init__(self, name: vl.Name, pat_type: vl.Class):
+        self.name = name
+        self.pat_type = pat_type
+
+
+class NamelessPattern(Pattern):
+    def __init__(self, pat_type: vl.Class):
+        self.pat_type = pat_type
 
 
 class AssignStmt(PlainStmt):
@@ -164,6 +188,20 @@ class SimpleExprBlock(ExprBlock):
 class IndentedExprBlock(ExprBlock):
     def __init__(self, expr: Expr):
         self.expr = expr
+
+
+class SimpleNamedPattern(SimplePattern):
+    def __init__(self, name: vl.Name):
+        self.name = name
+
+
+class SimpleNamelessPattern(SimplePattern):
+    pass
+
+
+class SimpleParenPattern(SimplePattern):
+    def __init__(self, pattern_list: Optional[PatternList]):
+        self.pattern_list = pattern_list
 
 
 class FuncDef(Definition):

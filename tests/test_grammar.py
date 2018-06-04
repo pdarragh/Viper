@@ -448,3 +448,27 @@ def test_if_expr(lines: List[str], tree: AST):
 def test_assign_stmt(lines: List[str], tree: AST):
     lexemes = lex_lines('\n'.join(lines))[:-1]
     run_test('assign_stmt', tree, lexemes, [], [])
+
+
+# TODO: NAME cannot include '_' if I want them to be handled in the patterns like this.
+@pytest.mark.parametrize('line,tree', [
+    ('x: Int',
+     ns.NamedPattern(vl.Name('x'), vl.Class('Int'))),
+    ('_: Int',
+     ns.NamelessPattern(vl.Class('Int'))),
+    ('x',
+     ns.SimpleNamedPattern(vl.Name('x'))),
+    ('_',
+     ns.SimpleNamelessPattern()),
+    ('(x: Foo, y: Bar)',
+     ns.SimpleParenPattern(ns.PatternList([
+         ns.NamedPattern(vl.Name('x'), vl.Class('Foo')),
+         ns.NamedPattern(vl.Name('y'), vl.Class('Bar'))]))),
+    ('(_: Foo, y: Bar)',
+     ns.SimpleParenPattern(ns.PatternList([
+         ns.NamelessPattern(vl.Class('Foo')),
+         ns.NamedPattern(vl.Name('y'), vl.Class('Bar'))]))),
+])
+def test_pattern(line: str, tree: AST):
+    lexemes = lex_line(line)
+    run_test('pattern', tree, lexemes, [], [])
