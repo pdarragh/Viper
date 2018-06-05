@@ -118,6 +118,10 @@ class ReservedName(Lexeme):
     pass
 
 
+class Underscore(Lexeme):
+    pass
+
+
 class Class(Lexeme):
     pass
 

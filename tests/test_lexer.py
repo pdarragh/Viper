@@ -65,7 +65,6 @@ def test_bad_number(token: str):
 # NAME
 
 @pytest.mark.parametrize('token', [
-    '_', '__', '___',
     'a', '_a', 'aa', 'aA', 'a1',
     'a-b-c', 'a-B-C', 'a1-b2-c3',
     'a!', 'a@', 'a$', 'a%', 'a^', 'a&', 'a*', 'a?',
@@ -79,6 +78,15 @@ def test_name(token: str):
 ])
 def test_bad_name(token: str):
     _test_bad_single_token(token, vl.Name)
+
+
+# UNDERSCORE
+
+@pytest.mark.parametrize('token', [
+    '_', '__', '___',
+])
+def test_Underscore(token: str):
+    _test_single_token(token, vl.Underscore)
 
 
 # CLASS

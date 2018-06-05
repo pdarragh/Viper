@@ -30,7 +30,8 @@ RE_NUMBER = re.compile(r'(?:\d+)'                           # 42
                        r'(?:\d+[eE][+-]?\d+)'               # 42e3
                        r'|'
                        r'(?:\d+\.\d*(?:[eE][+-]?\d+)?)')    # 42.7e2 | 42.e9 | 42. | 42.3e-8
-RE_NAME = re.compile(r'_+|(?:_*[a-z][_a-zA-Z0-9]*(?:-[_a-zA-Z0-9]+)*[!@$%^&*?]?)')
+RE_NAME = re.compile(r'(?:_*[a-z][_a-zA-Z0-9]*(?:-[_a-zA-Z0-9]+)*[!@$%^&*?]?)')
+RE_UNDERSCORE = re.compile(r'_+')
 RE_CLASS = re.compile(r'[A-Z][_a-zA-Z0-9]*(?:-[_a-zA-Z0-9]+)*')
 RE_PARENS = re.compile(r'\(\)')
 RE_OPERATOR = re.compile(r'[!@$%^&*()\-=+|:/?<>\[\]{}~.]+')
@@ -148,6 +149,9 @@ class Lexer:
                 lexemes.append(ReservedName(text))
             else:
                 lexemes.append(Name(text))
+        elif matcher.fullmatch(RE_UNDERSCORE):
+            text = matcher.group(0)
+            lexemes.append(Underscore(text))
         elif matcher.fullmatch(RE_CLASS):
             text = matcher.group(0)
             if text in RESERVED_CLASSES:
