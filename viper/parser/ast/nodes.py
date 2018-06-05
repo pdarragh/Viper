@@ -175,11 +175,6 @@ class CompoundStmtBlock(StmtBlock):
         self.stmts = stmts
 
 
-class Call(Trailer):
-    def __init__(self, args: List[AtomExpr]):
-        self.args = args
-
-
 class SimpleExprBlock(ExprBlock):
     def __init__(self, expr: Expr):
         self.expr = expr
@@ -276,6 +271,11 @@ class ElifExpr(AST):
 class TestExprList(Expr):
     def __init__(self, tests: List[TestExpr]):
         self.tests = tests
+
+
+class Call(Trailer):
+    def __init__(self, args: List[TestExpr]):
+        self.args = args
 
 
 class ReturnStmt(PlainStmt):

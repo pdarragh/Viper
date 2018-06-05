@@ -67,7 +67,7 @@
                       | NameAtom name:NAME
                       | NumberAtom num:NUMBER
                       | EllipsisAtom '...'
-<trailer>           ::= Call '(' args:<atom_expr>&*{,} ')'
+<trailer>           ::= Call '(' args:<test_expr>&*{,} ')'
                       | Field '.' field:NAME
 
 <expr_block>        ::= SimpleExprBlock expr:<expr> NEWLINE
