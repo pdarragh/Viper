@@ -450,7 +450,6 @@ def test_assign_stmt(lines: List[str], tree: AST):
     run_test('assign_stmt', tree, lexemes, [], [])
 
 
-# TODO: NAME cannot include '_' if I want them to be handled in the patterns like this.
 @pytest.mark.parametrize('line,tree', [
     ('x: Int',
      ns.NamedPattern(vl.Name('x'), vl.Class('Int'))),
