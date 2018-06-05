@@ -56,20 +56,39 @@ def test_atom(line: str, tree: AST):
      ns.AtomExpr(ns.NameAtom(vl.Name('foo')), [ns.Field(vl.Name('bar')), ns.Field(vl.Name('baz'))])),
     ('foo.bar(baz)',
      ns.AtomExpr(ns.NameAtom(vl.Name('foo')), [ns.Field(vl.Name('bar')),
-                                               ns.Call([ns.AtomExpr(ns.NameAtom(vl.Name('baz')), [])])])),
+                                               ns.Call([ns.TestExpr(ns.OrTestExpr([ns.AndTestExpr([ns.NotTestExpr([
+                                                   ns.OpExpr(None,
+                                                             ns.AtomExpr(ns.NameAtom(vl.Name('baz')), []),
+                                                             [],
+                                                             None)])])]))])])),
     ('foo.bar(baz, qux)',
      ns.AtomExpr(ns.NameAtom(vl.Name('foo')), [
          ns.Field(vl.Name('bar')),
-         ns.Call([ns.AtomExpr(ns.NameAtom(vl.Name('baz')), []), ns.AtomExpr(ns.NameAtom(vl.Name('qux')), [])])
-     ])),
+         ns.Call([
+             ns.TestExpr(ns.OrTestExpr([ns.AndTestExpr([ns.NotTestExpr([
+                 ns.OpExpr(None,
+                           ns.AtomExpr(ns.NameAtom(vl.Name('baz')), []),
+                           [],
+                           None)])])])),
+             ns.TestExpr(ns.OrTestExpr([ns.AndTestExpr([ns.NotTestExpr([
+                 ns.OpExpr(None,
+                           ns.AtomExpr(ns.NameAtom(vl.Name('qux')), []),
+                           [],
+                           None)])])]))])])),
     ('foo.bar(baz, qux.quum())',
      ns.AtomExpr(ns.NameAtom(vl.Name('foo')), [
          ns.Field(vl.Name('bar')),
          ns.Call([
-             ns.AtomExpr(ns.NameAtom(vl.Name('baz')), []),
-             ns.AtomExpr(ns.NameAtom(vl.Name('qux')), [ns.Field(vl.Name('quum')), ns.Call([])])
-         ])
-     ])),
+             ns.TestExpr(ns.OrTestExpr([ns.AndTestExpr([ns.NotTestExpr([
+                 ns.OpExpr(None,
+                           ns.AtomExpr(ns.NameAtom(vl.Name('baz')), []),
+                           [],
+                           None)])])])),
+             ns.TestExpr(ns.OrTestExpr([ns.AndTestExpr([ns.NotTestExpr([
+                 ns.OpExpr(None,
+                           ns.AtomExpr(ns.NameAtom(vl.Name('qux')), [ns.Field(vl.Name('quum')), ns.Call([])]),
+                           [],
+                           None)])])]))])])),
     ('2.foo',
      ns.AtomExpr(ns.NumberAtom(vl.Number('2')), [ns.Field(vl.Name('foo'))])),
 ])
