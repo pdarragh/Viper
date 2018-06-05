@@ -357,7 +357,7 @@ def test_if_expr(lines: List[str], tree: AST):
          '    42'
      ],
      ns.AssignStmt(
-         vl.Name('z'),
+         ns.SimpleNamedPattern(vl.Name('z')),
          ns.IfExpr(
              ns.TestExpr(ns.OrTestExpr([ns.AndTestExpr([ns.NotTestExpr([
                  ns.OpExpr(None,
@@ -376,7 +376,7 @@ def test_if_expr(lines: List[str], tree: AST):
          'z = if x == y: 42'
      ],
      ns.AssignStmt(
-         vl.Name('z'),
+         ns.SimpleNamedPattern(vl.Name('z')),
          ns.IfExpr(
              ns.TestExpr(ns.OrTestExpr([ns.AndTestExpr([ns.NotTestExpr([
                  ns.OpExpr(None,
@@ -401,7 +401,7 @@ def test_if_expr(lines: List[str], tree: AST):
          '    13'
      ],
      ns.AssignStmt(
-         vl.Name('z'),
+         ns.SimpleNamedPattern(vl.Name('z')),
          ns.IfExpr(
              ns.TestExpr(ns.OrTestExpr([ns.AndTestExpr([ns.NotTestExpr([
                  ns.OpExpr(None,

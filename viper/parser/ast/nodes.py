@@ -135,8 +135,8 @@ class NamelessPattern(Pattern):
 
 
 class AssignStmt(PlainStmt):
-    def __init__(self, name: vl.Name, expr: Expr):
-        self.name = name
+    def __init__(self, pattern: Pattern, expr: Expr):
+        self.pattern = pattern
         self.expr = expr
 
 
