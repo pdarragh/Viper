@@ -5,8 +5,10 @@ from viper.parser.ast.ast_to_string import ast_to_string
 import viper.lexer as vl
 import viper.parser.ast.nodes as ns
 
+import os
 import pytest
 
+from importlib import import_module
 from typing import List
 
 
@@ -490,3 +492,35 @@ def test_assign_stmt(lines: List[str], tree: AST):
 def test_pattern(line: str, tree: AST):
     lexemes = lex_line(line)
     run_test('pattern', tree, lexemes, [], [])
+
+
+###############################################################################
+#
+# FILES
+#
+###############################################################################
+
+
+def _generate_files_and_modules():
+    results = []
+    cur_dir = os.path.dirname(__file__)
+    viper_files_dir = os.path.join(cur_dir, 'viper_files')
+    lexeme_files_dir = os.path.join(cur_dir, 'grammar_files')
+    if not os.path.isdir(viper_files_dir) or not os.path.isdir(lexeme_files_dir):
+        return results
+    for viper_file in (os.path.join(viper_files_dir, file)
+                       for file in os.listdir(viper_files_dir) if file.endswith('.viper')):
+        basename = os.path.splitext(os.path.basename(viper_file))[0]
+        if f'{basename}.py' not in os.listdir(lexeme_files_dir):
+            continue
+        module_name = f'.{os.path.basename(lexeme_files_dir)}.{basename}'
+        results.append((viper_file, module_name))
+    return results
+
+
+@pytest.mark.parametrize('viper_file,module_name', _generate_files_and_modules())
+def test_files(viper_file: str, module_name: str):
+    module = import_module(module_name, 'tests')
+    tree = module.tree
+    lexemes = vl.lex_file(viper_file)
+    run_test('file_input', tree, lexemes, [], [])
