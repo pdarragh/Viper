@@ -2,7 +2,7 @@ INDENT_SIZE = 4
 
 
 class Lexeme:
-    def __init__(self, text, repl_with_text=True):
+    def __init__(self, text: str, repl_with_text=True):
         self.text = text
         self._repl_with_text = repl_with_text
 
