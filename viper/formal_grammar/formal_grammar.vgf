@@ -17,7 +17,7 @@
                       | <assign_stmt>
                       | <empty_stmt>
 <return_stmt>       ::= ReturnStmt 'return' tests:<test_expr_list>?
-<assign_stmt>       ::= AssignStmt pattern:<pattern> '=' expr:<expr>
+<assign_stmt>       ::= AssignStmt lhs:<lhs_expr> '=' expr:<expr>
 <empty_stmt>        ::= EmptyStmt 'pass'
 
 <if_stmt>           ::= IfStmt 'if' cond:<test_expr> ':' then_body:<stmt_block> elif_stmts:<elif_stmt>* else_stmt:<else_stmt>?
@@ -42,6 +42,12 @@
 
 <stmt_block>        ::= SimpleStmtBlock stmt:<stmt>
                       | CompoundStmtBlock NEWLINE INDENT stmts:<stmt>+ DEDENT
+
+# LEFT-HAND SIDE EXPRESSIONS
+
+<lhs_expr>          ::= <pattern>
+                      | FieldAccess atom:<atom> '.' fields:<lhs_field>&+{.}
+<lhs_field>         ::= FieldAccessField field:NAME
 
 # EXPRESSIONS
 

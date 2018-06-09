@@ -33,6 +33,18 @@ class StmtBlock(AST):
     pass
 
 
+class LhsExpr(AST):
+    pass
+
+
+class LhsField(AST):
+    def __init__(self, field: vl.Name):
+        self.field = field
+
+
+FieldAccessField = LhsField
+
+
 class Atom(AST):
     pass
 
@@ -42,10 +54,6 @@ class Trailer(AST):
 
 
 class ExprBlock(AST):
-    pass
-
-
-class Pattern(AST):
     pass
 
 
@@ -82,13 +90,8 @@ class AtomExpr(AST):
         self.trailers = trailers
 
 
-class SimplePattern(Pattern):
+class Pattern(LhsExpr):
     pass
-
-
-class PatternList(AST):
-    def __init__(self, patterns: List[Pattern]):
-        self.patterns = patterns
 
 
 class SingleNewline(SingleInput):
@@ -102,6 +105,12 @@ class SingleLine(SingleInput):
 
 class FileNewline(FileLine):
     pass
+
+
+class FieldAccess(LhsExpr):
+    def __init__(self, atom: Atom, fields: List[LhsField]):
+        self.atom = atom
+        self.fields = fields
 
 
 class NameAtom(Atom):
@@ -123,20 +132,9 @@ class Field(Trailer):
         self.field = field
 
 
-class NamedPattern(Pattern):
-    def __init__(self, name: vl.Name, pat_type: vl.Class):
-        self.name = name
-        self.pat_type = pat_type
-
-
-class NamelessPattern(Pattern):
-    def __init__(self, pat_type: vl.Class):
-        self.pat_type = pat_type
-
-
 class AssignStmt(PlainStmt):
-    def __init__(self, pattern: Pattern, expr: Expr):
-        self.pattern = pattern
+    def __init__(self, lhs: LhsExpr, expr: Expr):
+        self.lhs = lhs
         self.expr = expr
 
 
@@ -153,6 +151,15 @@ class SubOpExpr(AST):
     def __init__(self, op: vl.Operator, atom: AtomExpr):
         self.op = op
         self.atom = atom
+
+
+class SimplePattern(Pattern):
+    pass
+
+
+class PatternList(AST):
+    def __init__(self, patterns: List[Pattern]):
+        self.patterns = patterns
 
 
 class FileStmt(FileLine):
@@ -185,18 +192,15 @@ class IndentedExprBlock(ExprBlock):
         self.expr = expr
 
 
-class SimpleNamedPattern(SimplePattern):
-    def __init__(self, name: vl.Name):
+class NamedPattern(Pattern):
+    def __init__(self, name: vl.Name, pat_type: vl.Class):
         self.name = name
+        self.pat_type = pat_type
 
 
-class SimpleNamelessPattern(SimplePattern):
-    pass
-
-
-class SimpleParenPattern(SimplePattern):
-    def __init__(self, pattern_list: Optional[PatternList]):
-        self.pattern_list = pattern_list
+class NamelessPattern(Pattern):
+    def __init__(self, pat_type: vl.Class):
+        self.pat_type = pat_type
 
 
 class FuncDef(Definition):
@@ -234,6 +238,20 @@ class OpExpr(AST):
         self.atom = atom
         self.sub_op_exprs = sub_op_exprs
         self.right_op = right_op
+
+
+class SimpleNamedPattern(SimplePattern):
+    def __init__(self, name: vl.Name):
+        self.name = name
+
+
+class SimpleNamelessPattern(SimplePattern):
+    pass
+
+
+class SimpleParenPattern(SimplePattern):
+    def __init__(self, pattern_list: Optional[PatternList]):
+        self.pattern_list = pattern_list
 
 
 class NotTestExpr(AST):
