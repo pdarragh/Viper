@@ -91,5 +91,8 @@ ENV/
 # PyCharm
 .idea
 
+# LyX temp file
+*.lyx~
+
 # MacOS
 .DS_Store
