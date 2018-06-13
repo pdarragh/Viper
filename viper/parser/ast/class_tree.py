@@ -169,8 +169,8 @@ def make_ast_nodes_from_rules(parsed_rules: Dict[str, List[Production]], tree: C
 
 def make_ast_node_class_from_single_production(rule: str, production: Production, tree: ClassTree, solo_aliases: SoloAliasDict):
     if isinstance(production, RuleAliasProduction):
-        # This was handled in pre-processing.
-        return
+        class_name = convert_name_to_class_name(rule)
+        make_ast_node_class(class_name, tree, solo_aliases)
     elif isinstance(production, NamedProduction):
         class_name = convert_name_to_class_name(rule)
         process_parameters_for_class(class_name, production.parts, tree)
