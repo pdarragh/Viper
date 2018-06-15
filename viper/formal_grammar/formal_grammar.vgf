@@ -45,9 +45,7 @@
 
 # LEFT-HAND SIDE EXPRESSIONS
 
-<lhs_expr>          ::= <pattern>
-                      | FieldAccess atom:<atom> '.' fields:<lhs_field>&+{.}
-<lhs_field>         ::= FieldAccessField field:NAME
+<lhs_expr>          ::= <simple_pattern>
 
 # EXPRESSIONS
 
@@ -81,10 +79,19 @@
 
 # PATTERNS
 
-<pattern>           ::= NamedPattern name:NAME ':' pat_type:CLASS
-                      | NamelessPattern '_' ':' pat_type:CLASS
+<pattern>           ::= <typed_pattern>
+<typed_pattern>     ::= NamedTypedPattern id:<var_id> ':' pat_type:CLASS
+                      | NamelessTypedPattern '_' ':' pat_type:CLASS
                       | <simple_pattern>
-<simple_pattern>    ::= SimpleNamedPattern name:NAME
-                      | SimpleNamelessPattern '_'
-                      | SimpleParenPattern '(' pattern_list:<pattern_list>? ')'
+<simple_pattern>    ::= NamedSimplePattern path:<path>
+                      | NamelessSimplePattern '_'
+                      | ParenSimplePattern '(' pattern_list:<pattern_list>? ')'
 <pattern_list>      ::= PatternList patterns:<pattern>&+{,}
+
+# PATHS
+
+<var_id>            ::= VarId id:NAME
+<id>                ::= ClassId id:CLASS
+                      | <var_id>
+<path>              ::= Path id:<id> parts:<path_part>*
+<path_part>         ::= PathPart '.' part:<id>
