@@ -41,8 +41,8 @@ def run_test(rule: str, tree: AST, lexemes: List[vl.Lexeme], prepend: List[vl.Le
     ('()',
      ns.ParenAtom(None)),
     ('(foo)',
-     ns.ParenAtom(ns.TestExprList([ns.TestExpr(ns.OrTestExpr([ns.AndTestExpr([ns.NotTestExpr([
-         ns.OpExpr(None, ns.AtomExpr(ns.NameAtom(vl.Name('foo')), []), [], None)])])]))]))),
+     ns.ParenAtom(ns.TestExprList([ns.TestExpr(ns.OrTestExpr([ns.AndTestExpr([ns.NotNegatedTestExpr(
+         ns.OpExpr(None, ns.AtomExpr(ns.NameAtom(vl.Name('foo')), []), [], None))])]))]))),
 ])
 def test_atom(line: str, tree: AST):
     lexemes = lex_line(line)
@@ -58,39 +58,40 @@ def test_atom(line: str, tree: AST):
      ns.AtomExpr(ns.NameAtom(vl.Name('foo')), [ns.Field(vl.Name('bar')), ns.Field(vl.Name('baz'))])),
     ('foo.bar(baz)',
      ns.AtomExpr(ns.NameAtom(vl.Name('foo')), [ns.Field(vl.Name('bar')),
-                                               ns.Call([ns.TestExpr(ns.OrTestExpr([ns.AndTestExpr([ns.NotTestExpr([
-                                                   ns.OpExpr(None,
-                                                             ns.AtomExpr(ns.NameAtom(vl.Name('baz')), []),
-                                                             [],
-                                                             None)])])]))])])),
+                                               ns.Call([ns.TestExpr(ns.OrTestExpr([ns.AndTestExpr([
+                                                   ns.NotNegatedTestExpr(ns.OpExpr(None,
+                                                                                   ns.AtomExpr(
+                                                                                       ns.NameAtom(vl.Name('baz')), []),
+                                                                                   [],
+                                                                                   None))])]))])])),
     ('foo.bar(baz, qux)',
      ns.AtomExpr(ns.NameAtom(vl.Name('foo')), [
          ns.Field(vl.Name('bar')),
          ns.Call([
-             ns.TestExpr(ns.OrTestExpr([ns.AndTestExpr([ns.NotTestExpr([
+             ns.TestExpr(ns.OrTestExpr([ns.AndTestExpr([ns.NotNegatedTestExpr(
                  ns.OpExpr(None,
                            ns.AtomExpr(ns.NameAtom(vl.Name('baz')), []),
                            [],
-                           None)])])])),
-             ns.TestExpr(ns.OrTestExpr([ns.AndTestExpr([ns.NotTestExpr([
+                           None))])])),
+             ns.TestExpr(ns.OrTestExpr([ns.AndTestExpr([ns.NotNegatedTestExpr(
                  ns.OpExpr(None,
                            ns.AtomExpr(ns.NameAtom(vl.Name('qux')), []),
                            [],
-                           None)])])]))])])),
+                           None))])]))])])),
     ('foo.bar(baz, qux.quum())',
      ns.AtomExpr(ns.NameAtom(vl.Name('foo')), [
          ns.Field(vl.Name('bar')),
          ns.Call([
-             ns.TestExpr(ns.OrTestExpr([ns.AndTestExpr([ns.NotTestExpr([
+             ns.TestExpr(ns.OrTestExpr([ns.AndTestExpr([ns.NotNegatedTestExpr(
                  ns.OpExpr(None,
                            ns.AtomExpr(ns.NameAtom(vl.Name('baz')), []),
                            [],
-                           None)])])])),
-             ns.TestExpr(ns.OrTestExpr([ns.AndTestExpr([ns.NotTestExpr([
+                           None))])])),
+             ns.TestExpr(ns.OrTestExpr([ns.AndTestExpr([ns.NotNegatedTestExpr(
                  ns.OpExpr(None,
                            ns.AtomExpr(ns.NameAtom(vl.Name('qux')), [ns.Field(vl.Name('quum')), ns.Call([])]),
                            [],
-                           None)])])]))])])),
+                           None))])]))])])),
     ('2.foo',
      ns.AtomExpr(ns.NumberAtom(vl.Number('2')), [ns.Field(vl.Name('foo'))])),
 ])
@@ -140,29 +141,29 @@ def test_op_expr(line: str, tree: AST):
      ns.SimpleStmtBlock(ns.SimpleStmt(ns.ReturnStmt(None)))),
     ('return foo',
      ns.SimpleStmtBlock(
-         ns.SimpleStmt(ns.ReturnStmt(ns.TestExprList([ns.TestExpr(ns.OrTestExpr([ns.AndTestExpr([ns.NotTestExpr([
+         ns.SimpleStmt(ns.ReturnStmt(ns.TestExprList([ns.TestExpr(ns.OrTestExpr([ns.AndTestExpr([ns.NotNegatedTestExpr(
              ns.OpExpr(None,
                        ns.AtomExpr(ns.NameAtom(vl.Name('foo')), []),
                        [],
-                       None)])])]))]))))),
+                       None))])]))]))))),
     ('return foo, ~bar, baz !',
      ns.SimpleStmtBlock(
          ns.SimpleStmt(ns.ReturnStmt(ns.TestExprList([
-             ns.TestExpr(ns.OrTestExpr([ns.AndTestExpr([ns.NotTestExpr([
+             ns.TestExpr(ns.OrTestExpr([ns.AndTestExpr([ns.NotNegatedTestExpr(
                  ns.OpExpr(None,
                            ns.AtomExpr(ns.NameAtom(vl.Name('foo')), []),
                            [],
-                           None)])])])),
-             ns.TestExpr(ns.OrTestExpr([ns.AndTestExpr([ns.NotTestExpr([
+                           None))])])),
+             ns.TestExpr(ns.OrTestExpr([ns.AndTestExpr([ns.NotNegatedTestExpr(
                  ns.OpExpr(vl.Operator('~'),
                            ns.AtomExpr(ns.NameAtom(vl.Name('bar')), []),
                            [],
-                           None)])])])),
-             ns.TestExpr(ns.OrTestExpr([ns.AndTestExpr([ns.NotTestExpr([
+                           None))])])),
+             ns.TestExpr(ns.OrTestExpr([ns.AndTestExpr([ns.NotNegatedTestExpr(
                  ns.OpExpr(None,
                            ns.AtomExpr(ns.NameAtom(vl.Name('baz')), []),
                            [],
-                           vl.Operator('!'))])])]))]))))),
+                           vl.Operator('!')))])]))]))))),
 ])
 def test_stmt_block(line: str, tree: AST):
     lexemes = lex_line(line)
@@ -220,18 +221,19 @@ def test_class_def(line: str, tree: AST):
          '    return 42'
      ],
      ns.IfStmt(
-         ns.TestExpr(ns.OrTestExpr([ns.AndTestExpr([ns.NotTestExpr([
+         ns.TestExpr(ns.OrTestExpr([ns.AndTestExpr([ns.NotNegatedTestExpr(
              ns.OpExpr(None,
                        ns.AtomExpr(ns.NameAtom(vl.Name('x')), []),
                        [ns.SubOpExpr(vl.Operator('=='),
                                      ns.AtomExpr(ns.NameAtom(vl.Name('y')), []))],
-                       None)])])])),
+                       None))])])),
          ns.CompoundStmtBlock(
-             [ns.SimpleStmt(ns.ReturnStmt(ns.TestExprList([ns.TestExpr(ns.OrTestExpr([ns.AndTestExpr([ns.NotTestExpr([
-                 ns.OpExpr(None,
-                           ns.AtomExpr(ns.NumberAtom(vl.Number('42')), []),
-                           [],
-                           None)])])]))])))]),
+             [ns.SimpleStmt(
+                 ns.ReturnStmt(ns.TestExprList([ns.TestExpr(ns.OrTestExpr([ns.AndTestExpr([ns.NotNegatedTestExpr(
+                     ns.OpExpr(None,
+                               ns.AtomExpr(ns.NumberAtom(vl.Number('42')), []),
+                               [],
+                               None))])]))])))]),
          [],
          None)),
     ([
@@ -240,26 +242,26 @@ def test_class_def(line: str, tree: AST):
          '        return 42'
      ],
      ns.IfStmt(
-         ns.TestExpr(ns.OrTestExpr([ns.AndTestExpr([ns.NotTestExpr([
+         ns.TestExpr(ns.OrTestExpr([ns.AndTestExpr([ns.NotNegatedTestExpr(
              ns.OpExpr(None,
                        ns.AtomExpr(ns.NameAtom(vl.Name('x')), []),
                        [ns.SubOpExpr(vl.Operator('=='),
                                      ns.AtomExpr(ns.NameAtom(vl.Name('y')), []))],
-                       None)])])])),
+                       None))])])),
          ns.CompoundStmtBlock([
              ns.IfStmt(
-                 ns.TestExpr(ns.OrTestExpr([ns.AndTestExpr([ns.NotTestExpr([
+                 ns.TestExpr(ns.OrTestExpr([ns.AndTestExpr([ns.NotNegatedTestExpr(
                      ns.OpExpr(None,
                                ns.AtomExpr(ns.NameAtom(vl.Name('x')), []),
                                [ns.SubOpExpr(vl.Operator('=='),
                                              ns.AtomExpr(ns.NameAtom(vl.Name('z')), []))],
-                               None)])])])),
+                               None))])])),
                  ns.CompoundStmtBlock([ns.SimpleStmt(
-                     ns.ReturnStmt(ns.TestExprList([ns.TestExpr(ns.OrTestExpr([ns.AndTestExpr([ns.NotTestExpr([
+                     ns.ReturnStmt(ns.TestExprList([ns.TestExpr(ns.OrTestExpr([ns.AndTestExpr([ns.NotNegatedTestExpr(
                          ns.OpExpr(None,
                                    ns.AtomExpr(ns.NumberAtom(vl.Number('42')), []),
                                    [],
-                                   None)])])]))])))]),
+                                   None))])]))])))]),
                  [],
                  None)]),
          [],
@@ -271,59 +273,62 @@ def test_class_def(line: str, tree: AST):
          '    return 42'
      ],
      ns.IfStmt(
-         ns.TestExpr(ns.OrTestExpr([ns.AndTestExpr([ns.NotTestExpr([
+         ns.TestExpr(ns.OrTestExpr([ns.AndTestExpr([ns.NotNegatedTestExpr(
              ns.OpExpr(None,
                        ns.AtomExpr(ns.NameAtom(vl.Name('x')), []),
                        [ns.SubOpExpr(vl.Operator('=='),
                                      ns.AtomExpr(ns.NameAtom(vl.Name('y')), []))],
-                       None)])])])),
+                       None))])])),
          ns.CompoundStmtBlock([ns.SimpleStmt(ns.EmptyStmt())]),
          [],
          ns.ElseStmt(ns.CompoundStmtBlock(
-             [ns.SimpleStmt(ns.ReturnStmt(ns.TestExprList([ns.TestExpr(ns.OrTestExpr([ns.AndTestExpr([ns.NotTestExpr([
-                 ns.OpExpr(None,
-                           ns.AtomExpr(ns.NumberAtom(vl.Number('42')), []),
-                           [],
-                           None)])])]))])))])))),
+             [ns.SimpleStmt(
+                 ns.ReturnStmt(ns.TestExprList([ns.TestExpr(ns.OrTestExpr([ns.AndTestExpr([ns.NotNegatedTestExpr(
+                     ns.OpExpr(None,
+                               ns.AtomExpr(ns.NumberAtom(vl.Number('42')), []),
+                               [],
+                               None))])]))])))])))),
     ([
          'if x == y: pass',
          'else:',
          '    return 42'
      ],
      ns.IfStmt(
-         ns.TestExpr(ns.OrTestExpr([ns.AndTestExpr([ns.NotTestExpr([
+         ns.TestExpr(ns.OrTestExpr([ns.AndTestExpr([ns.NotNegatedTestExpr(
              ns.OpExpr(None,
                        ns.AtomExpr(ns.NameAtom(vl.Name('x')), []),
                        [ns.SubOpExpr(vl.Operator('=='),
                                      ns.AtomExpr(ns.NameAtom(vl.Name('y')), []))],
-                       None)])])])),
+                       None))])])),
          ns.SimpleStmtBlock(ns.SimpleStmt(ns.EmptyStmt())),
          [],
          ns.ElseStmt(ns.CompoundStmtBlock(
-             [ns.SimpleStmt(ns.ReturnStmt(ns.TestExprList([ns.TestExpr(ns.OrTestExpr([ns.AndTestExpr([ns.NotTestExpr([
-                 ns.OpExpr(None,
-                           ns.AtomExpr(ns.NumberAtom(vl.Number('42')), []),
-                           [],
-                           None)])])]))])))])))),
+             [ns.SimpleStmt(
+                 ns.ReturnStmt(ns.TestExprList([ns.TestExpr(ns.OrTestExpr([ns.AndTestExpr([ns.NotNegatedTestExpr(
+                     ns.OpExpr(None,
+                               ns.AtomExpr(ns.NumberAtom(vl.Number('42')), []),
+                               [],
+                               None))])]))])))])))),
     ([
          'if x == y: pass',
          'else: return 42'
      ],
      ns.IfStmt(
-         ns.TestExpr(ns.OrTestExpr([ns.AndTestExpr([ns.NotTestExpr([
+         ns.TestExpr(ns.OrTestExpr([ns.AndTestExpr([ns.NotNegatedTestExpr(
              ns.OpExpr(None,
                        ns.AtomExpr(ns.NameAtom(vl.Name('x')), []),
                        [ns.SubOpExpr(vl.Operator('=='),
                                      ns.AtomExpr(ns.NameAtom(vl.Name('y')), []))],
-                       None)])])])),
+                       None))])])),
          ns.SimpleStmtBlock(ns.SimpleStmt(ns.EmptyStmt())),
          [],
          ns.ElseStmt(ns.SimpleStmtBlock(
-             ns.SimpleStmt(ns.ReturnStmt(ns.TestExprList([ns.TestExpr(ns.OrTestExpr([ns.AndTestExpr([ns.NotTestExpr([
-                 ns.OpExpr(None,
-                           ns.AtomExpr(ns.NumberAtom(vl.Number('42')), []),
-                           [],
-                           None)])])]))]))))))),
+             ns.SimpleStmt(
+                 ns.ReturnStmt(ns.TestExprList([ns.TestExpr(ns.OrTestExpr([ns.AndTestExpr([ns.NotNegatedTestExpr(
+                     ns.OpExpr(None,
+                               ns.AtomExpr(ns.NumberAtom(vl.Number('42')), []),
+                               [],
+                               None))])]))]))))))),
 ])
 def test_if_stmt(lines: List[str], tree: AST):
     lexemes = lex_lines('\n'.join(lines))[:-1]
@@ -336,34 +341,34 @@ def test_if_stmt(lines: List[str], tree: AST):
          '    42'
      ],
      ns.IfExpr(
-         ns.TestExpr(ns.OrTestExpr([ns.AndTestExpr([ns.NotTestExpr([
+         ns.TestExpr(ns.OrTestExpr([ns.AndTestExpr([ns.NotNegatedTestExpr(
              ns.OpExpr(None,
                        ns.AtomExpr(ns.NameAtom(vl.Name('x')), []),
                        [ns.SubOpExpr(vl.Operator('=='),
                                      ns.AtomExpr(ns.NameAtom(vl.Name('y')), []))],
-                       None)])])])),
-         ns.IndentedExprBlock(ns.TestExprList([ns.TestExpr(ns.OrTestExpr([ns.AndTestExpr([ns.NotTestExpr([
+                       None))])])),
+         ns.IndentedExprBlock(ns.TestExprList([ns.TestExpr(ns.OrTestExpr([ns.AndTestExpr([ns.NotNegatedTestExpr(
              ns.OpExpr(None,
                        ns.AtomExpr(ns.NumberAtom(vl.Number('42')), []),
                        [],
-                       None)])])]))])),
+                       None))])]))])),
          [],
          None)),
     ([
          'if x == y: 42'
      ],
      ns.IfExpr(
-         ns.TestExpr(ns.OrTestExpr([ns.AndTestExpr([ns.NotTestExpr([
+         ns.TestExpr(ns.OrTestExpr([ns.AndTestExpr([ns.NotNegatedTestExpr(
              ns.OpExpr(None,
                        ns.AtomExpr(ns.NameAtom(vl.Name('x')), []),
                        [ns.SubOpExpr(vl.Operator('=='),
                                      ns.AtomExpr(ns.NameAtom(vl.Name('y')), []))],
-                       None)])])])),
-         ns.SimpleExprBlock(ns.TestExprList([ns.TestExpr(ns.OrTestExpr([ns.AndTestExpr([ns.NotTestExpr([
+                       None))])])),
+         ns.SimpleExprBlock(ns.TestExprList([ns.TestExpr(ns.OrTestExpr([ns.AndTestExpr([ns.NotNegatedTestExpr(
              ns.OpExpr(None,
                        ns.AtomExpr(ns.NumberAtom(vl.Number('42')), []),
                        [],
-                       None)])])]))])),
+                       None))])]))])),
          [],
          None)),
 ])
@@ -380,17 +385,17 @@ def test_if_expr(lines: List[str], tree: AST):
      ns.AssignStmt(
          ns.NamedSimplePattern(ns.Path(ns.VarId(vl.Name('z')), [])),
          ns.IfExpr(
-             ns.TestExpr(ns.OrTestExpr([ns.AndTestExpr([ns.NotTestExpr([
+             ns.TestExpr(ns.OrTestExpr([ns.AndTestExpr([ns.NotNegatedTestExpr(
                  ns.OpExpr(None,
                            ns.AtomExpr(ns.NameAtom(vl.Name('x')), []),
                            [ns.SubOpExpr(vl.Operator('=='),
                                          ns.AtomExpr(ns.NameAtom(vl.Name('y')), []))],
-                           None)])])])),
-             ns.IndentedExprBlock(ns.TestExprList([ns.TestExpr(ns.OrTestExpr([ns.AndTestExpr([ns.NotTestExpr([
+                           None))])])),
+             ns.IndentedExprBlock(ns.TestExprList([ns.TestExpr(ns.OrTestExpr([ns.AndTestExpr([ns.NotNegatedTestExpr(
                  ns.OpExpr(None,
                            ns.AtomExpr(ns.NumberAtom(vl.Number('42')), []),
                            [],
-                           None)])])]))])),
+                           None))])]))])),
              [],
              None))),
     ([
@@ -399,17 +404,17 @@ def test_if_expr(lines: List[str], tree: AST):
      ns.AssignStmt(
          ns.NamedSimplePattern(ns.Path(ns.VarId(vl.Name('z')), [])),
          ns.IfExpr(
-             ns.TestExpr(ns.OrTestExpr([ns.AndTestExpr([ns.NotTestExpr([
+             ns.TestExpr(ns.OrTestExpr([ns.AndTestExpr([ns.NotNegatedTestExpr(
                  ns.OpExpr(None,
                            ns.AtomExpr(ns.NameAtom(vl.Name('x')), []),
                            [ns.SubOpExpr(vl.Operator('=='),
                                          ns.AtomExpr(ns.NameAtom(vl.Name('y')), []))],
-                           None)])])])),
-             ns.SimpleExprBlock(ns.TestExprList([ns.TestExpr(ns.OrTestExpr([ns.AndTestExpr([ns.NotTestExpr([
+                           None))])])),
+             ns.SimpleExprBlock(ns.TestExprList([ns.TestExpr(ns.OrTestExpr([ns.AndTestExpr([ns.NotNegatedTestExpr(
                  ns.OpExpr(None,
                            ns.AtomExpr(ns.NumberAtom(vl.Number('42')), []),
                            [],
-                           None)])])]))])),
+                           None))])]))])),
              [],
              None))),
     ([
@@ -424,47 +429,48 @@ def test_if_expr(lines: List[str], tree: AST):
      ns.AssignStmt(
          ns.NamedSimplePattern(ns.Path(ns.VarId(vl.Name('z')), [])),
          ns.IfExpr(
-             ns.TestExpr(ns.OrTestExpr([ns.AndTestExpr([ns.NotTestExpr([
+             ns.TestExpr(ns.OrTestExpr([ns.AndTestExpr([ns.NotNegatedTestExpr(
                  ns.OpExpr(None,
                            ns.AtomExpr(ns.NameAtom(vl.Name('x')), []),
                            [ns.SubOpExpr(vl.Operator('=='),
                                          ns.AtomExpr(ns.NameAtom(vl.Name('y')), []))],
-                           None)])])])),
-             ns.IndentedExprBlock(ns.TestExprList([ns.TestExpr(ns.OrTestExpr([ns.AndTestExpr([ns.NotTestExpr([
+                           None))])])),
+             ns.IndentedExprBlock(ns.TestExprList([ns.TestExpr(ns.OrTestExpr([ns.AndTestExpr([ns.NotNegatedTestExpr(
                  ns.OpExpr(None,
                            ns.AtomExpr(ns.NumberAtom(vl.Number('42')), []),
                            [],
-                           None)])])]))])),
+                           None))])]))])),
              [ns.ElifExpr(
-                 ns.TestExpr(ns.OrTestExpr([ns.AndTestExpr([ns.NotTestExpr([
+                 ns.TestExpr(ns.OrTestExpr([ns.AndTestExpr([ns.NotNegatedTestExpr(
                      ns.OpExpr(None,
                                ns.AtomExpr(ns.NameAtom(vl.Name('x')), []),
                                [ns.SubOpExpr(vl.Operator('>'),
                                              ns.AtomExpr(ns.NameAtom(vl.Name('y')), []))],
-                               None)])])])),
-                 ns.IndentedExprBlock(ns.TestExprList([ns.TestExpr(ns.OrTestExpr([ns.AndTestExpr([ns.NotTestExpr([
+                               None))])])),
+                 ns.IndentedExprBlock(ns.TestExprList([ns.TestExpr(ns.OrTestExpr([ns.AndTestExpr([ns.NotNegatedTestExpr(
                      ns.OpExpr(None,
                                ns.AtomExpr(ns.NumberAtom(vl.Number('19')), []),
                                [],
-                               None)])])]))]))),
+                               None))])]))]))),
                  ns.ElifExpr(
-                     ns.TestExpr(ns.OrTestExpr([ns.AndTestExpr([ns.NotTestExpr([
+                     ns.TestExpr(ns.OrTestExpr([ns.AndTestExpr([ns.NotNegatedTestExpr(
                          ns.OpExpr(None,
                                    ns.AtomExpr(ns.NameAtom(vl.Name('x')), []),
                                    [ns.SubOpExpr(vl.Operator('<'),
                                                  ns.AtomExpr(ns.NumberAtom(vl.Number('0')), []))],
-                                   None)])])])),
-                     ns.SimpleExprBlock(ns.TestExprList([ns.TestExpr(ns.OrTestExpr([ns.AndTestExpr([ns.NotTestExpr([
-                         ns.OpExpr(None,
-                                   ns.AtomExpr(ns.NumberAtom(vl.Number('2')), []),
-                                   [],
-                                   None)])])]))])))],
+                                   None))])])),
+                     ns.SimpleExprBlock(
+                         ns.TestExprList([ns.TestExpr(ns.OrTestExpr([ns.AndTestExpr([ns.NotNegatedTestExpr(
+                             ns.OpExpr(None,
+                                       ns.AtomExpr(ns.NumberAtom(vl.Number('2')), []),
+                                       [],
+                                       None))])]))])))],
              ns.ElseExpr(
-                 ns.IndentedExprBlock(ns.TestExprList([ns.TestExpr(ns.OrTestExpr([ns.AndTestExpr([ns.NotTestExpr([
+                 ns.IndentedExprBlock(ns.TestExprList([ns.TestExpr(ns.OrTestExpr([ns.AndTestExpr([ns.NotNegatedTestExpr(
                      ns.OpExpr(None,
                                ns.AtomExpr(ns.NumberAtom(vl.Number('13')), []),
                                [],
-                               None)])])]))])))))),
+                               None))])]))])))))),
 ])
 def test_assign_stmt(lines: List[str], tree: AST):
     lexemes = lex_lines('\n'.join(lines))[:-1]

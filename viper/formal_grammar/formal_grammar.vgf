@@ -61,7 +61,8 @@
 <test_expr>         ::= TestExpr test:<or_test_expr>
 <or_test_expr>      ::= OrTestExpr tests:<and_test_expr>&+{or}
 <and_test_expr>     ::= AndTestExpr tests:<not_test_expr>&+{and}
-<not_test_expr>     ::= NotTestExpr tests:<op_expr>&+{not}
+<not_test_expr>     ::= NegatedTestExpr 'not' op_expr:<op_expr>
+                      | NotNegatedTestExpr op_expr:<op_expr>
 
 <op_expr>           ::= OpExpr left_op:OPERATOR? atom:<atom_expr> sub_op_exprs:<sub_op_expr>* right_op:OPERATOR?
 <sub_op_expr>       ::= SubOpExpr op:OPERATOR atom:<atom_expr>

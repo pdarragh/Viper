@@ -37,6 +37,10 @@ class LhsExpr(AST):
     pass
 
 
+class NotTestExpr(AST):
+    pass
+
+
 class Atom(AST):
     pass
 
@@ -82,6 +86,11 @@ class Expr(Term):
 class ElseExpr(AST):
     def __init__(self, else_body: ExprBlock):
         self.else_body = else_body
+
+
+class AndTestExpr(AST):
+    def __init__(self, tests: List[NotTestExpr]):
+        self.tests = tests
 
 
 class AtomExpr(AST):
@@ -159,6 +168,11 @@ class Definition(Stmt):
 class Arguments(AST):
     def __init__(self, args: List[AtomExpr]):
         self.args = args
+
+
+class OrTestExpr(AST):
+    def __init__(self, tests: List[AndTestExpr]):
+        self.tests = tests
 
 
 class SubOpExpr(AST):
@@ -247,6 +261,11 @@ class DataDef(Definition):
         self.body = body
 
 
+class TestExpr(AST):
+    def __init__(self, test: OrTestExpr):
+        self.test = test
+
+
 class OpExpr(AST):
     def __init__(self, left_op: Optional[vl.Operator], atom: AtomExpr, sub_op_exprs: List[SubOpExpr], right_op: Optional[vl.Operator]):
         self.left_op = left_op
@@ -269,26 +288,6 @@ class ParenSimplePattern(SimplePattern):
         self.pattern_list = pattern_list
 
 
-class NotTestExpr(AST):
-    def __init__(self, tests: List[OpExpr]):
-        self.tests = tests
-
-
-class AndTestExpr(AST):
-    def __init__(self, tests: List[NotTestExpr]):
-        self.tests = tests
-
-
-class OrTestExpr(AST):
-    def __init__(self, tests: List[AndTestExpr]):
-        self.tests = tests
-
-
-class TestExpr(AST):
-    def __init__(self, test: OrTestExpr):
-        self.test = test
-
-
 class ElifStmt(AST):
     def __init__(self, cond: TestExpr, elif_body: StmtBlock):
         self.cond = cond
@@ -304,6 +303,16 @@ class ElifExpr(AST):
 class TestExprList(Expr):
     def __init__(self, tests: List[TestExpr]):
         self.tests = tests
+
+
+class NegatedTestExpr(NotTestExpr):
+    def __init__(self, op_expr: OpExpr):
+        self.op_expr = op_expr
+
+
+class NotNegatedTestExpr(NotTestExpr):
+    def __init__(self, op_expr: OpExpr):
+        self.op_expr = op_expr
 
 
 class Call(Trailer):
