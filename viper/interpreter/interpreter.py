@@ -34,8 +34,8 @@ def start_eval(tree: AST, env: Environment = None, store: Store = None):
 
 
 def eval_stmt(stmt: AST, env: Environment, store: Store) -> Tuple[Environment, Store]:
-    if isinstance(stmt, ns.EmptyStmt):
-        return env, store
+    if isinstance(stmt, ns.SimpleStmt):
+        return eval_stmt(stmt.stmt, env, store)
     elif isinstance(stmt, ns.AssignStmt):
         # Evaluate the name of the location and the value.
         loc = eval_lhs_expr(stmt.lhs, env, store)
@@ -60,8 +60,31 @@ def eval_stmt(stmt: AST, env: Environment, store: Store) -> Tuple[Environment, S
         else:
             # Something... went wrong.
             raise NotImplementedError
+    elif isinstance(stmt, ns.EmptyStmt):
+        return env, store
+    elif isinstance(stmt, ns.IfStmt):
+        val, store2 = eval_expr(stmt.cond, env, store)
+        if isinstance(val, TrueVal):
+            return eval_stmt(stmt.then_body, env, store2)
+        elif isinstance(val, FalseVal):
+            for elif_stmt in stmt.elif_stmts:
+                val, store2 = eval_expr(elif_stmt.cond, env, store)
+                if isinstance(val, TrueVal):
+                    return eval_stmt(elif_stmt.elif_body, env, store2)
+            if stmt.else_stmt is not None:
+                return eval_stmt(stmt.else_stmt.else_body, env, store)
+            else:
+                return env, store
+        else:
+            raise RuntimeError(f"Not a boolean value: {val}")  # TODO: Use a custom error.
+    elif isinstance(stmt, ns.SimpleStmtBlock):
+        return eval_stmt(stmt.stmt, env, store)
+    elif isinstance(stmt, ns.CompoundStmtBlock):
+        for sub_stmt in stmt.stmts:
+            env, store = eval_stmt(sub_stmt, env, store)
+        return env, store
     else:
-        raise NotImplementedError
+        raise NotImplementedError(f"No implementation for statement type: {type(stmt).__name__}")
 
 
 def eval_lhs_expr(expr: AST, env: Environment, store: Store) -> Value:
