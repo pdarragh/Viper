@@ -4,21 +4,32 @@ from .value import *
 
 import viper.parser.ast.nodes as ns
 
-from viper.parser.ast.nodes import AST, Stmt, Expr, Pattern, Path
+from viper.parser.ast.nodes import AST, Pattern, Path
 
 from typing import Tuple, Union
 
 
+STMTS = [
+    ns.Stmt, ns.PlainStmt, ns.IfStmt, ns.ElifStmt, ns.ElseStmt, ns.Definition, ns.Parameter, ns.Arguments, ns.StmtBlock,
+]
+
+EXPRS = [
+    ns.Expr, ns.IfExpr, ns.ElifExpr, ns.ElseExpr, ns.TestExprList, ns.TestExpr, ns.OrTestExpr, ns.AndTestExpr,
+    ns.NotTestExpr, ns.OpExpr, ns.SubOpExpr, ns.AtomExpr, ns.Atom, ns.Trailer, ns.ExprBlock,
+    ns.LhsExpr,
+]
+
+
 def start_eval(tree: AST):
-    if isinstance(tree, Stmt):
+    if any(map(lambda s: isinstance(tree, s), STMTS)):
         return eval_stmt(tree, empty_env(), empty_store())
-    elif isinstance(tree, Expr):
+    elif any(map(lambda e: isinstance(tree, e), EXPRS)):
         return eval_expr(tree, empty_env(), empty_store())
     else:
-        return NotImplemented
+        raise NotImplementedError(f"No evaluation rules for ASTs of type: {type(tree).__name__}")
 
 
-def eval_stmt(stmt: Stmt, env: Environment, store: Store) -> Tuple[Environment, Store]:
+def eval_stmt(stmt: AST, env: Environment, store: Store) -> Tuple[Environment, Store]:
     if isinstance(stmt, ns.EmptyStmt):
         return env, store
     elif isinstance(stmt, ns.AssignStmt):
@@ -49,14 +60,14 @@ def eval_stmt(stmt: Stmt, env: Environment, store: Store) -> Tuple[Environment, 
         raise NotImplementedError
 
 
-def eval_lhs_expr(expr: Expr, env: Environment, store: Store) -> Value:
+def eval_lhs_expr(expr: AST, env: Environment, store: Store) -> Value:
     if isinstance(expr, Pattern):
         return eval_pattern(expr, env, store)
     else:
         raise NotImplementedError
 
 
-def eval_expr(expr: Expr, env: Environment, store: Store) -> Tuple[Value, Store]:
+def eval_expr(expr: AST, env: Environment, store: Store) -> Tuple[Value, Store]:
     if isinstance(expr, ns.IfExpr):
         raise NotImplementedError
     elif isinstance(expr, ns.TestExprList):
