@@ -20,11 +20,15 @@ EXPRS = [
 ]
 
 
-def start_eval(tree: AST):
+def start_eval(tree: AST, env: Environment = None, store: Store = None):
+    if env is None:
+        env = empty_env()
+    if store is None:
+        store = empty_store()
     if any(map(lambda s: isinstance(tree, s), STMTS)):
-        return eval_stmt(tree, empty_env(), empty_store())
+        return eval_stmt(tree, env, store)
     elif any(map(lambda e: isinstance(tree, e), EXPRS)):
-        return eval_expr(tree, empty_env(), empty_store())
+        return eval_expr(tree, env, store)
     else:
         raise NotImplementedError(f"No evaluation rules for ASTs of type: {type(tree).__name__}")
 
