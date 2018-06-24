@@ -16,8 +16,11 @@ class Store(Mapping):
     def __iter__(self):
         return iter(self.dict)
 
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self.dict)
+
+    def __repr__(self) -> str:
+        return f"Store({self.next_addr}, {self.dict})"
 
 
 def empty_store() -> Store:
