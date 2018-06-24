@@ -145,6 +145,14 @@ class EllipsisAtom(Atom):
     pass
 
 
+class TrueAtom(Atom):
+    pass
+
+
+class FalseAtom(Atom):
+    pass
+
+
 class Field(Trailer):
     def __init__(self, field: vl.Name):
         self.field = field

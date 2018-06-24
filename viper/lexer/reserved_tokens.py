@@ -12,6 +12,8 @@ RESERVED_NAMES = {
     'and',
     'not',
     'for',
+    'true',
+    'false',
 }
 
 RESERVED_CLASSES = set()

@@ -72,6 +72,8 @@
                       | NameAtom name:NAME
                       | NumberAtom num:NUMBER
                       | EllipsisAtom '...'
+                      | TrueAtom 'true'
+                      | FalseAtom 'false'
 <trailer>           ::= Call '(' args:<test_expr>&*{,} ')'
                       | Field '.' field:NAME
 
