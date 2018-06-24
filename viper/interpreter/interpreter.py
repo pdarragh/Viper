@@ -82,21 +82,33 @@ def eval_expr(expr: AST, env: Environment, store: Store) -> Tuple[Value, Store]:
     elif isinstance(expr, ns.TestExpr):
         return eval_expr(expr.test, env, store)
     elif isinstance(expr, ns.OrTestExpr):
+        values = []
         for test in expr.tests:
             val, store = eval_expr(test, env, store)
-            if not isinstance(val, BoolVal):
-                raise RuntimeError(f"Not a boolean value: {val}")  # TODO: Use a custom error.
-            if isinstance(val, TrueVal):
-                return TrueVal(), store
-        return FalseVal(), store
+            values.append(val)
+        if len(values) == 1:
+            return values[0], store
+        else:
+            for val in values:
+                if not isinstance(val, BoolVal):
+                    raise RuntimeError(f"Not a boolean value: {val}")  # TODO: Use a custom error.
+                if isinstance(val, TrueVal):
+                    return TrueVal(), store
+            return FalseVal(), store
     elif isinstance(expr, ns.AndTestExpr):
+        values = []
         for test in expr.tests:
             val, store = eval_expr(test, env, store)
-            if not isinstance(val, BoolVal):
-                raise RuntimeError(f"Not a boolean value: {val}")  # TODO: Use a custom error.
-            if isinstance(val, FalseVal):
-                return FalseVal(), store
-        return TrueVal(), store
+            values.append(val)
+        if len(values) == 1:
+            return values[0], store
+        else:
+            for val in values:
+                if not isinstance(val, BoolVal):
+                    raise RuntimeError(f"Not a boolean value: {val}")  # TODO: Use a custom error.
+                if isinstance(val, FalseVal):
+                    return FalseVal(), store
+            return TrueVal(), store
     elif isinstance(expr, ns.NegatedTestExpr):
         val, store = eval_expr(expr.op_expr, env, store)
         if not isinstance(val, BoolVal):
