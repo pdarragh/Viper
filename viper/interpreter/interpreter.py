@@ -4,7 +4,7 @@ from .value import *
 
 import viper.parser.ast.nodes as ns
 
-from viper.parser.ast.nodes import AST, Pattern, Path
+from viper.parser.ast.nodes import AST
 
 from typing import Tuple, Union
 
@@ -65,7 +65,7 @@ def eval_stmt(stmt: AST, env: Environment, store: Store) -> Tuple[Environment, S
 
 
 def eval_lhs_expr(expr: AST, env: Environment, store: Store) -> Value:
-    if isinstance(expr, Pattern):
+    if isinstance(expr, ns.Pattern):
         return eval_pattern(expr, env, store)
     else:
         raise NotImplementedError
@@ -150,11 +150,15 @@ def eval_expr(expr: AST, env: Environment, store: Store) -> Tuple[Value, Store]:
         return NumVal(expr.num.text), store
     elif isinstance(expr, ns.EllipsisAtom):
         return EllipsisVal(), store
+    elif isinstance(expr, ns.TrueAtom):
+        return TrueVal(), store
+    elif isinstance(expr, ns.FalseAtom):
+        return FalseVal(), store
     else:
         raise NotImplementedError
 
 
-def eval_pattern(ptrn: Pattern, env: Environment, store: Store) -> Value:
+def eval_pattern(ptrn: ns.Pattern, env: Environment, store: Store) -> Value:
     if isinstance(ptrn, ns.NamedTypedPattern):
         return eval_id(ptrn.id)
     elif isinstance(ptrn, ns.NamelessTypedPattern):
@@ -178,7 +182,7 @@ def eval_pattern(ptrn: Pattern, env: Environment, store: Store) -> Value:
         raise NotImplementedError
 
 
-def eval_path(path: Path) -> Union[NameVal, ClassVal]:
+def eval_path(path: ns.Path) -> Union[NameVal, ClassVal]:
     root = eval_id(path.id)
     base = root.name
     for part in path.parts:
