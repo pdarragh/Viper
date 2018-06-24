@@ -35,7 +35,7 @@ def eval_stmt(stmt: AST, env: Environment, store: Store) -> Tuple[Environment, S
     elif isinstance(stmt, ns.AssignStmt):
         # Evaluate the name of the location and the value.
         loc = eval_lhs_expr(stmt.lhs, env, store)
-        val, _ = eval_expr(stmt.expr, env, store)  # TODO: Is it right to throw away the store here?
+        val, store = eval_expr(stmt.expr, env, store)  # TODO: Is it right to throw away the store here?
         if isinstance(loc, TupleVal):
             # The number of locations must match the number of expressions on the right!
             raise NotImplementedError
