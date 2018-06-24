@@ -48,8 +48,8 @@ def eval_stmt(stmt: AST, env: Environment, store: Store) -> Tuple[Environment, S
                 return env, new_store
             else:
                 # It's an initialization.
+                new_env = extend_env(env, name, store.next_addr)
                 new_store = extend_store(store, val)
-                new_env = extend_env(env, name, new_store.next_addr)
                 return new_env, new_store
         elif isinstance(loc, NamelessVal):
             raise NotImplementedError
