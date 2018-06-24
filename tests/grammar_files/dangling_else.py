@@ -13,30 +13,30 @@ tree = ns.FileInput([
         vl.Class('Int'),
         ns.CompoundStmtBlock([
             ns.IfStmt(
-                ns.TestExpr(ns.OrTestExpr([ns.AndTestExpr([ns.NotTestExpr([
+                ns.TestExpr(ns.OrTestExpr([ns.AndTestExpr([ns.NotNegatedTestExpr(
                     ns.OpExpr(None,
                               ns.AtomExpr(ns.NameAtom(vl.Name('x')), []),
                               [ns.SubOpExpr(vl.Operator('>'),
                                             ns.AtomExpr(ns.NumberAtom(vl.Number('1')), []))],
                               None)
-                ])])])),
+                )])])),
                 ns.CompoundStmtBlock([
                     ns.IfStmt(
-                        ns.TestExpr(ns.OrTestExpr([ns.AndTestExpr([ns.NotTestExpr([
+                        ns.TestExpr(ns.OrTestExpr([ns.AndTestExpr([ns.NotNegatedTestExpr(
                             ns.OpExpr(None,
                                       ns.AtomExpr(ns.NameAtom(vl.Name('x')), []),
                                       [ns.SubOpExpr(vl.Operator('>'),
                                                     ns.AtomExpr(ns.NumberAtom(vl.Number('2')), []))],
                                       None)
-                        ])])])),
+                        )])])),
                         ns.CompoundStmtBlock([
                             ns.SimpleStmt(ns.ReturnStmt(ns.TestExprList([
-                                ns.TestExpr(ns.OrTestExpr([ns.AndTestExpr([ns.NotTestExpr([
+                                ns.TestExpr(ns.OrTestExpr([ns.AndTestExpr([ns.NotNegatedTestExpr(
                                     ns.OpExpr(None,
                                               ns.AtomExpr(ns.NumberAtom(vl.Number('9')), []),
                                               [],
                                               None)
-                                ])])]))
+                                )])]))
                             ])))
                         ]),
                         [],
@@ -46,12 +46,12 @@ tree = ns.FileInput([
                 [],
                 ns.ElseStmt(ns.CompoundStmtBlock([
                     ns.SimpleStmt(ns.ReturnStmt(ns.TestExprList([
-                        ns.TestExpr(ns.OrTestExpr([ns.AndTestExpr([ns.NotTestExpr([
+                        ns.TestExpr(ns.OrTestExpr([ns.AndTestExpr([ns.NotNegatedTestExpr(
                             ns.OpExpr(None,
                                       ns.AtomExpr(ns.NumberAtom(vl.Number('19')), []),
                                       [],
                                       None)
-                        ])])]))
+                        )])]))
                     ])))
                 ]))
             )
@@ -67,41 +67,41 @@ tree = ns.FileInput([
         vl.Class('Int'),
         ns.CompoundStmtBlock([
             ns.IfStmt(
-                ns.TestExpr(ns.OrTestExpr([ns.AndTestExpr([ns.NotTestExpr([
+                ns.TestExpr(ns.OrTestExpr([ns.AndTestExpr([ns.NotNegatedTestExpr(
                     ns.OpExpr(None,
                               ns.AtomExpr(ns.NameAtom(vl.Name('x')), []),
                               [ns.SubOpExpr(vl.Operator('>'),
                                             ns.AtomExpr(ns.NumberAtom(vl.Number('1')), []))],
                               None)
-                ])])])),
+                )])])),
                 ns.CompoundStmtBlock([
                     ns.IfStmt(
-                        ns.TestExpr(ns.OrTestExpr([ns.AndTestExpr([ns.NotTestExpr([
+                        ns.TestExpr(ns.OrTestExpr([ns.AndTestExpr([ns.NotNegatedTestExpr(
                             ns.OpExpr(None,
                                       ns.AtomExpr(ns.NameAtom(vl.Name('x')), []),
                                       [ns.SubOpExpr(vl.Operator('>'),
                                                     ns.AtomExpr(ns.NumberAtom(vl.Number('2')), []))],
                                       None)
-                        ])])])),
+                        )])])),
                         ns.CompoundStmtBlock([
                             ns.SimpleStmt(ns.ReturnStmt(ns.TestExprList([
-                                ns.TestExpr(ns.OrTestExpr([ns.AndTestExpr([ns.NotTestExpr([
+                                ns.TestExpr(ns.OrTestExpr([ns.AndTestExpr([ns.NotNegatedTestExpr(
                                     ns.OpExpr(None,
                                               ns.AtomExpr(ns.NumberAtom(vl.Number('9')), []),
                                               [],
                                               None)
-                                ])])]))
+                                )])]))
                             ])))
                         ]),
                         [],
                         ns.ElseStmt(ns.CompoundStmtBlock([
                             ns.SimpleStmt(ns.ReturnStmt(ns.TestExprList([
-                                ns.TestExpr(ns.OrTestExpr([ns.AndTestExpr([ns.NotTestExpr([
+                                ns.TestExpr(ns.OrTestExpr([ns.AndTestExpr([ns.NotNegatedTestExpr(
                                     ns.OpExpr(None,
                                               ns.AtomExpr(ns.NumberAtom(vl.Number('42')), []),
                                               [],
                                               None)
-                                ])])]))
+                                )])]))
                             ])))
                         ]))
                     )

@@ -12,48 +12,48 @@ tree = ns.FileInput([
         ns.CompoundStmtBlock([
             ns.IfStmt(
                 ns.TestExpr(ns.OrTestExpr([
-                    ns.AndTestExpr([ns.NotTestExpr([
+                    ns.AndTestExpr([ns.NotNegatedTestExpr(
                         ns.OpExpr(None,
                                   ns.AtomExpr(ns.NameAtom(vl.Name('n')), []),
                                   [ns.SubOpExpr(vl.Operator('=='),
                                                 ns.AtomExpr(ns.NumberAtom(vl.Number('1')), []))],
-                                  None)])]),
-                    ns.AndTestExpr([ns.NotTestExpr([
+                                  None))]),
+                    ns.AndTestExpr([ns.NotNegatedTestExpr(
                         ns.OpExpr(None,
                                   ns.AtomExpr(ns.NameAtom(vl.Name('n')), []),
                                   [ns.SubOpExpr(vl.Operator('=='),
                                                 ns.AtomExpr(ns.NumberAtom(vl.Number('2')), []))],
-                                  None)])])])),
+                                  None))])])),
                 ns.CompoundStmtBlock([ns.SimpleStmt(ns.ReturnStmt(ns.TestExprList([
-                    ns.TestExpr(ns.OrTestExpr([ns.AndTestExpr([ns.NotTestExpr([
+                    ns.TestExpr(ns.OrTestExpr([ns.AndTestExpr([ns.NotNegatedTestExpr(
                         ns.OpExpr(None,
                                   ns.AtomExpr(ns.NumberAtom(vl.Number('1')), []),
                                   [],
-                                  None)])])]))])))]),
+                                  None))])]))])))]),
                 [],
                 None
             ),
             ns.SimpleStmt(ns.ReturnStmt(ns.TestExprList([
-                ns.TestExpr(ns.OrTestExpr([ns.AndTestExpr([ns.NotTestExpr([
+                ns.TestExpr(ns.OrTestExpr([ns.AndTestExpr([ns.NotNegatedTestExpr(
                     ns.OpExpr(None,
                               ns.AtomExpr(ns.NameAtom(vl.Name('fib')), [
-                                  ns.Call([ns.TestExpr(ns.OrTestExpr([ns.AndTestExpr([ns.NotTestExpr([
+                                  ns.Call([ns.TestExpr(ns.OrTestExpr([ns.AndTestExpr([ns.NotNegatedTestExpr(
                                       ns.OpExpr(None,
                                                 ns.AtomExpr(ns.NameAtom(vl.Name('n')), []),
                                                 [ns.SubOpExpr(vl.Operator('-'),
                                                               ns.AtomExpr(ns.NumberAtom(vl.Number('1')), []))],
-                                                None)])])]))])]),
+                                                None))])]))])]),
                               [ns.SubOpExpr(vl.Operator('+'),
                                             ns.AtomExpr(ns.NameAtom(vl.Name('fib')), [
-                                                ns.Call([ns.TestExpr(ns.OrTestExpr([ns.AndTestExpr([ns.NotTestExpr([
+                                                ns.Call([ns.TestExpr(ns.OrTestExpr([ns.AndTestExpr([ns.NotNegatedTestExpr(
                                                     ns.OpExpr(None,
                                                               ns.AtomExpr(ns.NameAtom(vl.Name('n')), []),
                                                               [ns.SubOpExpr(vl.Operator('-'),
                                                                             ns.AtomExpr(ns.NumberAtom(vl.Number('2')),
                                                                                         []))],
-                                                              None)])])]))])]))],
+                                                              None))])]))])]))],
                               None)
-                ])])]))
+                )])]))
             ])))
         ])
     ))
