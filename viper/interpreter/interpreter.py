@@ -6,7 +6,7 @@ import viper.parser.ast.nodes as ns
 
 from viper.parser.ast.nodes import AST
 
-from typing import Tuple, Union
+from typing import NamedTuple, Union
 
 
 STMTS = [
@@ -20,7 +20,21 @@ EXPRS = [
 ]
 
 
-def start_eval(tree: AST, env: Environment = None, store: Store = None):
+class EvalResult:
+    pass
+
+
+class EvalStmtResult(NamedTuple, EvalResult):
+    env: Environment
+    store: Store
+
+
+class EvalExprResult(NamedTuple, EvalResult):
+    val: Value
+    store: Store
+
+
+def start_eval(tree: AST, env: Environment = None, store: Store = None) -> EvalResult:
     if env is None:
         env = empty_env()
     if store is None:
@@ -33,7 +47,7 @@ def start_eval(tree: AST, env: Environment = None, store: Store = None):
         raise NotImplementedError(f"No evaluation rules for ASTs of type: {type(tree).__name__}")
 
 
-def eval_stmt(stmt: AST, env: Environment, store: Store) -> Tuple[Environment, Store]:
+def eval_stmt(stmt: AST, env: Environment, store: Store) -> EvalStmtResult:
     if isinstance(stmt, ns.SimpleStmt):
         return eval_stmt(stmt.stmt, env, store)
     elif isinstance(stmt, ns.AssignStmt):
@@ -49,19 +63,19 @@ def eval_stmt(stmt: AST, env: Environment, store: Store) -> Tuple[Environment, S
             if name in env:
                 # It's an assignment to an existing address.
                 new_store = extend_store(store, val, env[name])
-                return env, new_store
+                return EvalStmtResult(env, new_store)
             else:
                 # It's an initialization.
                 new_env = extend_env(env, name, store.next_addr)
                 new_store = extend_store(store, val)
-                return new_env, new_store
+                return EvalStmtResult(new_env, new_store)
         elif isinstance(loc, NamelessVal):
             raise NotImplementedError
         else:
             # Something... went wrong.
             raise NotImplementedError
     elif isinstance(stmt, ns.EmptyStmt):
-        return env, store
+        return EvalStmtResult(env, store)
     elif isinstance(stmt, ns.IfStmt):
         val, store2 = eval_expr(stmt.cond, env, store)
         if isinstance(val, TrueVal):
@@ -74,7 +88,7 @@ def eval_stmt(stmt: AST, env: Environment, store: Store) -> Tuple[Environment, S
             if stmt.else_stmt is not None:
                 return eval_stmt(stmt.else_stmt.else_body, env, store)
             else:
-                return env, store
+                return EvalStmtResult(env, store)
         else:
             raise RuntimeError(f"Not a boolean value: {val}")  # TODO: Use a custom error.
     elif isinstance(stmt, ns.SimpleStmtBlock):
@@ -82,7 +96,7 @@ def eval_stmt(stmt: AST, env: Environment, store: Store) -> Tuple[Environment, S
     elif isinstance(stmt, ns.CompoundStmtBlock):
         for sub_stmt in stmt.stmts:
             env, store = eval_stmt(sub_stmt, env, store)
-        return env, store
+        return EvalStmtResult(env, store)
     else:
         raise NotImplementedError(f"No implementation for statement type: {type(stmt).__name__}")
 
@@ -94,7 +108,7 @@ def eval_lhs_expr(expr: AST, env: Environment, store: Store) -> Value:
         raise NotImplementedError
 
 
-def eval_expr(expr: AST, env: Environment, store: Store) -> Tuple[Value, Store]:
+def eval_expr(expr: AST, env: Environment, store: Store) -> EvalExprResult:
     if isinstance(expr, ns.IfExpr):
         raise NotImplementedError
     elif isinstance(expr, ns.TestExprList):
@@ -103,9 +117,9 @@ def eval_expr(expr: AST, env: Environment, store: Store) -> Tuple[Value, Store]:
             val, store = eval_expr(test, env, store)
             values.append(val)
         if len(values) == 1:
-            return values[0], store
+            return EvalExprResult(values[0], store)
         else:
-            return TupleVal(*values), store
+            return EvalExprResult(TupleVal(*values), store)
     elif isinstance(expr, ns.TestExpr):
         return eval_expr(expr.test, env, store)
     elif isinstance(expr, ns.OrTestExpr):
@@ -114,36 +128,36 @@ def eval_expr(expr: AST, env: Environment, store: Store) -> Tuple[Value, Store]:
             val, store = eval_expr(test, env, store)
             values.append(val)
         if len(values) == 1:
-            return values[0], store
+            return EvalExprResult(values[0], store)
         else:
             for val in values:
                 if not isinstance(val, BoolVal):
                     raise RuntimeError(f"Not a boolean value: {val}")  # TODO: Use a custom error.
                 if isinstance(val, TrueVal):
-                    return TrueVal(), store
-            return FalseVal(), store
+                    return EvalExprResult(TrueVal(), store)
+            return EvalExprResult(FalseVal(), store)
     elif isinstance(expr, ns.AndTestExpr):
         values = []
         for test in expr.tests:
             val, store = eval_expr(test, env, store)
             values.append(val)
         if len(values) == 1:
-            return values[0], store
+            return EvalExprResult(values[0], store)
         else:
             for val in values:
                 if not isinstance(val, BoolVal):
                     raise RuntimeError(f"Not a boolean value: {val}")  # TODO: Use a custom error.
                 if isinstance(val, FalseVal):
-                    return FalseVal(), store
-            return TrueVal(), store
+                    return EvalExprResult(FalseVal(), store)
+            return EvalExprResult(TrueVal(), store)
     elif isinstance(expr, ns.NegatedTestExpr):
         val, store = eval_expr(expr.op_expr, env, store)
         if not isinstance(val, BoolVal):
             raise RuntimeError(f"Not a boolean value: {val}")  # TODO: Use a custom error.
         if isinstance(val, TrueVal):
-            return FalseVal(), store
+            return EvalExprResult(FalseVal(), store)
         else:
-            return TrueVal(), store
+            return EvalExprResult(TrueVal(), store)
     elif isinstance(expr, ns.NotNegatedTestExpr):
         return eval_expr(expr.op_expr, env, store)
     elif isinstance(expr, ns.OpExpr):
@@ -160,23 +174,23 @@ def eval_expr(expr: AST, env: Environment, store: Store) -> Tuple[Value, Store]:
         return eval_expr(expr.atom, env, store)
     elif isinstance(expr, ns.ParenAtom):
         if expr.tests is None:
-            return UnitVal(), store
+            return EvalExprResult(UnitVal(), store)
         else:
             return eval_expr(expr.tests, env, store)
     elif isinstance(expr, ns.NameAtom):
         name = expr.name.text
         if name in env:
-            return store[env[name]], store
+            return EvalExprResult(store[env[name]], store)
         else:
             raise RuntimeError(f"No such name in environment: {name}")
     elif isinstance(expr, ns.NumberAtom):
-        return NumVal(expr.num.text), store
+        return EvalExprResult(NumVal(expr.num.text), store)
     elif isinstance(expr, ns.EllipsisAtom):
-        return EllipsisVal(), store
+        return EvalExprResult(EllipsisVal(), store)
     elif isinstance(expr, ns.TrueAtom):
-        return TrueVal(), store
+        return EvalExprResult(TrueVal(), store)
     elif isinstance(expr, ns.FalseAtom):
-        return FalseVal(), store
+        return EvalExprResult(FalseVal(), store)
     else:
         raise NotImplementedError
 
