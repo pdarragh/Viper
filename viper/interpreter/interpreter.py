@@ -39,17 +39,17 @@ class EvalLhsResult(NamedTuple, EvalResult):
     store: Store
 
 
-def start_eval(tree: AST, env: Environment = None, store: Store = None) -> EvalResult:
+def start_eval(code: AST, env: Environment = None, store: Store = None) -> EvalResult:
     if env is None:
         env = empty_env()
     if store is None:
         store = empty_store()
-    if any(map(lambda s: isinstance(tree, s), STMTS)):
-        return eval_stmt(tree, env, store)
-    elif any(map(lambda e: isinstance(tree, e), EXPRS)):
-        return eval_expr(tree, env, store)
+    if any(map(lambda s: isinstance(code, s), STMTS)):
+        return eval_stmt(code, env, store)
+    elif any(map(lambda e: isinstance(code, e), EXPRS)):
+        return eval_expr(code, env, store)
     else:
-        raise NotImplementedError(f"No evaluation rules for ASTs of type: {type(tree).__name__}")
+        raise NotImplementedError(f"No evaluation rules for ASTs of type: {type(code).__name__}")
 
 
 def eval_stmt(stmt: AST, env: Environment, store: Store) -> EvalStmtResult:
