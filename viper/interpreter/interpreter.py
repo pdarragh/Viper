@@ -178,6 +178,17 @@ def eval_expr(expr: AST, env: Environment, store: Store) -> EvalExprResult:
 
 
 def eval_lhs_expr(expr: AST, env: Environment, store: Store, val: Value) -> EvalLhsResult:
+    """
+    Attempts to perform a binding of a value. If the shape of the value and the shape of the left-hand side
+    are compatible, the binding is performed. An environment and store are returned. If the shapes are not
+    compatible, only the store is returned and the environment will be a None.
+
+    :param expr: a left-hand side expression
+    :param env: an environment
+    :param store: a store
+    :param val: a value to bind
+    :return: a tuple of a Maybe(env) (as an Environment or a None) and a store
+    """
     if isinstance(expr, ns.Pattern):
         return eval_pattern(expr, env, store, val)
     else:
@@ -185,6 +196,15 @@ def eval_lhs_expr(expr: AST, env: Environment, store: Store, val: Value) -> Eval
 
 
 def eval_pattern(ptrn: ns.Pattern, env: Environment, store: Store, val: Value) -> EvalLhsResult:
+    """
+    Binds a value to a pattern, if the value's type and the pattern's shape align.
+
+    :param ptrn: a pattern to match against
+    :param env: an environment
+    :param store: a store
+    :param val: a value to bind
+    :return: a tuple of a Maybe(env) (as an Environment or a None) and a store
+    """
     if isinstance(ptrn, ns.TypedVariablePattern):
         ...
     elif isinstance(ptrn, ns.TypedAnonymousPattern):
@@ -208,6 +228,10 @@ def eval_pattern(ptrn: ns.Pattern, env: Environment, store: Store, val: Value) -
 
 
 def bind_val(name: str, val: Value, env: Environment, store: Store) -> Tuple[Environment, Store]:
+    """
+    Binds a value to a name. If the name exists in the environment, the previous binding is overwritten.
+    Otherwise, a new binding is created.
+    """
     if name in env:
         store = extend_store(store, val, env[name])
     else:
