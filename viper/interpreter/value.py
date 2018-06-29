@@ -15,36 +15,6 @@ class TupleVal(Value):
         return f"TupleVal({', '.join(self.vals)})"
 
 
-class PathVal(Value):
-    def __init__(self, root: str, *parts: str):
-        self.root = root
-        self.parts = list(parts)
-
-    def __repr__(self) -> str:
-        return f"PathVal({'.'.join(self.root, *self.parts)})"
-
-
-class NameVal(Value):
-    def __init__(self, name: str):
-        self.name = name
-
-    def __repr__(self) -> str:
-        return f"NameVal({self.name})"
-
-
-class NamelessVal(Value):
-    def __repr__(self) -> str:
-        return "NamelessVal"
-
-
-class ClassVal(Value):
-    def __init__(self, name: str):
-        self.name = name
-
-    def __repr__(self) -> str:
-        return f"ClassVal({self.name})"
-
-
 class NumVal(Value):
     def __init__(self, val: str):
         self.val = val
