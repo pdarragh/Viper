@@ -383,7 +383,7 @@ def test_if_expr(lines: List[str], tree: AST):
          '    42'
      ],
      ns.AssignStmt(
-         ns.NamedSimplePattern(ns.Path(ns.VarId(vl.Name('z')), [])),
+         ns.SimpleVariablePattern(ns.VarId(vl.Name('z'))),
          ns.IfExpr(
              ns.TestExpr(ns.OrTestExpr([ns.AndTestExpr([ns.NotNegatedTestExpr(
                  ns.OpExpr(None,
@@ -402,7 +402,7 @@ def test_if_expr(lines: List[str], tree: AST):
          'z = if x == y: 42'
      ],
      ns.AssignStmt(
-         ns.NamedSimplePattern(ns.Path(ns.VarId(vl.Name('z')), [])),
+         ns.SimpleVariablePattern(ns.VarId(vl.Name('z'))),
          ns.IfExpr(
              ns.TestExpr(ns.OrTestExpr([ns.AndTestExpr([ns.NotNegatedTestExpr(
                  ns.OpExpr(None,
@@ -427,7 +427,7 @@ def test_if_expr(lines: List[str], tree: AST):
          '    13'
      ],
      ns.AssignStmt(
-         ns.NamedSimplePattern(ns.Path(ns.VarId(vl.Name('z')), [])),
+         ns.SimpleVariablePattern(ns.VarId(vl.Name('z'))),
          ns.IfExpr(
              ns.TestExpr(ns.OrTestExpr([ns.AndTestExpr([ns.NotNegatedTestExpr(
                  ns.OpExpr(None,
@@ -479,21 +479,29 @@ def test_assign_stmt(lines: List[str], tree: AST):
 
 @pytest.mark.parametrize('line,tree', [
     ('x: Int',
-     ns.NamedTypedPattern(ns.VarId(vl.Name('x')), vl.Class('Int'))),
+     ns.TypedVariablePattern(ns.VarId(vl.Name('x')), vl.Class('Int'))),
     ('_: Int',
-     ns.NamelessTypedPattern(vl.Class('Int'))),
+     ns.TypedAnonymousPattern(vl.Class('Int'))),
+    ('x.y: Int',
+     ns.TypedFieldPattern(ns.TestExprList([ns.TestExpr(ns.OrTestExpr([ns.AndTestExpr([ns.NotNegatedTestExpr(
+         ns.OpExpr(None,
+                   ns.AtomExpr(ns.NameAtom(vl.Name('x')), []),
+                   [],
+                   None))])]))]),
+         ns.VarId(vl.Name('y')),
+         vl.Class('Int'))),
     ('x',
-     ns.NamedSimplePattern(ns.Path(ns.VarId(vl.Name('x')), []))),
+     ns.SimpleVariablePattern(ns.VarId(vl.Name('x')))),
     ('_',
-     ns.NamelessSimplePattern()),
+     ns.SimpleAnonymousPattern()),
     ('(x: Foo, y: Bar)',
-     ns.ParenSimplePattern(ns.PatternList([
-         ns.NamedTypedPattern(ns.VarId(vl.Name('x')), vl.Class('Foo')),
-         ns.NamedTypedPattern(ns.VarId(vl.Name('y')), vl.Class('Bar'))]))),
+     ns.SimpleParenPattern(ns.PatternList([
+         ns.TypedVariablePattern(ns.VarId(vl.Name('x')), vl.Class('Foo')),
+         ns.TypedVariablePattern(ns.VarId(vl.Name('y')), vl.Class('Bar'))]))),
     ('(_: Foo, y: Bar)',
-     ns.ParenSimplePattern(ns.PatternList([
-         ns.NamelessTypedPattern(vl.Class('Foo')),
-         ns.NamedTypedPattern(ns.VarId(vl.Name('y')), vl.Class('Bar'))]))),
+     ns.SimpleParenPattern(ns.PatternList([
+         ns.TypedAnonymousPattern(vl.Class('Foo')),
+         ns.TypedVariablePattern(ns.VarId(vl.Name('y')), vl.Class('Bar'))]))),
 ])
 def test_pattern(line: str, tree: AST):
     lexemes = lex_line(line)

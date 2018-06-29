@@ -45,7 +45,7 @@
 
 # LEFT-HAND SIDE EXPRESSIONS
 
-<lhs_expr>          ::= <simple_pattern>
+<lhs_expr>          ::= <pattern>
 
 # EXPRESSIONS
 
@@ -83,12 +83,14 @@
 # PATTERNS
 
 <pattern>           ::= <typed_pattern>
-<typed_pattern>     ::= NamedTypedPattern id:<var_id> ':' pat_type:CLASS
-                      | NamelessTypedPattern '_' ':' pat_type:CLASS
+<typed_pattern>     ::= TypedVariablePattern id:<var_id> ':' pat_type:CLASS
+                      | TypedAnonymousPattern '_' ':' pat_type:CLASS
+                      | TypedFieldPattern root:<expr> '.' field:<var_id> ':' pat_type:CLASS
                       | <simple_pattern>
-<simple_pattern>    ::= NamedSimplePattern path:<path>
-                      | NamelessSimplePattern '_'
-                      | ParenSimplePattern '(' pattern_list:<pattern_list>? ')'
+<simple_pattern>    ::= SimpleVariablePattern id:<var_id>
+                      | SimpleAnonymousPattern '_'
+                      | SimpleFieldPattern root:<expr> '.' field:<var_id>
+                      | SimpleParenPattern '(' pattern_list:<pattern_list>? ')'
 <pattern_list>      ::= PatternList patterns:<pattern>&+{,}
 
 # PATHS

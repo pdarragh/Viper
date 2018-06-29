@@ -53,10 +53,6 @@ class ExprBlock(AST):
     pass
 
 
-class Pattern(AST):
-    pass
-
-
 class Id(AST):
     pass
 
@@ -99,13 +95,8 @@ class AtomExpr(AST):
         self.trailers = trailers
 
 
-class TypedPattern(Pattern):
+class Pattern(LhsExpr):
     pass
-
-
-class PatternList(AST):
-    def __init__(self, patterns: List[Pattern]):
-        self.patterns = patterns
 
 
 class VarId(Id):
@@ -189,8 +180,13 @@ class SubOpExpr(AST):
         self.atom = atom
 
 
-class SimplePattern(LhsExpr, TypedPattern):
+class TypedPattern(Pattern):
     pass
+
+
+class PatternList(AST):
+    def __init__(self, patterns: List[Pattern]):
+        self.patterns = patterns
 
 
 class Path(AST):
@@ -227,17 +223,6 @@ class SimpleExprBlock(ExprBlock):
 class IndentedExprBlock(ExprBlock):
     def __init__(self, expr: Expr):
         self.expr = expr
-
-
-class NamedTypedPattern(TypedPattern):
-    def __init__(self, id: VarId, pat_type: vl.Class):
-        self.id = id
-        self.pat_type = pat_type
-
-
-class NamelessTypedPattern(TypedPattern):
-    def __init__(self, pat_type: vl.Class):
-        self.pat_type = pat_type
 
 
 class FuncDef(Definition):
@@ -282,18 +267,26 @@ class OpExpr(AST):
         self.right_op = right_op
 
 
-class NamedSimplePattern(SimplePattern):
-    def __init__(self, path: Path):
-        self.path = path
-
-
-class NamelessSimplePattern(SimplePattern):
+class SimplePattern(TypedPattern):
     pass
 
 
-class ParenSimplePattern(SimplePattern):
-    def __init__(self, pattern_list: Optional[PatternList]):
-        self.pattern_list = pattern_list
+class TypedVariablePattern(TypedPattern):
+    def __init__(self, id: VarId, pat_type: vl.Class):
+        self.id = id
+        self.pat_type = pat_type
+
+
+class TypedAnonymousPattern(TypedPattern):
+    def __init__(self, pat_type: vl.Class):
+        self.pat_type = pat_type
+
+
+class TypedFieldPattern(TypedPattern):
+    def __init__(self, root: Expr, field: VarId, pat_type: vl.Class):
+        self.root = root
+        self.field = field
+        self.pat_type = pat_type
 
 
 class ElifStmt(AST):
@@ -326,6 +319,26 @@ class NotNegatedTestExpr(NotTestExpr):
 class Call(Trailer):
     def __init__(self, args: List[TestExpr]):
         self.args = args
+
+
+class SimpleVariablePattern(SimplePattern):
+    def __init__(self, id: VarId):
+        self.id = id
+
+
+class SimpleFieldPattern(SimplePattern):
+    def __init__(self, root: Expr, field: VarId):
+        self.root = root
+        self.field = field
+
+
+class SimpleAnonymousPattern(SimplePattern):
+    pass
+
+
+class SimpleParenPattern(SimplePattern):
+    def __init__(self, pattern_list: Optional[PatternList]):
+        self.pattern_list = pattern_list
 
 
 class ReturnStmt(PlainStmt):
