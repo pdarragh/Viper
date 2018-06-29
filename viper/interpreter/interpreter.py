@@ -6,7 +6,7 @@ import viper.parser.ast.nodes as ns
 
 from viper.parser.ast.nodes import AST
 
-from typing import NamedTuple, Union
+from typing import NamedTuple, Tuple, Union
 
 
 STMTS = [
@@ -34,6 +34,11 @@ class EvalExprResult(NamedTuple, EvalResult):
     store: Store
 
 
+class EvalLhsResult(NamedTuple, EvalResult):
+    maybe_env: Union[Environment, None]
+    store: Store
+
+
 def start_eval(tree: AST, env: Environment = None, store: Store = None) -> EvalResult:
     if env is None:
         env = empty_env()
@@ -51,29 +56,13 @@ def eval_stmt(stmt: AST, env: Environment, store: Store) -> EvalStmtResult:
     if isinstance(stmt, ns.SimpleStmt):
         return eval_stmt(stmt.stmt, env, store)
     elif isinstance(stmt, ns.AssignStmt):
-        # Evaluate the name of the location and the value.
-        loc = eval_lhs_expr(stmt.lhs, env, store)
-        val, store = eval_expr(stmt.expr, env, store)  # TODO: Is it right to throw away the store here?
-        if isinstance(loc, TupleVal):
-            # The number of locations must match the number of expressions on the right!
-            raise NotImplementedError
-        elif isinstance(loc, NameVal):
-            name = loc.name
-            # Check whether the name exists already. (Is this an initialization or only assignment?)
-            if name in env:
-                # It's an assignment to an existing address.
-                new_store = extend_store(store, val, env[name])
-                return EvalStmtResult(env, new_store)
-            else:
-                # It's an initialization.
-                new_env = extend_env(env, name, store.next_addr)
-                new_store = extend_store(store, val)
-                return EvalStmtResult(new_env, new_store)
-        elif isinstance(loc, NamelessVal):
-            raise NotImplementedError
-        else:
-            # Something... went wrong.
-            raise NotImplementedError
+        # Evaluate right-hand side first.
+        val, store = eval_expr(stmt.expr, env, store)
+        # Pass the value to the left-hand side evaluation.
+        maybe_env, store = eval_lhs_expr(stmt.lhs, env, store, val)
+        if maybe_env is not None:
+            env = maybe_env
+        return EvalStmtResult(env, store)
     elif isinstance(stmt, ns.EmptyStmt):
         return EvalStmtResult(env, store)
     elif isinstance(stmt, ns.IfStmt):
@@ -99,13 +88,6 @@ def eval_stmt(stmt: AST, env: Environment, store: Store) -> EvalStmtResult:
         return EvalStmtResult(env, store)
     else:
         raise NotImplementedError(f"No implementation for statement type: {type(stmt).__name__}")
-
-
-def eval_lhs_expr(expr: AST, env: Environment, store: Store) -> Value:
-    if isinstance(expr, ns.Pattern):
-        return eval_pattern(expr, env, store)
-    else:
-        raise NotImplementedError
 
 
 def eval_expr(expr: AST, env: Environment, store: Store) -> EvalExprResult:
@@ -195,42 +177,40 @@ def eval_expr(expr: AST, env: Environment, store: Store) -> EvalExprResult:
         raise NotImplementedError
 
 
-def eval_pattern(ptrn: ns.Pattern, env: Environment, store: Store) -> Value:
-    if isinstance(ptrn, ns.NamedTypedPattern):
-        return eval_id(ptrn.id)
-    elif isinstance(ptrn, ns.NamelessTypedPattern):
-        return NamelessVal()
-    elif isinstance(ptrn, ns.NamedSimplePattern):
-        return eval_path(ptrn.path)
-    elif isinstance(ptrn, ns.NamelessSimplePattern):
-        return NamelessVal()
-    elif isinstance(ptrn, ns.ParenSimplePattern):
-        if ptrn.pattern_list is None:
-            return NamelessVal()
-        else:
-            return eval_pattern(ptrn.pattern_list, env, store)
+def eval_lhs_expr(expr: AST, env: Environment, store: Store, val: Value) -> EvalLhsResult:
+    if isinstance(expr, ns.Pattern):
+        return eval_pattern(expr, env, store, val)
+    else:
+        raise NotImplementedError
+
+
+def eval_pattern(ptrn: ns.Pattern, env: Environment, store: Store, val: Value) -> EvalLhsResult:
+    if isinstance(ptrn, ns.TypedVariablePattern):
+        ...
+    elif isinstance(ptrn, ns.TypedAnonymousPattern):
+        ...
+    elif isinstance(ptrn, ns.TypedFieldPattern):
+        ...
+    elif isinstance(ptrn, ns.SimpleVariablePattern):
+        name = ptrn.id.id.text
+        env, store = bind_val(name, val, env, store)
+        return EvalLhsResult(env, store)
+    elif isinstance(ptrn, ns.SimpleAnonymousPattern):
+        return EvalLhsResult(env, store)
+    elif isinstance(ptrn, ns.SimpleFieldPattern):
+        ...
+    elif isinstance(ptrn, ns.SimpleParenPattern):
+        ...
     elif isinstance(ptrn, ns.PatternList):
-        values = [eval_pattern(pattern, env, store) for pattern in ptrn.patterns]
-        if len(values) == 1:
-            return values[0]
-        else:
-            return TupleVal(*values)
+        ...
     else:
         raise NotImplementedError
 
 
-def eval_path(path: ns.Path) -> Union[NameVal, ClassVal]:
-    root = eval_id(path.id)
-    base = root.name
-    for part in path.parts:
-        base += '.' + eval_id(part).name
-    return type(root)(base)
-
-
-def eval_id(_id: ns.Id) -> Union[NameVal, ClassVal]:
-    if isinstance(_id, ns.VarId):
-        return NameVal(_id.id.text)
-    elif isinstance(_id, ns.ClassId):
-        return ClassVal(_id.id.text)
+def bind_val(name: str, val: Value, env: Environment, store: Store) -> Tuple[Environment, Store]:
+    if name in env:
+        store = extend_store(store, val, env[name])
     else:
-        raise NotImplementedError
+        env = extend_env(env, name, store.next_addr)
+        store = extend_store(store, val)
+    return env, store
