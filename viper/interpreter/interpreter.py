@@ -6,7 +6,7 @@ import viper.parser.ast.nodes as ns
 
 from viper.parser.ast.nodes import AST
 
-from typing import NamedTuple, Tuple, Union
+from typing import NamedTuple, Optional, Tuple
 
 
 STMTS = [
@@ -20,22 +20,24 @@ EXPRS = [
 ]
 
 
-class EvalResult:
-    pass
-
-
-class EvalStmtResult(NamedTuple, EvalResult):
+class EvalResult(NamedTuple):
+    val: Optional[Value]
     env: Environment
     store: Store
 
 
-class EvalExprResult(NamedTuple, EvalResult):
+class EvalStmtResult(NamedTuple):
+    env: Environment
+    store: Store
+
+
+class EvalExprResult(NamedTuple):
     val: Value
     store: Store
 
 
-class EvalLhsResult(NamedTuple, EvalResult):
-    maybe_env: Union[Environment, None]
+class EvalLhsResult(NamedTuple):
+    maybe_env: Optional[Environment]
     store: Store
 
 
@@ -45,9 +47,11 @@ def start_eval(code: AST, env: Environment = None, store: Store = None) -> EvalR
     if store is None:
         store = empty_store()
     if any(map(lambda s: isinstance(code, s), STMTS)):
-        return eval_stmt(code, env, store)
+        stmt_res = eval_stmt(code, env, store)
+        return EvalResult(None, stmt_res.env, stmt_res.store)
     elif any(map(lambda e: isinstance(code, e), EXPRS)):
-        return eval_expr(code, env, store)
+        expr_res = eval_expr(code, env, store)
+        return EvalResult(expr_res.val, env, expr_res.store)
     else:
         raise NotImplementedError(f"No evaluation rules for ASTs of type: {type(code).__name__}")
 
