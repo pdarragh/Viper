@@ -9,6 +9,10 @@ from viper.parser.ast.nodes import AST
 from typing import List, NamedTuple, Optional, Tuple
 
 
+STARTERS = [
+    ns.SingleNewline, ns.SingleLine, ns.FileInput, ns.FileNewline, ns.FileStmt
+]
+
 STMTS = [
     ns.Stmt, ns.PlainStmt, ns.IfStmt, ns.ElifStmt, ns.ElseStmt, ns.Definition, ns.Parameter, ns.Arguments, ns.StmtBlock,
 ]
@@ -46,7 +50,9 @@ def start_eval(code: AST, env: Environment = None, store: Store = None) -> EvalR
         env = empty_env()
     if store is None:
         store = empty_store()
-    if any(map(lambda s: isinstance(code, s), STMTS)):
+    if any(map(lambda s: isinstance(code, s), STARTERS)):
+        return eval_starter(code, env, store)
+    elif any(map(lambda s: isinstance(code, s), STMTS)):
         stmt_res = eval_stmt(code, env, store)
         return EvalResult(None, stmt_res.env, stmt_res.store)
     elif any(map(lambda e: isinstance(code, e), EXPRS)):
@@ -54,6 +60,27 @@ def start_eval(code: AST, env: Environment = None, store: Store = None) -> EvalR
         return EvalResult(expr_res.val, env, expr_res.store)
     else:
         raise NotImplementedError(f"No evaluation rules for ASTs of type: {type(code).__name__}")
+
+
+def eval_starter(starter: AST, env: Environment, store: Store) -> EvalResult:
+    if isinstance(starter, ns.SingleNewline):
+        return EvalResult(None, env, store)
+    elif isinstance(starter, ns.SingleLine):
+        return start_eval(starter.line, env, store)
+    elif isinstance(starter, ns.FileInput):
+        val = None
+        for line in starter.lines:
+            eval_res = eval_starter(line, env, store)
+            val = eval_res.val
+            env = eval_res.env
+            store = eval_res.store
+        return EvalResult(val, env, store)
+    elif isinstance(starter, ns.FileNewline):
+        return EvalResult(None, env, store)
+    elif isinstance(starter, ns.FileStmt):
+        return start_eval(starter.stmt, env, store)
+    else:
+        raise NotImplementedError(f"No evaluation rules for starters of type: {type(starter).__name__}")
 
 
 def eval_stmt(stmt: AST, env: Environment, store: Store) -> EvalStmtResult:
