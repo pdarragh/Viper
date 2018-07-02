@@ -75,9 +75,9 @@ def eval_stmt(stmt: AST, env: Environment, store: Store) -> EvalStmtResult:
             return eval_stmt(stmt.then_body, env, store2)
         elif isinstance(val, FalseVal):
             for elif_stmt in stmt.elif_stmts:
-                val, store2 = eval_expr(elif_stmt.cond, env, store)
+                val, store3 = eval_expr(elif_stmt.cond, env, store)
                 if isinstance(val, TrueVal):
-                    return eval_stmt(elif_stmt.elif_body, env, store2)
+                    return eval_stmt(elif_stmt.elif_body, env, store3)
             if stmt.else_stmt is not None:
                 return eval_stmt(stmt.else_stmt.else_body, env, store)
             else:
@@ -96,7 +96,22 @@ def eval_stmt(stmt: AST, env: Environment, store: Store) -> EvalStmtResult:
 
 def eval_expr(expr: AST, env: Environment, store: Store) -> EvalExprResult:
     if isinstance(expr, ns.IfExpr):
-        raise NotImplementedError
+        val, store2 = eval_expr(expr.cond, env, store)
+        if isinstance(val, TrueVal):
+            return eval_expr(expr.then_body, env, store2)
+        elif isinstance(val, FalseVal):
+            for elif_expr in expr.elif_exprs:
+                val, store3 = eval_expr(elif_expr.cond, env, store)
+                if isinstance(val, TrueVal):
+                    return eval_expr(elif_expr.elif_body, env, store3)
+            if expr.else_expr is not None:
+                return eval_expr(expr.else_expr.else_body, env, store)
+            else:
+                return EvalExprResult(UnitVal(), store)
+    elif isinstance(expr, ns.ElifExpr):
+        return eval_expr(expr.elif_body, env, store)
+    elif isinstance(expr, ns.ElseExpr):
+        return eval_expr(expr.else_body, env, store)
     elif isinstance(expr, ns.TestExprList):
         return accumulate_values_from_exprs(expr.tests, env, store)
     elif isinstance(expr, ns.TestExpr):
@@ -164,8 +179,12 @@ def eval_expr(expr: AST, env: Environment, store: Store) -> EvalExprResult:
         return EvalExprResult(TrueVal(), store)
     elif isinstance(expr, ns.FalseAtom):
         return EvalExprResult(FalseVal(), store)
+    elif isinstance(expr, ns.SimpleExprBlock):
+        return eval_expr(expr.expr, env, store)
+    elif isinstance(expr, ns.IndentedExprBlock):
+        return eval_expr(expr.expr, env, store)
     else:
-        raise NotImplementedError
+        raise NotImplementedError(f"No implementation for expression type: {type(expr).__name__}")
 
 
 def eval_lhs_expr(expr: AST, env: Environment, store: Store, val: Value) -> EvalLhsResult:
