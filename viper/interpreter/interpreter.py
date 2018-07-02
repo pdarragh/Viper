@@ -6,7 +6,7 @@ import viper.parser.ast.nodes as ns
 
 from viper.parser.ast.nodes import AST
 
-from typing import NamedTuple, Optional, Tuple
+from typing import List, NamedTuple, Optional, Tuple
 
 
 STMTS = [
@@ -98,44 +98,31 @@ def eval_expr(expr: AST, env: Environment, store: Store) -> EvalExprResult:
     if isinstance(expr, ns.IfExpr):
         raise NotImplementedError
     elif isinstance(expr, ns.TestExprList):
-        values = []
-        for test in expr.tests:
-            val, store = eval_expr(test, env, store)
-            values.append(val)
-        if len(values) == 1:
-            return EvalExprResult(values[0], store)
-        else:
-            return EvalExprResult(TupleVal(*values), store)
+        return accumulate_values_from_exprs(expr.tests, env, store)
     elif isinstance(expr, ns.TestExpr):
         return eval_expr(expr.test, env, store)
     elif isinstance(expr, ns.OrTestExpr):
-        values = []
-        for test in expr.tests:
-            val, store = eval_expr(test, env, store)
-            values.append(val)
-        if len(values) == 1:
-            return EvalExprResult(values[0], store)
-        else:
-            for val in values:
-                if not isinstance(val, BoolVal):
+        val, store = accumulate_values_from_exprs(expr.tests, env, store)
+        if isinstance(val, TupleVal):
+            for subval in val.vals:
+                if not isinstance(subval, BoolVal):
                     raise RuntimeError(f"Not a boolean value: {val}")  # TODO: Use a custom error.
-                if isinstance(val, TrueVal):
+                if isinstance(subval, TrueVal):
                     return EvalExprResult(TrueVal(), store)
             return EvalExprResult(FalseVal(), store)
-    elif isinstance(expr, ns.AndTestExpr):
-        values = []
-        for test in expr.tests:
-            val, store = eval_expr(test, env, store)
-            values.append(val)
-        if len(values) == 1:
-            return EvalExprResult(values[0], store)
         else:
-            for val in values:
-                if not isinstance(val, BoolVal):
+            return EvalExprResult(val, store)
+    elif isinstance(expr, ns.AndTestExpr):
+        val, store = accumulate_values_from_exprs(expr.tests, env, store)
+        if isinstance(val, TupleVal):
+            for subval in val.vals:
+                if not isinstance(subval, BoolVal):
                     raise RuntimeError(f"Not a boolean value: {val}")  # TODO: Use a custom error.
-                if isinstance(val, FalseVal):
+                if isinstance(subval, FalseVal):
                     return EvalExprResult(FalseVal(), store)
             return EvalExprResult(TrueVal(), store)
+        else:
+            return EvalExprResult(val, store)
     elif isinstance(expr, ns.NegatedTestExpr):
         val, store = eval_expr(expr.op_expr, env, store)
         if not isinstance(val, BoolVal):
@@ -242,3 +229,14 @@ def bind_val(name: str, val: Value, env: Environment, store: Store) -> Tuple[Env
         env = extend_env(env, name, store.next_addr)
         store = extend_store(store, val)
     return env, store
+
+
+def accumulate_values_from_exprs(exprs: List[AST], env: Environment, store: Store) -> EvalExprResult:
+    values: List[Value] = []
+    for expr in exprs:
+        val, store = eval_expr(expr, env, store)
+        values.append(val)
+    if len(values) == 1:
+        return EvalExprResult(values[0], store)
+    else:
+        return EvalExprResult(TupleVal(*values), store)
