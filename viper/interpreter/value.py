@@ -1,6 +1,8 @@
 from .environment import Environment
 
-from viper.parser.ast.nodes import Expr
+from viper.parser.ast.nodes import AST, Parameter
+
+from typing import List
 
 
 class Value:
@@ -24,13 +26,13 @@ class NumVal(Value):
 
 
 class CloVal(Value):
-    def __init__(self, name: str, expr: Expr, env: Environment):
-        self.name = name
-        self.expr = expr
+    def __init__(self, params: List[Parameter], code: AST, env: Environment):
+        self.params = params
+        self.code = code
         self.env = env
 
     def __repr__(self) -> str:
-        return f"CloVal({self.name}, {self.expr}, {self.env})"
+        return f"CloVal(({', '.join(map(lambda p: p.internal, self.params))}), {self.env})"
 
 
 class BoolVal(Value):
