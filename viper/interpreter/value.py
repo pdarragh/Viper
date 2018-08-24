@@ -12,7 +12,7 @@ class TupleVal(Value):
         self.vals = list(vals)
 
     def __repr__(self) -> str:
-        return f"TupleVal({', '.join(self.vals)})"
+        return f"TupleVal({', '.join(map(str, self.vals))})"
 
 
 class NumVal(Value):
