@@ -4,8 +4,7 @@ from viper.lexer.lexemes import *
 
 import re
 
-from re import _pattern_type as PatternType
-from typing import List, Union
+from typing import List, Pattern, Union
 
 __all__ = [
     'LexerError', 'Lexer', 'lex_file', 'lex_lines', 'lex_line',
@@ -37,12 +36,12 @@ RE_PARENS = re.compile(r'\(\)')
 RE_OPERATOR = re.compile(r'[!@$%^&*()\-=+|:/?<>\[\]{}~.]+')
 
 
-def make_infix_re(pattern: PatternType, group_name: str) -> PatternType:
-    return re.compile(r'(?P<left_val>.*)(?P<' + group_name + '>' + pattern + r')(?P<right_val>.*)')
+def make_infix_re(pattern: Pattern, group_name: str) -> Pattern:
+    return re.compile(r'(?P<left_val>.*)(?P<' + group_name + '>' + pattern.pattern + r')(?P<right_val>.*)')
 
 
-RE_INFIX_COMMA = make_infix_re(RE_COMMA.pattern, 'comma')
-RE_INFIX_OP = make_infix_re(RE_OPERATOR.pattern, 'op')
+RE_INFIX_COMMA = make_infix_re(RE_COMMA, 'comma')
+RE_INFIX_OP = make_infix_re(RE_OPERATOR, 'op')
 
 
 # Regular expression magic class for making if/else matching simpler. Idea from:
@@ -52,7 +51,7 @@ class RegexMatcher:
         self._token = token
         self._match = None
 
-    def fullmatch(self, pattern: PatternType):
+    def fullmatch(self, pattern: Pattern):
         self._match = pattern.fullmatch(self._token)
         return self._match
 
