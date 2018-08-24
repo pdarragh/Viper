@@ -86,6 +86,8 @@ def eval_starter(starter: AST, env: Environment, store: Store) -> EvalResult:
 def eval_stmt(stmt: AST, env: Environment, store: Store) -> EvalStmtResult:
     if isinstance(stmt, ns.SimpleStmt):
         return eval_stmt(stmt.stmt, env, store)
+    elif isinstance(stmt, ns.ReturnStmt):
+        ...
     elif isinstance(stmt, ns.AssignStmt):
         # Evaluate right-hand side first.
         val, store = eval_expr(stmt.expr, env, store)
@@ -111,6 +113,16 @@ def eval_stmt(stmt: AST, env: Environment, store: Store) -> EvalStmtResult:
                 return EvalStmtResult(env, store)
         else:
             raise RuntimeError(f"Not a boolean value: {val}")  # TODO: Use a custom error.
+    elif isinstance(stmt, ns.FuncDef):
+        ...
+    elif isinstance(stmt, ns.ClassDef):
+        ...
+    elif isinstance(stmt, ns.InterfaceDef):
+        ...
+    elif isinstance(stmt, ns.DataDef):
+        ...
+    elif isinstance(stmt, ns.Arguments):
+        ...
     elif isinstance(stmt, ns.SimpleStmtBlock):
         return eval_stmt(stmt.stmt, env, store)
     elif isinstance(stmt, ns.CompoundStmtBlock):
@@ -118,7 +130,25 @@ def eval_stmt(stmt: AST, env: Environment, store: Store) -> EvalStmtResult:
             env, store = eval_stmt(sub_stmt, env, store)
         return EvalStmtResult(env, store)
     else:
-        raise NotImplementedError(f"No implementation for statement type: {type(stmt).__name__}")
+        raise NotImplementedError(f"No implementation for statement of type: {type(stmt).__name__}")
+
+
+def eval_lhs_expr(expr: AST, env: Environment, store: Store, val: Value) -> EvalLhsResult:
+    """
+    Attempts to perform a binding of a value. If the shape of the value and the shape of the left-hand side
+    are compatible, the binding is performed. An environment and store are returned. If the shapes are not
+    compatible, only the store is returned and the environment will be a None.
+
+    :param expr: a left-hand side expression
+    :param env: an environment
+    :param store: a store
+    :param val: a value to bind
+    :return: a tuple of a Maybe(env) (as an Environment or a None) and a store
+    """
+    if isinstance(expr, ns.Pattern):
+        return eval_pattern(expr, env, store, val)
+    else:
+        raise NotImplementedError(f"No implementation for left-hand-side expression of type: {type(expr).__name__}")
 
 
 def eval_expr(expr: AST, env: Environment, store: Store) -> EvalExprResult:
@@ -135,10 +165,6 @@ def eval_expr(expr: AST, env: Environment, store: Store) -> EvalExprResult:
                 return eval_expr(expr.else_expr.else_body, env, store)
             else:
                 return EvalExprResult(UnitVal(), store)
-    elif isinstance(expr, ns.ElifExpr):
-        return eval_expr(expr.elif_body, env, store)
-    elif isinstance(expr, ns.ElseExpr):
-        return eval_expr(expr.else_body, env, store)
     elif isinstance(expr, ns.TestExprList):
         return accumulate_values_from_exprs(expr.tests, env, store)
     elif isinstance(expr, ns.TestExpr):
@@ -177,15 +203,15 @@ def eval_expr(expr: AST, env: Environment, store: Store) -> EvalExprResult:
         return eval_expr(expr.op_expr, env, store)
     elif isinstance(expr, ns.OpExpr):
         if expr.left_op is not None:
-            raise NotImplementedError
+            ...
         if expr.right_op is not None:
-            raise NotImplementedError
+            ...
         if expr.sub_op_exprs:
-            raise NotImplementedError
+            ...
         return eval_expr(expr.atom, env, store)
     elif isinstance(expr, ns.AtomExpr):
         if expr.trailers:
-            raise NotImplementedError
+            ...
         return eval_expr(expr.atom, env, store)
     elif isinstance(expr, ns.ParenAtom):
         if expr.tests is None:
@@ -206,30 +232,16 @@ def eval_expr(expr: AST, env: Environment, store: Store) -> EvalExprResult:
         return EvalExprResult(TrueVal(), store)
     elif isinstance(expr, ns.FalseAtom):
         return EvalExprResult(FalseVal(), store)
+    elif isinstance(expr, ns.Call):
+        ...
+    elif isinstance(expr, ns.Field):
+        ...
     elif isinstance(expr, ns.SimpleExprBlock):
         return eval_expr(expr.expr, env, store)
     elif isinstance(expr, ns.IndentedExprBlock):
         return eval_expr(expr.expr, env, store)
     else:
-        raise NotImplementedError(f"No implementation for expression type: {type(expr).__name__}")
-
-
-def eval_lhs_expr(expr: AST, env: Environment, store: Store, val: Value) -> EvalLhsResult:
-    """
-    Attempts to perform a binding of a value. If the shape of the value and the shape of the left-hand side
-    are compatible, the binding is performed. An environment and store are returned. If the shapes are not
-    compatible, only the store is returned and the environment will be a None.
-
-    :param expr: a left-hand side expression
-    :param env: an environment
-    :param store: a store
-    :param val: a value to bind
-    :return: a tuple of a Maybe(env) (as an Environment or a None) and a store
-    """
-    if isinstance(expr, ns.Pattern):
-        return eval_pattern(expr, env, store, val)
-    else:
-        raise NotImplementedError
+        raise NotImplementedError(f"No implementation for expression of type: {type(expr).__name__}")
 
 
 def eval_pattern(ptrn: ns.Pattern, env: Environment, store: Store, val: Value) -> EvalLhsResult:
