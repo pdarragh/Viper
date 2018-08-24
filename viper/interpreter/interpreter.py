@@ -91,7 +91,7 @@ def eval_stmt(stmt: AST, env: Environment, store: Store) -> EvalStmtResult:
     if isinstance(stmt, ns.SimpleStmt):
         return eval_stmt(stmt.stmt, env, store)
     elif isinstance(stmt, ns.ReturnStmt):
-        ...
+        raise NotImplementedError
     elif isinstance(stmt, ns.AssignStmt):
         # Evaluate right-hand side first.
         val, store = eval_expr(stmt.expr, env, store)
@@ -118,15 +118,15 @@ def eval_stmt(stmt: AST, env: Environment, store: Store) -> EvalStmtResult:
         else:
             raise RuntimeError(f"Not a boolean value: {val}")  # TODO: Use a custom error.
     elif isinstance(stmt, ns.FuncDef):
-        ...
+        raise NotImplementedError
     elif isinstance(stmt, ns.ClassDef):
-        ...
+        raise NotImplementedError
     elif isinstance(stmt, ns.InterfaceDef):
-        ...
+        raise NotImplementedError
     elif isinstance(stmt, ns.DataDef):
-        ...
+        raise NotImplementedError
     elif isinstance(stmt, ns.Arguments):
-        ...
+        raise NotImplementedError
     elif isinstance(stmt, ns.SimpleStmtBlock):
         return eval_stmt(stmt.stmt, env, store)
     elif isinstance(stmt, ns.CompoundStmtBlock):
@@ -207,15 +207,15 @@ def eval_expr(expr: AST, env: Environment, store: Store) -> EvalExprResult:
         return eval_expr(expr.op_expr, env, store)
     elif isinstance(expr, ns.OpExpr):
         if expr.left_op is not None:
-            ...
+            raise NotImplementedError
         if expr.right_op is not None:
-            ...
+            raise NotImplementedError
         if expr.sub_op_exprs:
-            ...
+            raise NotImplementedError
         return eval_expr(expr.atom, env, store)
     elif isinstance(expr, ns.AtomExpr):
         if expr.trailers:
-            ...
+            raise NotImplementedError
         return eval_expr(expr.atom, env, store)
     elif isinstance(expr, ns.ParenAtom):
         if expr.tests is None:
@@ -237,9 +237,9 @@ def eval_expr(expr: AST, env: Environment, store: Store) -> EvalExprResult:
     elif isinstance(expr, ns.FalseAtom):
         return EvalExprResult(FalseVal(), store)
     elif isinstance(expr, ns.Call):
-        ...
+        raise NotImplementedError
     elif isinstance(expr, ns.Field):
-        ...
+        raise NotImplementedError
     elif isinstance(expr, ns.SimpleExprBlock):
         return eval_expr(expr.expr, env, store)
     elif isinstance(expr, ns.IndentedExprBlock):
@@ -259,11 +259,11 @@ def eval_pattern(ptrn: ns.Pattern, env: Environment, store: Store, val: Value) -
     :return: a tuple of a Maybe(env) (as an Environment or a None) and a store
     """
     if isinstance(ptrn, ns.TypedVariablePattern):
-        ...
+        raise NotImplementedError
     elif isinstance(ptrn, ns.TypedAnonymousPattern):
-        ...
+        raise NotImplementedError
     elif isinstance(ptrn, ns.TypedFieldPattern):
-        ...
+        raise NotImplementedError
     elif isinstance(ptrn, ns.SimpleVariablePattern):
         name = ptrn.id.id.text
         env, store = bind_val(name, val, env, store)
@@ -271,13 +271,13 @@ def eval_pattern(ptrn: ns.Pattern, env: Environment, store: Store, val: Value) -
     elif isinstance(ptrn, ns.SimpleAnonymousPattern):
         return EvalLhsResult(env, store)
     elif isinstance(ptrn, ns.SimpleFieldPattern):
-        ...
-    elif isinstance(ptrn, ns.SimpleParenPattern):
-        ...
-    elif isinstance(ptrn, ns.PatternList):
-        ...
-    else:
         raise NotImplementedError
+    elif isinstance(ptrn, ns.SimpleParenPattern):
+        raise NotImplementedError
+    elif isinstance(ptrn, ns.PatternList):
+        raise NotImplementedError
+    else:
+        raise NotImplementedError(f"No impementation for pattern of type: {type(ptrn).__name__}")
 
 
 def bind_val(name: str, val: Value, env: Environment, store: Store) -> Tuple[Environment, Store]:
