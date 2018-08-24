@@ -45,7 +45,11 @@ class EvalLhsResult(NamedTuple):
     store: Store
 
 
-def start_eval(code: AST, env: Environment = None, store: Store = None) -> EvalResult:
+def start_eval(code: AST, env: Environment = None, store: Store = None,
+               previous_result: EvalResult = None) -> EvalResult:
+    if previous_result is not None:
+        env = previous_result.env
+        store = previous_result.store
     if env is None:
         env = empty_env()
     if store is None:
