@@ -208,9 +208,10 @@ def eval_expr(expr: AST, env: Environment, store: Store) -> EvalExprResult:
     elif isinstance(expr, ns.OpExpr):
         if expr.left_op is not None:
             raise NotImplementedError
-        if expr.right_op is not None:
-            raise NotImplementedError
+        val, store = eval_expr(expr.atom, env, store)
         if expr.sub_op_exprs:
+            raise NotImplementedError
+        if expr.right_op is not None:
             raise NotImplementedError
         return eval_expr(expr.atom, env, store)
     elif isinstance(expr, ns.AtomExpr):
