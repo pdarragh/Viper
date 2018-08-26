@@ -141,6 +141,9 @@ def eval_stmt(stmt: AST, env: Environment, store: Store) -> EvalStmtResult:
             stmt_res = eval_stmt(sub_stmt, env, store)
             env = stmt_res.env
             store = stmt_res.store
+            if stmt_res.val is not None:
+                # A value is only present if we should return immediately.
+                return EvalStmtResult(env, store, stmt_res.val)
         return EvalStmtResult(env, store, None)
     else:
         raise NotImplementedError(f"No implementation for statement of type: {type(stmt).__name__}")
