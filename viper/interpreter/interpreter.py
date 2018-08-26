@@ -134,7 +134,9 @@ def eval_stmt(stmt: AST, env: Environment, store: Store) -> EvalStmtResult:
         return eval_stmt(stmt.stmt, env, store)
     elif isinstance(stmt, ns.CompoundStmtBlock):
         for sub_stmt in stmt.stmts:
-            env, store = eval_stmt(sub_stmt, env, store)
+            stmt_res = eval_stmt(sub_stmt, env, store)
+            env = stmt_res.env
+            store = stmt_res.store
         return EvalStmtResult(env, store, None)
     else:
         raise NotImplementedError(f"No implementation for statement of type: {type(stmt).__name__}")
