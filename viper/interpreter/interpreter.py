@@ -119,7 +119,7 @@ def eval_stmt(stmt: AST, env: Environment, store: Store) -> EvalStmtResult:
             raise RuntimeError(f"Not a boolean value: {val}")  # TODO: Use a custom error.
     elif isinstance(stmt, ns.FuncDef):
         closure = CloVal(stmt.params, stmt.body, env)
-        env, store = bind_val(stmt.name, closure, env, store)
+        env, store = bind_val(stmt.name.text, closure, env, store)
         return EvalStmtResult(env, store)
     elif isinstance(stmt, ns.ClassDef):
         raise NotImplementedError
