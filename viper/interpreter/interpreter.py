@@ -220,9 +220,30 @@ def eval_expr(expr: AST, env: Environment, store: Store) -> EvalExprResult:
             raise NotImplementedError
         return eval_expr(expr.atom, env, store)
     elif isinstance(expr, ns.AtomExpr):
-        if expr.trailers:
-            raise NotImplementedError
-        return eval_expr(expr.atom, env, store)
+        val, store = eval_expr(expr.atom, env, store)
+        for trailer in expr.trailers:
+            if isinstance(trailer, ns.Call):
+                if isinstance(val, CloVal):
+                    args, store = accumulate_values_from_exprs(trailer.args, env, store)
+                    if len(val.params) != len(args):
+                        if len(args) > len(val.params):
+                            raise RuntimeError(f"Too many arguments specified for call to function {val.name}")  # TODO: Use a custom error.
+                        else:
+                            # TODO: Automatic currying could be implemented here.
+                            raise RuntimeError(f"Not enough arguments specified for call to function {val.name}")  # TODO: Use a custom error.
+                    inner_env = val.env
+                    for i in range(len(val.params)):
+                        param = val.params[i]
+                        arg = args[i]
+                        inner_env, store = bind_val(param.internal.text, arg, inner_env, store)
+                    return eval_expr(val.code, inner_env, store)
+                else:
+                    raise RuntimeError(f"Cannot apply arguments to non-closure value of type: {type(val).__name__}")  # TODO: Use a custom error.
+            elif isinstance(trailer, ns.Field):
+                raise NotImplementedError
+            else:
+                raise NotImplementedError(f"No implementation for trailer of type: {type(trailer).__name__}")
+        return EvalExprResult(val, store)
     elif isinstance(expr, ns.ParenAtom):
         if expr.tests is None:
             return EvalExprResult(UnitVal(), store)
@@ -242,10 +263,6 @@ def eval_expr(expr: AST, env: Environment, store: Store) -> EvalExprResult:
         return EvalExprResult(TrueVal(), store)
     elif isinstance(expr, ns.FalseAtom):
         return EvalExprResult(FalseVal(), store)
-    elif isinstance(expr, ns.Call):
-        raise NotImplementedError
-    elif isinstance(expr, ns.Field):
-        raise NotImplementedError
     elif isinstance(expr, ns.SimpleExprBlock):
         return eval_expr(expr.expr, env, store)
     elif isinstance(expr, ns.IndentedExprBlock):
