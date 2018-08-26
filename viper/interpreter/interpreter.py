@@ -92,7 +92,11 @@ def eval_stmt(stmt: AST, env: Environment, store: Store) -> EvalStmtResult:
     if isinstance(stmt, ns.SimpleStmt):
         return eval_stmt(stmt.stmt, env, store)
     elif isinstance(stmt, ns.ReturnStmt):
-        raise NotImplementedError
+        if stmt.tests is None:
+            return EvalStmtResult(env, store, None)
+        else:
+            val, store = eval_expr(stmt.tests, env, store)
+            return EvalStmtResult(env, store, val)
     elif isinstance(stmt, ns.AssignStmt):
         # Evaluate right-hand side first.
         val, store = eval_expr(stmt.expr, env, store)
