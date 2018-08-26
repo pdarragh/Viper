@@ -25,14 +25,15 @@ EXPRS = [
 
 
 class EvalResult(NamedTuple):
-    val: Optional[Value]
     env: Environment
     store: Store
+    val: Optional[Value]
 
 
 class EvalStmtResult(NamedTuple):
     env: Environment
     store: Store
+    val: Optional[Value]
 
 
 class EvalExprResult(NamedTuple):
@@ -58,17 +59,17 @@ def start_eval(code: AST, env: Environment = None, store: Store = None,
         return eval_starter(code, env, store)
     elif any(map(lambda s: isinstance(code, s), STMTS)):
         stmt_res = eval_stmt(code, env, store)
-        return EvalResult(None, stmt_res.env, stmt_res.store)
+        return EvalResult(stmt_res.env, stmt_res.store, stmt_res.val)
     elif any(map(lambda e: isinstance(code, e), EXPRS)):
         expr_res = eval_expr(code, env, store)
-        return EvalResult(expr_res.val, env, expr_res.store)
+        return EvalResult(env, expr_res.store, expr_res.val)
     else:
         raise NotImplementedError(f"No evaluation rules for ASTs of type: {type(code).__name__}")
 
 
 def eval_starter(starter: AST, env: Environment, store: Store) -> EvalResult:
     if isinstance(starter, ns.SingleNewline):
-        return EvalResult(None, env, store)
+        return EvalResult(env, store, None)
     elif isinstance(starter, ns.SingleLine):
         return start_eval(starter.line, env, store)
     elif isinstance(starter, ns.FileInput):
@@ -78,9 +79,9 @@ def eval_starter(starter: AST, env: Environment, store: Store) -> EvalResult:
             val = eval_res.val
             env = eval_res.env
             store = eval_res.store
-        return EvalResult(val, env, store)
+        return EvalResult(env, store, val)
     elif isinstance(starter, ns.FileNewline):
-        return EvalResult(None, env, store)
+        return EvalResult(env, store, None)
     elif isinstance(starter, ns.FileStmt):
         return start_eval(starter.stmt, env, store)
     else:
@@ -99,9 +100,9 @@ def eval_stmt(stmt: AST, env: Environment, store: Store) -> EvalStmtResult:
         maybe_env, store = eval_lhs_expr(stmt.lhs, env, store, val)
         if maybe_env is not None:
             env = maybe_env
-        return EvalStmtResult(env, store)
+        return EvalStmtResult(env, store, None)
     elif isinstance(stmt, ns.EmptyStmt):
-        return EvalStmtResult(env, store)
+        return EvalStmtResult(env, store, None)
     elif isinstance(stmt, ns.IfStmt):
         val, store2 = eval_expr(stmt.cond, env, store)
         if isinstance(val, TrueVal):
@@ -114,13 +115,13 @@ def eval_stmt(stmt: AST, env: Environment, store: Store) -> EvalStmtResult:
             if stmt.else_stmt is not None:
                 return eval_stmt(stmt.else_stmt.else_body, env, store)
             else:
-                return EvalStmtResult(env, store)
+                return EvalStmtResult(env, store, None)
         else:
             raise RuntimeError(f"Not a boolean value: {val}")  # TODO: Use a custom error.
     elif isinstance(stmt, ns.FuncDef):
         closure = CloVal(stmt.params, stmt.body, env)
         env, store = bind_val(stmt.name.text, closure, env, store)
-        return EvalStmtResult(env, store)
+        return EvalStmtResult(env, store, None)
     elif isinstance(stmt, ns.ClassDef):
         raise NotImplementedError
     elif isinstance(stmt, ns.InterfaceDef):
@@ -134,7 +135,7 @@ def eval_stmt(stmt: AST, env: Environment, store: Store) -> EvalStmtResult:
     elif isinstance(stmt, ns.CompoundStmtBlock):
         for sub_stmt in stmt.stmts:
             env, store = eval_stmt(sub_stmt, env, store)
-        return EvalStmtResult(env, store)
+        return EvalStmtResult(env, store, None)
     else:
         raise NotImplementedError(f"No implementation for statement of type: {type(stmt).__name__}")
 
@@ -236,7 +237,8 @@ def eval_expr(expr: AST, env: Environment, store: Store) -> EvalExprResult:
                         param = val.params[i]
                         arg = args[i]
                         inner_env, store = bind_val(param.internal.text, arg, inner_env, store)
-                    return eval_expr(val.code, inner_env, store)
+                    stmt_res = eval_stmt(val.code, inner_env, store)
+                    return EvalExprResult(stmt_res.val, stmt_res.store)
                 else:
                     raise RuntimeError(f"Cannot apply arguments to non-closure value of type: {type(val).__name__}")  # TODO: Use a custom error.
             elif isinstance(trailer, ns.Field):
