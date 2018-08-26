@@ -172,11 +172,13 @@ def eval_expr(expr: AST, env: Environment, store: Store) -> EvalExprResult:
             else:
                 return EvalExprResult(UnitVal(), store)
     elif isinstance(expr, ns.TestExprList):
-        return wrap_values(accumulate_values_from_exprs(expr.tests, env, store), store)
+        vals, store = accumulate_values_from_exprs(expr.tests, env, store)
+        return wrap_values(vals, store)
     elif isinstance(expr, ns.TestExpr):
         return eval_expr(expr.test, env, store)
     elif isinstance(expr, ns.OrTestExpr):
-        val, store = wrap_values(accumulate_values_from_exprs(expr.tests, env, store), store)
+        vals, store = accumulate_values_from_exprs(expr.tests, env, store)
+        val, store = wrap_values(vals, store)
         if isinstance(val, TupleVal):
             for subval in val.vals:
                 if not isinstance(subval, BoolVal):
@@ -187,7 +189,8 @@ def eval_expr(expr: AST, env: Environment, store: Store) -> EvalExprResult:
         else:
             return EvalExprResult(val, store)
     elif isinstance(expr, ns.AndTestExpr):
-        val, store = wrap_values(accumulate_values_from_exprs(expr.tests, env, store), store)
+        vals, store = accumulate_values_from_exprs(expr.tests, env, store)
+        val, store = wrap_values(vals, store)
         if isinstance(val, TupleVal):
             for subval in val.vals:
                 if not isinstance(subval, BoolVal):
@@ -296,12 +299,12 @@ def bind_val(name: str, val: Value, env: Environment, store: Store) -> Tuple[Env
     return env, store
 
 
-def accumulate_values_from_exprs(exprs: List[AST], env: Environment, store: Store) -> List[Value]:
+def accumulate_values_from_exprs(exprs: List[AST], env: Environment, store: Store) -> Tuple[List[Value], Store]:
     values: List[Value] = []
     for expr in exprs:
         val, store = eval_expr(expr, env, store)
         values.append(val)
-    return values
+    return values, store
 
 
 def wrap_values(values: List[Value], store: Store) -> EvalExprResult:
