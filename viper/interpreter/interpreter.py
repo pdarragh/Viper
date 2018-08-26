@@ -225,7 +225,7 @@ def eval_expr(expr: AST, env: Environment, store: Store) -> EvalExprResult:
             raise NotImplementedError
         if expr.right_op is not None:
             raise NotImplementedError
-        return eval_expr(expr.atom, env, store)
+        return EvalExprResult(val, store)
     elif isinstance(expr, ns.AtomExpr):
         val, store = eval_expr(expr.atom, env, store)
         for trailer in expr.trailers:
