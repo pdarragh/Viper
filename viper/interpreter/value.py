@@ -2,7 +2,8 @@ from .environment import Environment
 
 from viper.parser.ast.nodes import AST, Parameter
 
-from typing import List
+from inspect import signature
+from typing import Callable, List
 
 
 class Value:
@@ -33,6 +34,13 @@ class CloVal(Value):
 
     def __repr__(self) -> str:
         return f"CloVal(({', '.join(map(lambda p: p.internal, self.params))}), {self.env})"
+
+
+class ForeignCloVal(Value):
+    def __init__(self, func: Callable, env: Environment):
+        self.func = func
+        self.params = signature(func).parameters
+        self.env = env
 
 
 class BoolVal(Value):
