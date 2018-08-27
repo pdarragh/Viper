@@ -93,7 +93,7 @@ def eval_stmt(stmt: AST, env: Environment, store: Store) -> EvalStmtResult:
         return eval_stmt(stmt.stmt, env, store)
     elif isinstance(stmt, ns.ReturnStmt):
         if stmt.tests is None:
-            return EvalStmtResult(env, store, None)
+            return EvalStmtResult(env, store, UnitVal())
         else:
             val, store = eval_expr(stmt.tests, env, store)
             return EvalStmtResult(env, store, val)
