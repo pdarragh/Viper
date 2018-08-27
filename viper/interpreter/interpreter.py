@@ -139,11 +139,12 @@ def eval_stmt(stmt: AST, env: Environment, store: Store) -> EvalStmtResult:
     elif isinstance(stmt, ns.CompoundStmtBlock):
         for sub_stmt in stmt.stmts:
             stmt_res = eval_stmt(sub_stmt, env, store)
+            if stmt_res.val is not None:
+                # A value is only present if we should return immediately, so return.
+                return stmt_res
+            # Since we did not return, record the (potentially) modified environment and store and continue.
             env = stmt_res.env
             store = stmt_res.store
-            if stmt_res.val is not None:
-                # A value is only present if we should return immediately.
-                return EvalStmtResult(env, store, stmt_res.val)
         return EvalStmtResult(env, store, None)
     else:
         raise NotImplementedError(f"No implementation for statement of type: {type(stmt).__name__}")
