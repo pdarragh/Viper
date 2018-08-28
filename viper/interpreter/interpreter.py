@@ -287,7 +287,7 @@ def _eval_operator(op: str, operands: List[Value], env: Environment, store: Stor
         val = store[env[op]]
         return eval_function_call(val, operands, store)
     else:
-        raise RuntimeError(f"No implementation for postfix operator: {op}")
+        raise RuntimeError(f"No implementation for operator: {op}")  # TODO: Use a custom error.
 
 
 def eval_function_call(val: Value, args: List[Value], store: Store) -> EvalExprResult:
