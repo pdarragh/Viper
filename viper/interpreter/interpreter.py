@@ -234,23 +234,8 @@ def eval_expr(expr: AST, env: Environment, store: Store) -> EvalExprResult:
         val, store = eval_expr(expr.atom, env, store)
         for trailer in expr.trailers:
             if isinstance(trailer, ns.Call):
-                if isinstance(val, CloVal):
-                    args, store = accumulate_values_from_exprs(trailer.args, env, store)
-                    if len(val.params) != len(args):
-                        if len(args) > len(val.params):
-                            raise RuntimeError(f"Too many arguments specified for call to function {val.name}")  # TODO: Use a custom error.
-                        else:
-                            # TODO: Automatic currying could be implemented here.
-                            raise RuntimeError(f"Not enough arguments specified for call to function {val.name}")  # TODO: Use a custom error.
-                    inner_env = val.env
-                    for i in range(len(val.params)):
-                        param = val.params[i]
-                        arg = args[i]
-                        inner_env, store = bind_val(param.internal.text, arg, inner_env, store)
-                    stmt_res = eval_stmt(val.code, inner_env, store)
-                    return EvalExprResult(stmt_res.val, stmt_res.store)
-                else:
-                    raise RuntimeError(f"Cannot apply arguments to non-closure value of type: {type(val).__name__}")  # TODO: Use a custom error.
+                args, store = accumulate_values_from_exprs(trailer.args, env, store)
+                return eval_function_call(val, args, store)
             elif isinstance(trailer, ns.Field):
                 raise NotImplementedError
             else:
@@ -281,6 +266,43 @@ def eval_expr(expr: AST, env: Environment, store: Store) -> EvalExprResult:
         return eval_expr(expr.expr, env, store)
     else:
         raise NotImplementedError(f"No implementation for expression of type: {type(expr).__name__}")
+
+def eval_function_call(val: Value, args: List[Value], store: Store) -> EvalExprResult:
+    if isinstance(val, CloVal):
+        return _eval_function_call(val, args, store)
+    elif isinstance(val, ForeignCloVal):
+        return _eval_foreign_function_call(val, args, store)
+    else:
+        raise RuntimeError(f"Cannot apply arguments to non-closure value of type: {type(val).__name__}")  # TODO: Use a custom error.
+
+
+def _eval_function_call(clo: CloVal, args: List[Value], store: Store) -> EvalExprResult:
+    if len(clo.params) != len(args):
+        if len(args) > len(clo.params):
+            raise RuntimeError(f"Too many arguments specified for call to function: {clo}")  # TODO: Use a custom error.
+        else:
+            # TODO: Automatic currying could be implemented here.
+            raise RuntimeError(f"Not enough arguments specified for call to function: {clo}")  # TODO: Use a custom error.
+    inner_env = clo.env
+    for i in range(len(clo.params)):
+        param = clo.params[i]
+        arg = args[i]
+        inner_env, store = bind_val(param.internal.text, arg, inner_env, store)
+    stmt_res = eval_stmt(clo.code, inner_env, store)
+    return EvalExprResult(stmt_res.val, stmt_res.store)
+
+
+def _eval_foreign_function_call(clo: ForeignCloVal, args: List[Value], store: Store) -> EvalExprResult:
+    if len(clo.params) != len(args):
+        raise RuntimeError(f"Foreign function call expected {len(clo.params)} arguments but received {len(args)}")  # TODO: Use a custom error.
+    inner_env = {}
+    for i in range(len(clo.params)):
+        param = clo.params[i]
+        arg = args[i]
+        inner_env[param] = arg
+    # TODO: This is incredibly unsafe and should be handled specially.
+    val = eval('func(' + ', '.join([k + '=' + str(v) for k, v in inner_env.items()]) + ')', {}, {'func': clo.func})
+    return EvalExprResult(val, store)
 
 
 def eval_pattern(ptrn: ns.Pattern, env: Environment, store: Store, val: Value) -> EvalLhsResult:
