@@ -222,13 +222,14 @@ def eval_expr(expr: AST, env: Environment, store: Store) -> EvalExprResult:
     elif isinstance(expr, ns.NotNegatedTestExpr):
         return eval_expr(expr.op_expr, env, store)
     elif isinstance(expr, ns.OpExpr):
-        if expr.left_op is not None:
-            raise NotImplementedError
         val, store = eval_expr(expr.atom, env, store)
-        if expr.sub_op_exprs:
-            raise NotImplementedError
+        if expr.left_op is not None:
+            val, store = eval_prefix_operator(expr.left_op, val, env, store)
+        for sub_op_expr in expr.sub_op_exprs:
+            r_val, store = eval_expr(sub_op_expr.atom, env, store)
+            val, store = eval_infix_operator(sub_op_expr.op, val, r_val, env, store)
         if expr.right_op is not None:
-            raise NotImplementedError
+            val, store = eval_postfix_operator(expr.right_op, val, env, store)
         return EvalExprResult(val, store)
     elif isinstance(expr, ns.AtomExpr):
         val, store = eval_expr(expr.atom, env, store)
@@ -266,6 +267,28 @@ def eval_expr(expr: AST, env: Environment, store: Store) -> EvalExprResult:
         return eval_expr(expr.expr, env, store)
     else:
         raise NotImplementedError(f"No implementation for expression of type: {type(expr).__name__}")
+
+
+def eval_prefix_operator(op: str, operand: Value, env: Environment, store: Store) -> EvalExprResult:
+    return _eval_operator(op, [operand], env, store)
+
+
+def eval_infix_operator(op: str, left_operand: Value, right_operand: Value,
+                        env: Environment, store: Store) -> EvalExprResult:
+    return _eval_operator(op, [left_operand, right_operand], env, store)
+
+
+def eval_postfix_operator(op: str, operand: Value, env: Environment, store: Store) -> EvalExprResult:
+    return _eval_operator(op, [operand], env, store)
+
+
+def _eval_operator(op: str, operands: List[Value], env: Environment, store: Store) -> EvalExprResult:
+    if op in env:
+        val = store[env[op]]
+        return eval_function_call(val, operands, store)
+    else:
+        raise RuntimeError(f"No implementation for postfix operator: {op}")
+
 
 def eval_function_call(val: Value, args: List[Value], store: Store) -> EvalExprResult:
     if isinstance(val, CloVal):
