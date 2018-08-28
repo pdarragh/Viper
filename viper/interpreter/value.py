@@ -43,7 +43,7 @@ class ForeignCloVal(Value):
         self.env = env
 
     def __repr__(self) -> str:
-        return f"ForeignCloVal(({', '.join(map(self.params))}), {self.env})"
+        return f"ForeignCloVal(({', '.join(self.params)}), {self.env})"
 
 
 class BoolVal(Value):
