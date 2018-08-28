@@ -38,8 +38,8 @@ class CloVal(Value):
 
 class ForeignCloVal(Value):
     def __init__(self, func: Callable, env: Environment):
+        self.params: List[str] = list(signature(func).parameters)
         self.func = func
-        self.params = signature(func).parameters
         self.env = env
 
 
