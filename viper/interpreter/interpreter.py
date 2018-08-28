@@ -369,7 +369,7 @@ def eval_pattern(ptrn: ns.Pattern, env: Environment, store: Store, val: Value) -
     elif isinstance(ptrn, ns.PatternList):
         raise NotImplementedError
     else:
-        raise NotImplementedError(f"No impementation for pattern of type: {type(ptrn).__name__}")
+        raise NotImplementedError(f"No implementation for pattern of type: {type(ptrn).__name__}")
 
 
 def bind_val(name: str, val: Value, env: Environment, store: Store) -> Tuple[Environment, Store]:
