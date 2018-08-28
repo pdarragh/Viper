@@ -87,4 +87,16 @@ def val_to_python(val: Value):
     elif isinstance(val, FalseVal):
         return False
     else:
-        raise RuntimeError(f"Cannot convert value to native Python value: {val}")
+        raise RuntimeError(f"Cannot convert Value to native Python value: {val}")  # TODO: Use custom error.
+
+
+def python_to_val(py) -> Value:
+    if isinstance(py, int) or isinstance(py, float):
+        return NumVal(str(py))
+    elif isinstance(py, bool):
+        if py:
+            return TrueVal()
+        else:
+            return FalseVal()
+    else:
+        raise RuntimeError(f"Cannot convert native Python value to Value: {py}")  # TODO: Use custom error.
