@@ -224,12 +224,12 @@ def eval_expr(expr: AST, env: Environment, store: Store) -> EvalExprResult:
     elif isinstance(expr, ns.OpExpr):
         val, store = eval_expr(expr.atom, env, store)
         if expr.left_op is not None:
-            val, store = eval_prefix_operator(expr.left_op, val, env, store)
+            val, store = eval_prefix_operator(expr.left_op.text, val, env, store)
         for sub_op_expr in expr.sub_op_exprs:
             r_val, store = eval_expr(sub_op_expr.atom, env, store)
-            val, store = eval_infix_operator(sub_op_expr.op, val, r_val, env, store)
+            val, store = eval_infix_operator(sub_op_expr.op.text, val, r_val, env, store)
         if expr.right_op is not None:
-            val, store = eval_postfix_operator(expr.right_op, val, env, store)
+            val, store = eval_postfix_operator(expr.right_op.text, val, env, store)
         return EvalExprResult(val, store)
     elif isinstance(expr, ns.AtomExpr):
         val, store = eval_expr(expr.atom, env, store)
