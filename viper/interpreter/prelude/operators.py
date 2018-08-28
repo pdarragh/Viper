@@ -21,5 +21,5 @@ env = {
     '+': ForeignCloVal(plus, {}),
     '-': ForeignCloVal(minus, {}),
     '*': ForeignCloVal(times, {}),
-    '//': ForeignCloVal(divide, {}),
+    '/': ForeignCloVal(divide, {}),
 }
