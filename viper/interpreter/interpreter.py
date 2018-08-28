@@ -322,9 +322,10 @@ def _eval_foreign_function_call(clo: ForeignCloVal, args: List[Value], store: St
     for i in range(len(clo.params)):
         param = clo.params[i]
         arg = args[i]
-        inner_env[param] = arg
+        inner_env[param] = val_to_python(arg)
     # TODO: This is incredibly unsafe and should be handled specially.
     val = eval('func(' + ', '.join([k + '=' + str(v) for k, v in inner_env.items()]) + ')', {}, {'func': clo.func})
+    val = python_to_val(val)
     return EvalExprResult(val, store)
 
 
