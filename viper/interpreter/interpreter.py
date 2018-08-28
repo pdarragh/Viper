@@ -1,4 +1,5 @@
 from .environment import *
+from .prelude import env as prelude_env
 from .store import *
 from .value import *
 
@@ -51,6 +52,8 @@ def start_eval(code: AST, env: Environment = None, store: Store = None,
     if previous_result is not None:
         env = previous_result.env
         store = previous_result.store
+    if env is None and store is None:
+        env, store = bootstrap_env_and_store(prelude_env)
     if env is None:
         env = empty_env()
     if store is None:
@@ -65,6 +68,14 @@ def start_eval(code: AST, env: Environment = None, store: Store = None,
         return EvalResult(env, expr_res.store, expr_res.val)
     else:
         raise NotImplementedError(f"No evaluation rules for ASTs of type: {type(code).__name__}")
+
+
+def bootstrap_env_and_store(initial_env: Dict[str, Value]) -> Tuple[Environment, Store]:
+    env = empty_env()
+    store = empty_store()
+    for name, val in initial_env.items():
+        env, store = bind_val(name, val, env, store)
+    return env, store
 
 
 def eval_starter(starter: AST, env: Environment, store: Store) -> EvalResult:
