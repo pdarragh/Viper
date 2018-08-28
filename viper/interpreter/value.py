@@ -74,3 +74,17 @@ class BottomVal(Value):
 class EllipsisVal(Value):
     def __repr__(self) -> str:
         return "EllipsisVal"
+
+
+def val_to_python(val: Value):
+    if isinstance(val, NumVal):
+        num_val = float(val.val)
+        if num_val.is_integer():
+            num_val = int(num_val)
+        return num_val
+    elif isinstance(val, TrueVal):
+        return True
+    elif isinstance(val, FalseVal):
+        return False
+    else:
+        raise RuntimeError(f"Cannot convert value to native Python value: {val}")
