@@ -81,9 +81,15 @@ class InteractiveInterpreter(cmd.Cmd):  # pragma: no cover
                 if remainder:
                     val = self.store.get(remainder)
                     if val is None:
-                        raise InteractiveInterpreterException(f"No such element in store: {remainder}")
-                    else:
-                        print(f"store[{remainder}]: {val}")
+                        try:
+                            addr = int(remainder)
+                        except ValueError:
+                            addr = self.env.get(remainder)
+                            remainder = f'env[{remainder}]'
+                        if addr is None or addr not in self.store:
+                            raise InteractiveInterpreterException(f"No such element in store: {remainder}")
+                        val = self.store.get(addr)
+                    print(f"store[{remainder}]: {val}")
                 else:
                     print(self.store)
             else:
