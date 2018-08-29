@@ -52,3 +52,5 @@ if __name__ == '__main__':
                 print(ast_to_string(ast))
         else:
             raise RuntimeError(f"Invalid return result: {parse}")
+    else:
+        InteractiveInterpreter().cmdloop()
