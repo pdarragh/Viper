@@ -17,6 +17,9 @@ class TupleVal(Value):
     def __repr__(self) -> str:
         return f"TupleVal({', '.join(map(str, self.vals))})"
 
+    def __str__(self) -> str:
+        return '(' + ', '.join(map(str, self.vals)) + ')'
+
 
 class NumVal(Value):
     def __init__(self, val: str):
@@ -24,6 +27,9 @@ class NumVal(Value):
 
     def __repr__(self) -> str:
         return f"NumVal({self.val})"
+
+    def __str__(self) -> str:
+        return str(self.val)
 
 
 class CloVal(Value):
@@ -35,6 +41,9 @@ class CloVal(Value):
     def __repr__(self) -> str:
         return f"CloVal(({', '.join(map(lambda p: p.internal, self.params))}), {self.env})"
 
+    def __str__(self) -> str:
+        return 'λ(' + ', '.join(map(lambda p: p.internal, self.params)) + ')'
+
 
 class ForeignCloVal(Value):
     def __init__(self, func: Callable, env: Environment):
@@ -44,6 +53,9 @@ class ForeignCloVal(Value):
 
     def __repr__(self) -> str:
         return f"ForeignCloVal(({', '.join(self.params)}), {self.env})"
+
+    def __str__(self) -> str:
+        return 'pyλ(' + ', '.join(self.params) + ')'
 
 
 class BoolVal(Value):
@@ -55,15 +67,24 @@ class TrueVal(BoolVal):
     def __repr__(self) -> str:
         return "TrueVal"
 
+    def __str__(self) -> str:
+        return 'true'
+
 
 class FalseVal(BoolVal):
     def __repr__(self) -> str:
         return "FalseVal"
 
+    def __str__(self) -> str:
+        return 'false'
+
 
 class UnitVal(Value):
     def __repr__(self) -> str:
         return "UnitVal"
+
+    def __str__(self) -> str:
+        return '()'
 
 
 class BottomVal(Value):
@@ -74,6 +95,9 @@ class BottomVal(Value):
 class EllipsisVal(Value):
     def __repr__(self) -> str:
         return "EllipsisVal"
+
+    def __str__(self) -> str:
+        return '...'
 
 
 def val_to_python(val: Value):
