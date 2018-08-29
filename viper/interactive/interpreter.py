@@ -18,6 +18,10 @@ class InteractiveInterpreterException(Exception):
         self.output = output
 
 
+class StopREPL(Exception):
+    pass
+
+
 class InteractiveInterpreter(cmd.Cmd):  # pragma: no cover
     prompt = SINGLE_INPUT_PROMPT
 
@@ -28,13 +32,36 @@ class InteractiveInterpreter(cmd.Cmd):  # pragma: no cover
         self.env = None
         self.store = None
 
+    def cmdloop(self, intro=None):
+        cont = True
+        while cont:
+            try:
+                super().cmdloop(intro=intro)
+            except InteractiveInterpreterException as e:
+                self._handle_error(f"Error: {e.output}")
+            except KeyboardInterrupt:
+                self._handle_error('KeyboardInterrupt')
+            except StopREPL:
+                cont = False
+            except Exception as e:
+                self._handle_error(f"Error: {str(e)}")
+
+    def _handle_error(self, msg: str):
+        print()
+        print(msg)
+        self.multiline = False
+        self.lines = []
+        self._update_prompt()
+
     def default(self, line: str):
         self._parse_input(line)
         self._update_prompt()
 
     def _parse_input(self, line: str):
         line.replace('\\', '\\\\')
-        if line == ':{':
+        if line == 'EOF':
+            raise StopREPL
+        elif line == ':{':
             if self.multiline:
                 raise InteractiveInterpreterException(f"Already in multiline mode.")
             else:
@@ -104,7 +131,7 @@ class InteractiveInterpreter(cmd.Cmd):  # pragma: no cover
                         lexemes.append(vl.NEWLINE)
                         parse = GRAMMAR.parse_rule(SINGLE_INPUT_RULE, lexemes)
                         if isinstance(parse, NoParse):
-                            raise InteractiveInterpreterException(f"Could not parse input: {line}")
+                            raise InteractiveInterpreterException(f"Could not parse input: {repr(line)}")
                     result = start_eval(parse.ast, env=self.env, store=self.store)
                     if result.val is not None:
                         # Show the result.
