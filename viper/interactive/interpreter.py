@@ -113,7 +113,7 @@ class InteractiveInterpreter(cmd.Cmd):  # pragma: no cover
                         if addr is None or addr not in self.store:
                             raise InteractiveInterpreterException(f"No such element in store: {remainder}")
                         val = self.store.get(addr)
-                    print(f"store[{remainder}]: {val}")
+                    print(f"store[{remainder}]: {repr(val)}")
                 else:
                     print(self.store)
             else:
