@@ -7,7 +7,10 @@ import cmd
 
 
 SINGLE_INPUT_RULE = 'single_input'
-MULTILINE_INPUT_RULE = 'file_input'
+MULTILINE_INPUT_RULE = 'stmt_block'
+
+SINGLE_INPUT_PROMPT = '>>> '
+MULTILINE_INPUT_PROMPT = '... '
 
 
 class InteractiveInterpreterException(Exception):
@@ -16,15 +19,20 @@ class InteractiveInterpreterException(Exception):
 
 
 class InteractiveInterpreter(cmd.Cmd):  # pragma: no cover
-    prompt = '>>> '
+    prompt = SINGLE_INPUT_PROMPT
 
     def __init__(self):
         super().__init__()
         self.multiline = False
+        self.lines = []
         self.env = None
         self.store = None
 
     def default(self, line: str):
+        self._parse_input(line)
+        self._update_prompt()
+
+    def _parse_input(self, line: str):
         line.replace('\\', '\\\\')
         if line == ':{':
             if self.multiline:
@@ -36,6 +44,15 @@ class InteractiveInterpreter(cmd.Cmd):  # pragma: no cover
             if self.multiline:
                 # End multi-line processing.
                 self.multiline = False
+                # Interpret the result.
+                lines = '\n'.join(self.lines)
+                lexemes = [vl.NEWLINE, vl.INDENT] + vl.lex_lines(lines)[:-1] + [vl.DEDENT]
+                parse = GRAMMAR.parse_rule(MULTILINE_INPUT_RULE, lexemes)
+                if isinstance(parse, NoParse):
+                    raise InteractiveInterpreterException(f"Could not parse multiline input: {repr(lines)}")
+                result = start_eval(parse.ast, env=self.env, store=self.store)
+                self.env = result.env
+                self.store = result.store
             else:
                 raise InteractiveInterpreterException(f"Not currently in multiline mode.")
         else:
@@ -72,8 +89,7 @@ class InteractiveInterpreter(cmd.Cmd):  # pragma: no cover
             else:
                 # Handle as regular input.
                 if self.multiline:
-                    # TODO: Implement this.
-                    raise InteractiveInterpreterException(f"Multiline input not supported at this time.")
+                    self.lines.append(line)
                 else:
                     # Handle as single input.
                     lexemes = vl.lex_line(line)
@@ -89,3 +105,16 @@ class InteractiveInterpreter(cmd.Cmd):  # pragma: no cover
                         print(result.val)
                     self.env = result.env
                     self.store = result.store
+
+    def _update_prompt(self):
+        if self.multiline:
+            self.prompt = MULTILINE_INPUT_PROMPT
+        else:
+            self.prompt = SINGLE_INPUT_PROMPT
+
+    def parseline(self, line):
+        if self.multiline:
+            line = line.rstrip()
+        else:
+            line = line.strip()
+        return None, None, line
