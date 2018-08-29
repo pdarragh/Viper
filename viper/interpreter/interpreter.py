@@ -138,12 +138,16 @@ def eval_stmt(stmt: AST, env: Environment, store: Store) -> EvalStmtResult:
         env, store = bind_val(stmt.name.text, closure, env, store)
         return EvalStmtResult(env, store, None)
     elif isinstance(stmt, ns.ClassDef):
+        # TODO: Implement this.
         raise NotImplementedError
     elif isinstance(stmt, ns.InterfaceDef):
+        # TODO: Implement this.
         raise NotImplementedError
     elif isinstance(stmt, ns.DataDef):
+        # TODO: Implement this.
         raise NotImplementedError
     elif isinstance(stmt, ns.Arguments):
+        # TODO: Implement this.
         raise NotImplementedError
     elif isinstance(stmt, ns.SimpleStmtBlock):
         return eval_stmt(stmt.stmt, env, store)
@@ -249,6 +253,7 @@ def eval_expr(expr: AST, env: Environment, store: Store) -> EvalExprResult:
                 args, store = accumulate_values_from_exprs(trailer.args, env, store)
                 return eval_function_call(val, args, store)
             elif isinstance(trailer, ns.Field):
+                # TODO: Implement this.
                 raise NotImplementedError
             else:
                 raise NotImplementedError(f"No implementation for trailer of type: {type(trailer).__name__}")
@@ -351,10 +356,13 @@ def eval_pattern(ptrn: ns.Pattern, env: Environment, store: Store, val: Value) -
     :return: a tuple of a Maybe(env) (as an Environment or a None) and a store
     """
     if isinstance(ptrn, ns.TypedVariablePattern):
+        # TODO: Implement this.
         raise NotImplementedError
     elif isinstance(ptrn, ns.TypedAnonymousPattern):
+        # TODO: Implement this.
         raise NotImplementedError
     elif isinstance(ptrn, ns.TypedFieldPattern):
+        # TODO: Implement this.
         raise NotImplementedError
     elif isinstance(ptrn, ns.SimpleVariablePattern):
         name = ptrn.id.id.text
@@ -363,10 +371,13 @@ def eval_pattern(ptrn: ns.Pattern, env: Environment, store: Store, val: Value) -
     elif isinstance(ptrn, ns.SimpleAnonymousPattern):
         return EvalLhsResult(env, store)
     elif isinstance(ptrn, ns.SimpleFieldPattern):
+        # TODO: Implement this.
         raise NotImplementedError
     elif isinstance(ptrn, ns.SimpleParenPattern):
+        # TODO: Implement this.
         raise NotImplementedError
     elif isinstance(ptrn, ns.PatternList):
+        # TODO: Implement this.
         raise NotImplementedError
     else:
         raise NotImplementedError(f"No implementation for pattern of type: {type(ptrn).__name__}")
