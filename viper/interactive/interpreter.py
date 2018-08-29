@@ -18,15 +18,11 @@ class InteractiveInterpreterException(Exception):
         self.output = output
 
 
-class StopREPL(Exception):
-    pass
-
-
 class InteractiveInterpreter(cmd.Cmd):  # pragma: no cover
     prompt = SINGLE_INPUT_PROMPT
 
     def __init__(self):
-        super().__init__()
+        super().__init__(completekey=None)
         self.multiline = False
         self.lines = []
         self.env = None
@@ -41,10 +37,11 @@ class InteractiveInterpreter(cmd.Cmd):  # pragma: no cover
                 self._handle_error(f"Error: {e.output}")
             except KeyboardInterrupt:
                 self._handle_error('KeyboardInterrupt')
-            except StopREPL:
+            except EOFError:
+                print()
                 cont = False
             except Exception as e:
-                self._handle_error(f"Error: {str(e)}")
+                self._handle_error(f"{type(e).__name__}: {str(e)}")
 
     def _handle_error(self, msg: str):
         print()
@@ -58,9 +55,9 @@ class InteractiveInterpreter(cmd.Cmd):  # pragma: no cover
         self._update_prompt()
 
     def _parse_input(self, line: str):
-        line.replace('\\', '\\\\')
+        line = line.replace('\\', '\\\\').replace('\t', '    ')
         if line == 'EOF':
-            raise StopREPL
+            raise EOFError
         elif line == ':{':
             if self.multiline:
                 raise InteractiveInterpreterException(f"Already in multiline mode.")
