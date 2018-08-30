@@ -23,11 +23,11 @@ RE_LEADING_INDENT = re.compile(fr'^((?: {{{INDENT_SIZE}}})*)(.*)$')
 
 RE_COMMA = re.compile(r',')
 RE_INT = re.compile(r'(?:-?\d+)')                           # (-)42
-RE_FLOAT = re.compile(r'(?:\.\d+(?:[eE][+-]?\d+)?)'         # .42 | .42e-8
+RE_FLOAT = re.compile(r'(?:-?\.\d+(?:[eE][+-]?\d+)?)'       # (-).42 | (-).42e-8
                       r'|'
-                      r'(?:\d+[eE][+-]?\d+)'                # 42e3
+                      r'(?:-?\d+[eE][+-]?\d+)'              # (-)42e3
                       r'|'
-                      r'(?:\d+\.\d*(?:[eE][+-]?\d+)?)')     # 42.7e2 | 42.e9 | 42. | 42.3e-8
+                      r'(?:-?\d+\.\d*(?:[eE][+-]?\d+)?)')   # (-)42.7e2 | (-)42.e9 | (-)42. | (-)42.3e-8
 RE_NAME = re.compile(r'(?:_*[a-z][_a-zA-Z0-9]*(?:-[_a-zA-Z0-9]+)*[!@$%^&*?]?)')
 RE_UNDERSCORE = re.compile(r'_+')
 RE_CLASS = re.compile(r'[A-Z][_a-zA-Z0-9]*(?:-[_a-zA-Z0-9]+)*')
