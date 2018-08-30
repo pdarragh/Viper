@@ -135,11 +135,11 @@ class InteractiveInterpreter(cmd.Cmd):  # pragma: no cover
                     # Handle as single input.
                     self._handle_input(line)
 
-    def _handle_input(self, input: str, mode: InterpreterMode=None):
+    def _handle_input(self, text: str, mode: InterpreterMode=None):
         if mode is None:
             mode = self.mode
 
-        lexemes = self._lex_text(input)
+        lexemes = self._lex_text(text)
         if mode & LexMode:
             print(lexemes)
             if mode <= LexMode:
@@ -147,7 +147,7 @@ class InteractiveInterpreter(cmd.Cmd):  # pragma: no cover
 
         parse = self._parse_lexemes(lexemes)
         if isinstance(parse, NoParse):
-            raise InteractiveInterpreterException(f"Could not parse multiline input: {repr(lines)}")
+            raise InteractiveInterpreterException(f"Could not parse input: {repr(text)}")
         assert isinstance(parse, SingleParse)
         if mode & ParseMode:
             print(ast_to_string(parse.ast))
