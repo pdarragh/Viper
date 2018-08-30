@@ -12,6 +12,13 @@ MULTILINE_INPUT_RULE = 'stmt_block'
 SINGLE_INPUT_PROMPT = '>>> '
 MULTILINE_INPUT_PROMPT = '... '
 
+LexMode = 1 << 0
+ParseMode = 1 << 1
+EvalMode = 1 << 2
+ExecMode = 1 << 3
+
+InterpreterMode = int
+
 
 class InteractiveInterpreterException(Exception):
     def __init__(self, output: str):
@@ -23,6 +30,7 @@ class InteractiveInterpreter(cmd.Cmd):  # pragma: no cover
 
     def __init__(self):
         super().__init__(completekey=None)
+        self.mode: InterpreterMode = EvalMode | ExecMode
         self.multiline = False
         self.lines = []
         self.env = None
@@ -116,25 +124,57 @@ class InteractiveInterpreter(cmd.Cmd):  # pragma: no cover
                     print(f"store[{remainder}]: {repr(val)}")
                 else:
                     print(self.store)
+            elif starter in {':l', ':lex'}:
+                # Print the lexemes of the lexed remainder.
+                if not remainder:
+                    raise InteractiveInterpreterException(f"Missing argument for lexeme construction.")
+                self._handle_line(remainder, LexMode)
+            elif starter in {':a', ':ast'}:
+                # Print the AST of the parsed remainder.
+                if not remainder:
+                    raise InteractiveInterpreterException(f"Missing argument for AST construction.")
+                self._handle_line(remainder, ParseMode)
             else:
                 # Handle as regular input.
                 if self.multiline:
                     self.lines.append(line)
                 else:
                     # Handle as single input.
-                    lexemes = vl.lex_line(line)
-                    parse = GRAMMAR.parse_rule(SINGLE_INPUT_RULE, lexemes)
-                    if isinstance(parse, NoParse):
-                        lexemes.append(vl.NEWLINE)
-                        parse = GRAMMAR.parse_rule(SINGLE_INPUT_RULE, lexemes)
-                        if isinstance(parse, NoParse):
-                            raise InteractiveInterpreterException(f"Could not parse input: {repr(line)}")
-                    result = start_eval(parse.ast, env=self.env, store=self.store)
-                    if result.val is not None:
-                        # Show the result.
-                        print(result.val)
-                    self.env = result.env
-                    self.store = result.store
+                    self._handle_line(line)
+
+    def _handle_line(self, line: str, mode: InterpreterMode=None):
+        if mode is None:
+            mode = self.mode
+
+        lexemes = vl.lex_line(line)
+        if mode & LexMode:
+            print(lexemes)
+            if mode <= LexMode:
+                return
+
+        parse = GRAMMAR.parse_rule(SINGLE_INPUT_RULE, lexemes)
+        if isinstance(parse, NoParse):
+            lexemes.append(vl.NEWLINE)
+            parse = GRAMMAR.parse_rule(SINGLE_INPUT_RULE, lexemes)
+            if isinstance(parse, NoParse):
+                raise InteractiveInterpreterException(f"Could not parse input: {repr(line)}")
+        if mode & ParseMode:
+            print(ast_to_string(parse.ast))
+            if mode <= ParseMode:
+                return
+
+        result = start_eval(parse.ast, env=self.env, store=self.store)
+        if mode & EvalMode:
+            if result.val is not None:
+                # Show the result.
+                print(result.val)
+            if mode <= EvalMode:
+                return
+
+        if mode & ExecMode:
+            self.env = result.env
+            self.store = result.store
+
 
     def _update_prompt(self):
         if self.multiline:
