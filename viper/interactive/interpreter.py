@@ -77,7 +77,7 @@ class InteractiveInterpreter(cmd.Cmd):  # pragma: no cover
                 # End multi-line processing.
                 self.multiline = False
                 # Interpret the result.
-                self._handle_lines(self.lines)
+                self._handle_input('\n'.join(self.lines))
             else:
                 raise InteractiveInterpreterException(f"Not currently in multiline mode.")
         else:
@@ -121,36 +121,34 @@ class InteractiveInterpreter(cmd.Cmd):  # pragma: no cover
                 # Print the lexemes of the lexed remainder.
                 if not remainder:
                     raise InteractiveInterpreterException(f"Missing argument for lexeme construction.")
-                self._handle_line(remainder, LexMode)
+                self._handle_input(remainder, LexMode)
             elif starter in {':a', ':ast'}:
                 # Print the AST of the parsed remainder.
                 if not remainder:
                     raise InteractiveInterpreterException(f"Missing argument for AST construction.")
-                self._handle_line(remainder, ParseMode)
+                self._handle_input(remainder, ParseMode)
             else:
                 # Handle as regular input.
                 if self.multiline:
                     self.lines.append(line)
                 else:
                     # Handle as single input.
-                    self._handle_line(line)
+                    self._handle_input(line)
 
-    def _handle_line(self, line: str, mode: InterpreterMode=None):
+    def _handle_input(self, input: str, mode: InterpreterMode=None):
         if mode is None:
             mode = self.mode
 
-        lexemes = vl.lex_line(line)
+        lexemes = self._lex_text(input)
         if mode & LexMode:
             print(lexemes)
             if mode <= LexMode:
                 return
 
-        parse = GRAMMAR.parse_rule(SINGLE_INPUT_RULE, lexemes)
+        parse = self._parse_lexemes(lexemes)
         if isinstance(parse, NoParse):
-            lexemes.append(vl.NEWLINE)
-            parse = GRAMMAR.parse_rule(SINGLE_INPUT_RULE, lexemes)
-            if isinstance(parse, NoParse):
-                raise InteractiveInterpreterException(f"Could not parse input: {repr(line)}")
+            raise InteractiveInterpreterException(f"Could not parse multiline input: {repr(lines)}")
+        assert isinstance(parse, SingleParse)
         if mode & ParseMode:
             print(ast_to_string(parse.ast))
             if mode <= ParseMode:
@@ -168,32 +166,20 @@ class InteractiveInterpreter(cmd.Cmd):  # pragma: no cover
             self.env = result.env
             self.store = result.store
 
-    def _handle_lines(self, lines: List[str], mode: InterpreterMode=None):
-        if mode is None:
-            mode = self.mode
+    def _lex_text(self, text: str) -> List[vl.Lexeme]:
+        if self.multiline:
+            return vl.lex_lines(text)
+        else:
+            return vl.lex_line(text)
 
-        lines = '\n'.join(lines)
-        lexemes = [vl.NEWLINE, vl.INDENT] + vl.lex_lines(lines)[:-1] + [vl.DEDENT]
-        if mode & LexMode:
-            print(lexemes)
-            if mode <= LexMode:
-                return
-
-        parse = GRAMMAR.parse_rule(MULTILINE_INPUT_RULE, lexemes)
-        if isinstance(parse, NoParse):
-            raise InteractiveInterpreterException(f"Could not parse multiline input: {repr(lines)}")
-        if mode & ParseMode:
-            print(ast_to_string(parse.ast))
-            if mode <= ParseMode:
-                return
-
-        result = start_eval(parse.ast, env=self.env, store=self.store)
-        if mode <= EvalMode:
-            return
-
-        if mode & ExecMode:
-            self.env = result.env
-            self.store = result.store
+    def _parse_lexemes(self, lexemes: List[vl.Lexeme]) -> Parse:
+        if self.multiline:
+            return GRAMMAR.parse_rule(MULTILINE_INPUT_RULE, lexemes)
+        else:
+            parse = GRAMMAR.parse_rule(SINGLE_INPUT_RULE, lexemes)
+            if isinstance(parse, NoParse):
+                parse = GRAMMAR.parse_rule(SINGLE_INPUT_RULE, lexemes + [vl.NEWLINE])
+            return parse
 
 
     def _update_prompt(self):
