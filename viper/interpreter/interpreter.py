@@ -389,7 +389,7 @@ def eval_pattern(ptrn: ns.Pattern, env: Environment, store: Store, val: Value) -
                 # >>> (a) = 2, 3, 4
                 return eval_pattern(ptrn.patterns[0], env, store, val)
             # >>> (a, b, c) = 2, 3
-            raise RuntimeError()
+            raise RuntimeError(f"Not enough values to unpack into pattern.")
         # >>> (a, b, c) = (2, 3, 4)
         for sub_pattern, sub_val in zip(ptrn.patterns, val.vals):
             env, store = eval_pattern(sub_pattern, env, store, sub_val)
