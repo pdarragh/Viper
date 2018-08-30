@@ -16,18 +16,18 @@ tree = ns.FileInput([
                         ns.OpExpr(None,
                                   ns.AtomExpr(ns.NameAtom(vl.Name('n')), []),
                                   [ns.SubOpExpr(vl.Operator('=='),
-                                                ns.AtomExpr(ns.NumberAtom(vl.Number('1')), []))],
+                                                ns.AtomExpr(ns.IntAtom(vl.Int('1')), []))],
                                   None))]),
                     ns.AndTestExpr([ns.NotNegatedTestExpr(
                         ns.OpExpr(None,
                                   ns.AtomExpr(ns.NameAtom(vl.Name('n')), []),
                                   [ns.SubOpExpr(vl.Operator('=='),
-                                                ns.AtomExpr(ns.NumberAtom(vl.Number('2')), []))],
+                                                ns.AtomExpr(ns.IntAtom(vl.Int('2')), []))],
                                   None))])])),
                 ns.CompoundStmtBlock([ns.SimpleStmt(ns.ReturnStmt(ns.TestExprList([
                     ns.TestExpr(ns.OrTestExpr([ns.AndTestExpr([ns.NotNegatedTestExpr(
                         ns.OpExpr(None,
-                                  ns.AtomExpr(ns.NumberAtom(vl.Number('1')), []),
+                                  ns.AtomExpr(ns.IntAtom(vl.Int('1')), []),
                                   [],
                                   None))])]))])))]),
                 [],
@@ -41,7 +41,7 @@ tree = ns.FileInput([
                                       ns.OpExpr(None,
                                                 ns.AtomExpr(ns.NameAtom(vl.Name('n')), []),
                                                 [ns.SubOpExpr(vl.Operator('-'),
-                                                              ns.AtomExpr(ns.NumberAtom(vl.Number('1')), []))],
+                                                              ns.AtomExpr(ns.IntAtom(vl.Int('1')), []))],
                                                 None))])]))])]),
                               [ns.SubOpExpr(vl.Operator('+'),
                                             ns.AtomExpr(ns.NameAtom(vl.Name('fib')), [
@@ -49,7 +49,7 @@ tree = ns.FileInput([
                                                     ns.OpExpr(None,
                                                               ns.AtomExpr(ns.NameAtom(vl.Name('n')), []),
                                                               [ns.SubOpExpr(vl.Operator('-'),
-                                                                            ns.AtomExpr(ns.NumberAtom(vl.Number('2')),
+                                                                            ns.AtomExpr(ns.IntAtom(vl.Int('2')),
                                                                                         []))],
                                                               None))])]))])]))],
                               None)

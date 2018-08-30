@@ -21,7 +21,8 @@ ProdDict = Dict[str, str]
 SPECIAL_TYPES = {
     'NAME': 'vl.Name',
     'CLASS': 'vl.Class',
-    'NUMBER': 'vl.Number',
+    'INT': 'vl.Int',
+    'FLOAT': 'vl.Float',
     'OPERATOR': 'vl.Operator',
 }
 

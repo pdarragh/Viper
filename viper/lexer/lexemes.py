@@ -106,7 +106,11 @@ class Ellipsis(Lexeme):
         super().__init__('...', False)
 
 
-class Number(Lexeme):
+class Int(Lexeme):
+    pass
+
+
+class Float(Lexeme):
     pass
 
 

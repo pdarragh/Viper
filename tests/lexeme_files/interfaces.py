@@ -1,7 +1,7 @@
 from viper.lexer import (
     NEWLINE as NL, INDENT as IND, DEDENT as DED, PERIOD, COMMA, COLON, OPEN_PAREN as OP, CLOSE_PAREN as CP, R_ARROW,
     EQUALS as EQ, ENDMARKER as EM,
-    Number as Num,
+    Int,
     Name as N, ReservedName as RN,
     Class as C,
     Operator as Op,
@@ -21,7 +21,7 @@ lexemes = [
         DED,
         RN('def'), N('get_area'), OP, CP, R_ARROW, C('Float'), COLON,
         NL, IND,
-            RN('return'), N('pi'), Op('*'), OP, N('self'), PERIOD, N('radius'), Op('^'), Num('2'), CP, NL,
+            RN('return'), N('pi'), Op('*'), OP, N('self'), PERIOD, N('radius'), Op('^'), Int('2'), CP, NL,
         DED,
     DED,
     C('Shape'), C('Quadrilateral'), COLON,

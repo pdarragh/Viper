@@ -21,12 +21,23 @@ class TupleVal(Value):
         return '(' + ', '.join(map(str, self.vals)) + ')'
 
 
-class NumVal(Value):
+class IntVal(Value):
     def __init__(self, val: str):
         self.val = val
 
     def __repr__(self) -> str:
-        return f"NumVal({self.val})"
+        return f"IntVal({self.val})"
+
+    def __str__(self) -> str:
+        return str(self.val)
+
+
+class FloatVal(Value):
+    def __init__(self, val: str):
+        self.val = val
+
+    def __repr__(self) -> str:
+        return f"FloatVal({self.val})"
 
     def __str__(self) -> str:
         return str(self.val)
@@ -101,11 +112,10 @@ class EllipsisVal(Value):
 
 
 def val_to_python(val: Value):
-    if isinstance(val, NumVal):
-        num_val = float(val.val)
-        if num_val.is_integer():
-            num_val = int(num_val)
-        return num_val
+    if isinstance(val, IntVal):
+        return int(val.val)
+    elif isinstance(val, FloatVal):
+        return float(val.val)
     elif isinstance(val, TrueVal):
         return True
     elif isinstance(val, FalseVal):
@@ -115,8 +125,10 @@ def val_to_python(val: Value):
 
 
 def python_to_val(py) -> Value:
-    if isinstance(py, int) or isinstance(py, float):
-        return NumVal(str(py))
+    if isinstance(py, int):
+        return IntVal(str(py))
+    elif isinstance(py, float):
+        return FloatVal(str(py))
     elif isinstance(py, bool):
         if py:
             return TrueVal()

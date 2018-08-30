@@ -17,7 +17,7 @@ tree = ns.FileInput([
                     ns.OpExpr(None,
                               ns.AtomExpr(ns.NameAtom(vl.Name('x')), []),
                               [ns.SubOpExpr(vl.Operator('>'),
-                                            ns.AtomExpr(ns.NumberAtom(vl.Number('1')), []))],
+                                            ns.AtomExpr(ns.IntAtom(vl.Int('1')), []))],
                               None)
                 )])])),
                 ns.CompoundStmtBlock([
@@ -26,14 +26,14 @@ tree = ns.FileInput([
                             ns.OpExpr(None,
                                       ns.AtomExpr(ns.NameAtom(vl.Name('x')), []),
                                       [ns.SubOpExpr(vl.Operator('>'),
-                                                    ns.AtomExpr(ns.NumberAtom(vl.Number('2')), []))],
+                                                    ns.AtomExpr(ns.IntAtom(vl.Int('2')), []))],
                                       None)
                         )])])),
                         ns.CompoundStmtBlock([
                             ns.SimpleStmt(ns.ReturnStmt(ns.TestExprList([
                                 ns.TestExpr(ns.OrTestExpr([ns.AndTestExpr([ns.NotNegatedTestExpr(
                                     ns.OpExpr(None,
-                                              ns.AtomExpr(ns.NumberAtom(vl.Number('9')), []),
+                                              ns.AtomExpr(ns.IntAtom(vl.Int('9')), []),
                                               [],
                                               None)
                                 )])]))
@@ -48,7 +48,7 @@ tree = ns.FileInput([
                     ns.SimpleStmt(ns.ReturnStmt(ns.TestExprList([
                         ns.TestExpr(ns.OrTestExpr([ns.AndTestExpr([ns.NotNegatedTestExpr(
                             ns.OpExpr(None,
-                                      ns.AtomExpr(ns.NumberAtom(vl.Number('19')), []),
+                                      ns.AtomExpr(ns.IntAtom(vl.Int('19')), []),
                                       [],
                                       None)
                         )])]))
@@ -71,7 +71,7 @@ tree = ns.FileInput([
                     ns.OpExpr(None,
                               ns.AtomExpr(ns.NameAtom(vl.Name('x')), []),
                               [ns.SubOpExpr(vl.Operator('>'),
-                                            ns.AtomExpr(ns.NumberAtom(vl.Number('1')), []))],
+                                            ns.AtomExpr(ns.IntAtom(vl.Int('1')), []))],
                               None)
                 )])])),
                 ns.CompoundStmtBlock([
@@ -80,14 +80,14 @@ tree = ns.FileInput([
                             ns.OpExpr(None,
                                       ns.AtomExpr(ns.NameAtom(vl.Name('x')), []),
                                       [ns.SubOpExpr(vl.Operator('>'),
-                                                    ns.AtomExpr(ns.NumberAtom(vl.Number('2')), []))],
+                                                    ns.AtomExpr(ns.IntAtom(vl.Int('2')), []))],
                                       None)
                         )])])),
                         ns.CompoundStmtBlock([
                             ns.SimpleStmt(ns.ReturnStmt(ns.TestExprList([
                                 ns.TestExpr(ns.OrTestExpr([ns.AndTestExpr([ns.NotNegatedTestExpr(
                                     ns.OpExpr(None,
-                                              ns.AtomExpr(ns.NumberAtom(vl.Number('9')), []),
+                                              ns.AtomExpr(ns.IntAtom(vl.Int('9')), []),
                                               [],
                                               None)
                                 )])]))
@@ -98,7 +98,7 @@ tree = ns.FileInput([
                             ns.SimpleStmt(ns.ReturnStmt(ns.TestExprList([
                                 ns.TestExpr(ns.OrTestExpr([ns.AndTestExpr([ns.NotNegatedTestExpr(
                                     ns.OpExpr(None,
-                                              ns.AtomExpr(ns.NumberAtom(vl.Number('42')), []),
+                                              ns.AtomExpr(ns.IntAtom(vl.Int('42')), []),
                                               [],
                                               None)
                                 )])]))

@@ -127,8 +127,13 @@ class NameAtom(Atom):
         self.name = name
 
 
-class NumberAtom(Atom):
-    def __init__(self, num: vl.Number):
+class IntAtom(Atom):
+    def __init__(self, num: vl.Int):
+        self.num = num
+
+
+class FloatAtom(Atom):
+    def __init__(self, num: vl.Float):
         self.num = num
 
 

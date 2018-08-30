@@ -40,17 +40,25 @@ def test_comma():
     assert lexemes[0] == vl.COMMA
 
 
-# NUMBER
+# INT
 
 @pytest.mark.parametrize('token', [
-    '42',
+    '42', '-42',
+])
+def test_int(token: str):
+    _test_single_token(token, vl.Int)
+
+
+# FLOAT
+
+@pytest.mark.parametrize('token', [
     '.42', '.42e8', '.42E8', '.42e+8', '.42E+8', '.42e-8', '.42E-8',
     '42e8', '42E8', '42e+8', '42E+8', '42e-8', '42E-8',
     '42.', '42.e8', '42.E8', '42.e+8', '42.E+8', '42.e-8', '42.E-8',
     '4.2', '4.2e8', '4.2E8', '4.2e+8', '4.2E+8', '4.2e-8', '4.2E-8',
 ])
-def test_number(token: str):
-    _test_single_token(token, vl.Number)
+def test_float(token: str):
+    _test_single_token(token, vl.Float)
 
 
 @pytest.mark.parametrize('token', [
@@ -58,8 +66,8 @@ def test_number(token: str):
     '42.e', '42.E', '42.e+', '42.E+', '42.e-', '42.E-',
     '4.2e', '4.2E', '4.2e+', '4.2E+', '4.2e-', '4.2E-',
 ])
-def test_bad_number(token: str):
-    _test_bad_single_token(token, vl.Number)
+def test_bad_float(token: str):
+    _test_bad_single_token(token, vl.Float)
 
 
 # NAME
