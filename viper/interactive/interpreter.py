@@ -17,6 +17,8 @@ ParseMode = 1 << 1
 EvalMode = 1 << 2
 ExecMode = 1 << 3
 
+ALL_MODES = LexMode | ParseMode | EvalMode | ExecMode
+
 InterpreterMode = int
 
 
@@ -122,11 +124,28 @@ class InteractiveInterpreter(cmd.Cmd):  # pragma: no cover
                 if not remainder:
                     raise InteractiveInterpreterException(f"Missing argument for lexeme construction.")
                 self._handle_input(remainder, LexMode)
-            elif starter in {':a', ':ast'}:
+            elif starter in {':p', ':parse'}:
                 # Print the AST of the parsed remainder.
                 if not remainder:
                     raise InteractiveInterpreterException(f"Missing argument for AST construction.")
                 self._handle_input(remainder, ParseMode)
+            elif starter in {':set'}:
+                if not remainder:
+                    raise InteractiveInterpreterException(f"No argument given for :set command.")
+                split_subcmd = remainder.split(maxsplit=1)
+                subcmd = split_subcmd[0]
+                if len(split_subcmd) == 2:
+                    remainder = split_subcmd[1]
+                else:
+                    remainder = None
+                if subcmd == 'mode':
+                    if remainder is None:
+                        # Show current mode.
+                        print(f":set mode: {bin(self.mode)[2:].zfill(4)}")
+                    else:
+                        self.mode = self._parse_mode(remainder)
+                else:
+                    raise InteractiveInterpreterException(f"Unsupported :set subcommand given: {subcmd}")
             else:
                 # Handle as regular input.
                 if self.multiline:
@@ -181,6 +200,39 @@ class InteractiveInterpreter(cmd.Cmd):  # pragma: no cover
                 parse = GRAMMAR.parse_rule(SINGLE_INPUT_RULE, lexemes + [vl.NEWLINE])
             return parse
 
+    def _parse_mode(self, text: str) -> int:
+        parts = text.split()
+        mode = self.mode
+        for part in parts:
+            if part.startswith('+'):
+                for switch in list(part)[1:]:
+                    mode |= self._parse_switch(switch)
+            elif part.startswith('-'):
+                for switch in list(part)[1:]:
+                    mode &= (ALL_MODES & ~self._parse_switch(switch))
+            else:
+                try:
+                    val = int(part, base=2)
+                except ValueError:
+                    raise InteractiveInterpreterException(f"Invalid mode value: {part}")
+                if val < 0 or val > ALL_MODES:
+                    raise InteractiveInterpreterException(f"Mode value outside valid range: {val}")
+                mode = val
+        return mode
+
+    def _parse_switch(self, c: str) -> int:
+        if c == 'l':
+            return LexMode
+        elif c == 'p':
+            return ParseMode
+        elif c == 'e':
+            return EvalMode
+        elif c == 'x':
+            return ExecMode
+        elif c == 'a':
+            return ALL_MODES
+        else:
+            raise InteractiveInterpreterException(f"Invalid mode switch specification: {c}")
 
     def _update_prompt(self):
         if self.multiline:
