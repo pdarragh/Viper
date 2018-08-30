@@ -378,18 +378,16 @@ def eval_pattern(ptrn: ns.Pattern, env: Environment, store: Store, val: Value) -
         # TODO: Implement this.
         raise NotImplementedError
     elif isinstance(ptrn, ns.SimpleParenPattern):
+        if len(ptrn.patterns) == 1:
+            # >>> (a) = 2
+            # >>> (a) = 3, 4
+            return eval_pattern(ptrn.patterns[0], env, store, val)
         if not isinstance(val, TupleVal):
-            if len(ptrn.patterns) == 1:
-                # >>> (a) = 2
-                return eval_pattern(ptrn.patterns[0], env, store, val)
-            # >>> (a, b, c) = 3
-            raise RuntimeError(f"Too many values to unpack into pattern.")
-        if len(ptrn.patterns) != len(val.vals):
-            if len(ptrn.patterns) == 1:
-                # >>> (a) = 2, 3, 4
-                return eval_pattern(ptrn.patterns[0], env, store, val)
-            # >>> (a, b, c) = 2, 3
+            # >>> (a, b) = 3
             raise RuntimeError(f"Not enough values to unpack into pattern.")
+        if len(ptrn.patterns) != len(val.vals):
+            # >>> (a, b, c) = 2, 3
+            raise RuntimeError(f"Incompatible number of values to unpack into pattern.")
         # >>> (a, b, c) = (2, 3, 4)
         for sub_pattern, sub_val in zip(ptrn.patterns, val.vals):
             env, store = eval_pattern(sub_pattern, env, store, sub_val)
