@@ -15,14 +15,14 @@ from typing import List, Type
 
 
 def _test_single_token(token: str, lexeme_type: Type[vl.Lexeme]):
-    lexemes = vl.Lexer.lex_token(token)
+    lexemes = vl.lex_token(token)
     assert len(lexemes) == 1
     assert lexemes[0] == lexeme_type(token)
 
 
 def _test_bad_single_token(token: str, intended_type: Type[vl.Lexeme]):
     try:
-        lexemes = vl.Lexer.lex_token(token)
+        lexemes = vl.lex_token(token)
     except vl.LexerError:
         assert True
     else:
@@ -35,7 +35,7 @@ def _test_bad_single_token(token: str, intended_type: Type[vl.Lexeme]):
 # COMMA
 
 def test_comma():
-    lexemes = vl.Lexer.lex_token(',')
+    lexemes = vl.lex_token(',')
     assert len(lexemes) == 1
     assert lexemes[0] == vl.COMMA
 
@@ -85,7 +85,7 @@ def test_bad_name(token: str):
 @pytest.mark.parametrize('token', [
     '_', '__', '___',
 ])
-def test_Underscore(token: str):
+def test_underscore(token: str):
     _test_single_token(token, vl.Underscore)
 
 
@@ -194,7 +194,7 @@ def test_commas(line: str, correct_lexemes: List[vl.Lexeme]):
       vl.Name('arg2'), vl.COMMA, vl.CLOSE_PAREN, vl.NEWLINE, vl.DEDENT, vl.ENDMARKER]),
 ])
 def test_multiple_lines(text: str, correct_lexemes: List[vl.Lexeme]):
-    assert vl.Lexer.lex_lines(text) == correct_lexemes
+    assert vl.lex_lines(text) == correct_lexemes
 
 
 ###############################################################################

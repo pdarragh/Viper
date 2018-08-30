@@ -495,13 +495,13 @@ def test_assign_stmt(lines: List[str], tree: AST):
     ('_',
      ns.SimpleAnonymousPattern()),
     ('(x: Foo, y: Bar)',
-     ns.SimpleParenPattern(ns.PatternList([
+     ns.SimpleParenPattern([
          ns.TypedVariablePattern(ns.VarId(vl.Name('x')), vl.Class('Foo')),
-         ns.TypedVariablePattern(ns.VarId(vl.Name('y')), vl.Class('Bar'))]))),
+         ns.TypedVariablePattern(ns.VarId(vl.Name('y')), vl.Class('Bar'))])),
     ('(_: Foo, y: Bar)',
-     ns.SimpleParenPattern(ns.PatternList([
+     ns.SimpleParenPattern([
          ns.TypedAnonymousPattern(vl.Class('Foo')),
-         ns.TypedVariablePattern(ns.VarId(vl.Name('y')), vl.Class('Bar'))]))),
+         ns.TypedVariablePattern(ns.VarId(vl.Name('y')), vl.Class('Bar'))])),
 ])
 def test_pattern(line: str, tree: AST):
     lexemes = lex_line(line)

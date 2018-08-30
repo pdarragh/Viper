@@ -7,7 +7,7 @@ import re
 from typing import List, Pattern, Union
 
 __all__ = [
-    'LexerError', 'lex_file', 'lex_lines', 'lex_line',
+    'LexerError', 'lex_file', 'lex_lines', 'lex_line', 'lex_token',
 ]
 
 # FIXME: Ambiguity between names with symbol endings and operators with those same symbols.
