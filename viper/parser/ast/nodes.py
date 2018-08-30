@@ -184,11 +184,6 @@ class TypedPattern(Pattern):
     pass
 
 
-class PatternList(AST):
-    def __init__(self, patterns: List[Pattern]):
-        self.patterns = patterns
-
-
 class Path(AST):
     def __init__(self, id: Id, parts: List[PathPart]):
         self.id = id
@@ -337,8 +332,8 @@ class SimpleFieldPattern(SimplePattern):
 
 
 class SimpleParenPattern(SimplePattern):
-    def __init__(self, pattern_list: PatternList):
-        self.pattern_list = pattern_list
+    def __init__(self, patterns: List[Pattern]):
+        self.patterns = patterns
 
 
 class ReturnStmt(PlainStmt):
