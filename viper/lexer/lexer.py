@@ -7,7 +7,7 @@ import re
 from typing import List, Pattern, Union
 
 __all__ = [
-    'LexerError', 'Lexer', 'lex_file', 'lex_lines', 'lex_line',
+    'LexerError', 'lex_file', 'lex_lines', 'lex_line',
 ]
 
 # FIXME: Ambiguity between names with symbol endings and operators with those same symbols.
@@ -59,140 +59,131 @@ class RegexMatcher:
         return self._match.group(grp)
 
 
-# Lexer errors.
 class LexerError(ViperError):
     pass
 
 
-# Lexer implementation.
-class Lexer:
-    @classmethod
-    def lex_file(cls, file: str) -> List[Lexeme]:
-        with open(file) as f:
-            text = f.read()
-        return cls.lex_lines(text)
+def lex_file(file: str) -> List[Lexeme]:
+    with open(file) as f:
+        text = f.read()
+    return lex_lines(text)
 
-    @classmethod
-    def lex_lines(cls, text: str) -> List[Lexeme]:
-        all_lexemes: List[Lexeme] = []
-        prev_indents = 0
-        lines = text.splitlines()
-        for i, line in enumerate(lines):
-            # Find the raw number of indentation levels for this line.
-            indent_match = RE_LEADING_INDENT.match(line)
-            if indent_match is None:  # pragma: no cover
-                raise LexerError(f"invalid line indentation given: '{line}'")
-            indentation, rest = indent_match.groups()
-            rest = rest.strip()
-            if not rest:
-                # Don't use blank lines to handle indentation.
-                continue
-            if rest.startswith('#'):
-                # Skip comments.
-                continue
-            lexemes = cls.lex_line(rest)
-            curr_indents = len(indentation) // INDENT_SIZE
-            # Determine whether we need to add indents, dedents, or neither.
-            indent_diff = curr_indents - prev_indents
-            prev_indents = curr_indents
-            if indent_diff > 0:
-                # This line is more indented than the previous line.
-                for _ in range(indent_diff):
-                    lexemes.insert(0, INDENT)
-                # Add a newline before all the indents.
-                lexemes.insert(0, NEWLINE)
-            elif indent_diff < 0:
-                # This line is less indented than the previous line, which means DEDENT tokens are needed.
-                for _ in range(abs(indent_diff)):
-                    lexemes.insert(0, DEDENT)
-                # Add a newline before the dedents.
-                lexemes.insert(0, NEWLINE)
-            else:
-                # We're at the same indentation level, so add neither.
-                lexemes.insert(0, NEWLINE)
-            # If this is the first line, remove the extraneous NEWLINE.
-            if i == 0:
-                del(lexemes[0])
-            # Add these lexemes to the list.
-            all_lexemes += lexemes
-        # At the end of the file, append necessary dedents, newline, and end-of-file tokens.
-        all_lexemes.append(NEWLINE)
-        for _ in range(prev_indents):
-            all_lexemes.append(DEDENT)
-        all_lexemes.append(ENDMARKER)
-        return all_lexemes
 
-    @classmethod
-    def lex_line(cls, line: str) -> List[Lexeme]:
-        lexemes = []
-        if not line:
-            return lexemes
-        for token in line.split():
-            for lexeme in cls.lex_token(token):
-                lexemes.append(lexeme)
-        return lexemes
-
-    @classmethod
-    def lex_token(cls, token: str) -> List[Lexeme]:
-        matcher = RegexMatcher(token)
-        lexemes = []
-        if not token:
-            return lexemes
-        elif matcher.fullmatch(RE_COMMA):
-            lexemes.append(COMMA)
-        elif matcher.fullmatch(RE_NUMBER):
-            lexemes.append(Number(matcher.group(0)))
-        elif matcher.fullmatch(RE_NAME):
-            text = matcher.group(0)
-            if text in RESERVED_NAMES:
-                lexemes.append(ReservedName(text))
-            else:
-                lexemes.append(Name(text))
-        elif matcher.fullmatch(RE_UNDERSCORE):
-            text = matcher.group(0)
-            lexemes.append(Underscore(text))
-        elif matcher.fullmatch(RE_CLASS):
-            text = matcher.group(0)
-            if text in RESERVED_CLASSES:
-                lexemes.append(ReservedClass(text))
-            else:
-                lexemes.append(Class(text))
-        elif matcher.fullmatch(RE_PARENS):
-            lexemes.append(OPEN_PAREN)
-            lexemes.append(CLOSE_PAREN)
-        elif matcher.fullmatch(RE_OPERATOR):
-            symbol = matcher.group(0)
-            if symbol == PERIOD.text:
-                lexemes.append(PERIOD)
-            elif symbol == EQUALS.text:
-                lexemes.append(EQUALS)
-            elif symbol == OPEN_PAREN.text:
-                lexemes.append(OPEN_PAREN)
-            elif symbol == CLOSE_PAREN.text:
-                lexemes.append(CLOSE_PAREN)
-            elif symbol == COLON.text:
-                lexemes.append(COLON)
-            elif symbol == L_ARROW.text:
-                lexemes.append(L_ARROW)
-            elif symbol == R_ARROW.text:
-                lexemes.append(R_ARROW)
-            elif symbol == ELLIPSIS.text:
-                lexemes.append(ELLIPSIS)
-            else:
-                lexemes.append(Operator(symbol))
-        elif matcher.fullmatch(RE_INFIX_COMMA):
-            lexemes.extend(cls.lex_token(matcher.group('left_val')))
-            lexemes.append(COMMA)
-            lexemes.extend(cls.lex_token(matcher.group('right_val')))
-        elif matcher.fullmatch(RE_INFIX_OP):
-            lexemes.extend(cls.lex_token(matcher.group('left_val')))
-            lexemes.extend(cls.lex_token(matcher.group('op')))
-            lexemes.extend(cls.lex_token(matcher.group('right_val')))
+def lex_lines(text: str) -> List[Lexeme]:
+    all_lexemes: List[Lexeme] = []
+    prev_indents = 0
+    lines = text.splitlines()
+    for i, line in enumerate(lines):
+        # Find the raw number of indentation levels for this line.
+        indent_match = RE_LEADING_INDENT.match(line)
+        if indent_match is None:  # pragma: no cover
+            raise LexerError(f"invalid line indentation given: '{line}'")
+        indentation, rest = indent_match.groups()
+        rest = rest.strip()
+        if not rest:
+            # Don't use blank lines to handle indentation.
+            continue
+        if rest.startswith('#'):
+            # Skip comments.
+            continue
+        lexemes = lex_line(rest)
+        curr_indents = len(indentation) // INDENT_SIZE
+        # Determine whether we need to add indents, dedents, or neither.
+        indent_diff = curr_indents - prev_indents
+        prev_indents = curr_indents
+        if indent_diff > 0:
+            # This line is more indented than the previous line.
+            for _ in range(indent_diff):
+                lexemes.insert(0, INDENT)
+            # Add a newline before all the indents.
+            lexemes.insert(0, NEWLINE)
+        elif indent_diff < 0:
+            # This line is less indented than the previous line, which means DEDENT tokens are needed.
+            for _ in range(abs(indent_diff)):
+                lexemes.insert(0, DEDENT)
+            # Add a newline before the dedents.
+            lexemes.insert(0, NEWLINE)
         else:
-            raise LexerError(f"invalid token: '{token}'")
+            # We're at the same indentation level, so add neither.
+            lexemes.insert(0, NEWLINE)
+        # If this is the first line, remove the extraneous NEWLINE.
+        if i == 0:
+            del(lexemes[0])
+        # Add these lexemes to the list.
+        all_lexemes += lexemes
+    # At the end of the file, append necessary dedents, newline, and end-of-file tokens.
+    all_lexemes.append(NEWLINE)
+    for _ in range(prev_indents):
+        all_lexemes.append(DEDENT)
+    all_lexemes.append(ENDMARKER)
+    return all_lexemes
+
+
+def lex_line(line: str) -> List[Lexeme]:
+    lexemes = []
+    if not line:
         return lexemes
+    for token in line.split():
+        for lexeme in lex_token(token):
+            lexemes.append(lexeme)
+    return lexemes
 
 
-lex_file = Lexer.lex_file
-lex_lines = Lexer.lex_lines
-lex_line = Lexer.lex_line
+def lex_token(token: str) -> List[Lexeme]:
+    matcher = RegexMatcher(token)
+    lexemes = []
+    if not token:
+        return lexemes
+    elif matcher.fullmatch(RE_COMMA):
+        lexemes.append(COMMA)
+    elif matcher.fullmatch(RE_NUMBER):
+        lexemes.append(Number(matcher.group(0)))
+    elif matcher.fullmatch(RE_NAME):
+        text = matcher.group(0)
+        if text in RESERVED_NAMES:
+            lexemes.append(ReservedName(text))
+        else:
+            lexemes.append(Name(text))
+    elif matcher.fullmatch(RE_UNDERSCORE):
+        text = matcher.group(0)
+        lexemes.append(Underscore(text))
+    elif matcher.fullmatch(RE_CLASS):
+        text = matcher.group(0)
+        if text in RESERVED_CLASSES:
+            lexemes.append(ReservedClass(text))
+        else:
+            lexemes.append(Class(text))
+    elif matcher.fullmatch(RE_PARENS):
+        lexemes.append(OPEN_PAREN)
+        lexemes.append(CLOSE_PAREN)
+    elif matcher.fullmatch(RE_OPERATOR):
+        symbol = matcher.group(0)
+        if symbol == PERIOD.text:
+            lexemes.append(PERIOD)
+        elif symbol == EQUALS.text:
+            lexemes.append(EQUALS)
+        elif symbol == OPEN_PAREN.text:
+            lexemes.append(OPEN_PAREN)
+        elif symbol == CLOSE_PAREN.text:
+            lexemes.append(CLOSE_PAREN)
+        elif symbol == COLON.text:
+            lexemes.append(COLON)
+        elif symbol == L_ARROW.text:
+            lexemes.append(L_ARROW)
+        elif symbol == R_ARROW.text:
+            lexemes.append(R_ARROW)
+        elif symbol == ELLIPSIS.text:
+            lexemes.append(ELLIPSIS)
+        else:
+            lexemes.append(Operator(symbol))
+    elif matcher.fullmatch(RE_INFIX_COMMA):
+        lexemes.extend(lex_token(matcher.group('left_val')))
+        lexemes.append(COMMA)
+        lexemes.extend(lex_token(matcher.group('right_val')))
+    elif matcher.fullmatch(RE_INFIX_OP):
+        lexemes.extend(lex_token(matcher.group('left_val')))
+        lexemes.extend(lex_token(matcher.group('op')))
+        lexemes.extend(lex_token(matcher.group('right_val')))
+    else:
+        raise LexerError(f"invalid token: '{token}'")
+    return lexemes
