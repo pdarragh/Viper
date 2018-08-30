@@ -43,7 +43,7 @@ class EvalExprResult(NamedTuple):
 
 
 class EvalLhsResult(NamedTuple):
-    maybe_env: Optional[Environment]
+    env: Environment
     store: Store
 
 
@@ -112,9 +112,7 @@ def eval_stmt(stmt: AST, env: Environment, store: Store) -> EvalStmtResult:
         # Evaluate right-hand side first.
         val, store = eval_expr(stmt.expr, env, store)
         # Pass the value to the left-hand side evaluation.
-        maybe_env, store = eval_lhs_expr(stmt.lhs, env, store, val)
-        if maybe_env is not None:
-            env = maybe_env
+        env, store = eval_lhs_expr(stmt.lhs, env, store, val)
         return EvalStmtResult(env, store, None)
     elif isinstance(stmt, ns.EmptyStmt):
         return EvalStmtResult(env, store, None)
@@ -356,29 +354,46 @@ def eval_pattern(ptrn: ns.Pattern, env: Environment, store: Store, val: Value) -
     :return: a tuple of a Maybe(env) (as an Environment or a None) and a store
     """
     if isinstance(ptrn, ns.TypedVariablePattern):
-        # TODO: Implement this.
-        raise NotImplementedError
+        # >>> x: Type = {val}
+        name = ptrn.id.id.text
+        env, store = bind_val(name, val, env, store)
+        return EvalLhsResult(env, store)
     elif isinstance(ptrn, ns.TypedAnonymousPattern):
-        # TODO: Implement this.
-        raise NotImplementedError
+        # >>> _: Type = {val}
+        return EvalLhsResult(env, store)
     elif isinstance(ptrn, ns.TypedFieldPattern):
+        # >>> foo.bar: Type = {val}
         # TODO: Implement this.
         raise NotImplementedError
     elif isinstance(ptrn, ns.SimpleVariablePattern):
+        # >>> x = {val}
         name = ptrn.id.id.text
         env, store = bind_val(name, val, env, store)
         return EvalLhsResult(env, store)
     elif isinstance(ptrn, ns.SimpleAnonymousPattern):
+        # >>> _ = {val}
         return EvalLhsResult(env, store)
     elif isinstance(ptrn, ns.SimpleFieldPattern):
+        # >>> foo.bar = {val}
         # TODO: Implement this.
         raise NotImplementedError
     elif isinstance(ptrn, ns.SimpleParenPattern):
-        # TODO: Implement this.
-        raise NotImplementedError
-    elif isinstance(ptrn, ns.PatternList):
-        # TODO: Implement this.
-        raise NotImplementedError
+        if not isinstance(val, TupleVal):
+            if len(ptrn.patterns) == 1:
+                # >>> (a) = 2
+                return eval_pattern(ptrn.patterns[0], env, store, val)
+            # >>> (a, b, c) = 3
+            raise RuntimeError(f"Too many values to unpack into pattern.")
+        if len(ptrn.patterns) != len(val.vals):
+            if len(ptrn.patterns) == 1:
+                # >>> (a) = 2, 3, 4
+                return eval_pattern(ptrn.patterns[0], env, store, val)
+            # >>> (a, b, c) = 2, 3
+            raise RuntimeError()
+        # >>> (a, b, c) = (2, 3, 4)
+        for sub_pattern, sub_val in zip(ptrn.patterns, val.vals):
+            env, store = eval_pattern(sub_pattern, env, store, sub_val)
+        return EvalLhsResult(env, store)
     else:
         raise NotImplementedError(f"No implementation for pattern of type: {type(ptrn).__name__}")
 
