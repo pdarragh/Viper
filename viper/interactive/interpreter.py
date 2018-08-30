@@ -76,10 +76,12 @@ class InteractiveInterpreter(cmd.Cmd):  # pragma: no cover
                 self.multiline = True
         elif line == ':}':
             if self.multiline:
-                # End multi-line processing.
-                self.multiline = False
                 # Interpret the result.
                 self._handle_input('\n'.join(self.lines))
+                # End multi-line processing.
+                self.multiline = False
+                self.lines = []
+                self._update_prompt()
             else:
                 raise InteractiveInterpreterException(f"Not currently in multiline mode.")
         else:
@@ -187,7 +189,7 @@ class InteractiveInterpreter(cmd.Cmd):  # pragma: no cover
 
     def _lex_text(self, text: str) -> List[vl.Lexeme]:
         if self.multiline:
-            return vl.lex_lines(text)
+            return [vl.NEWLINE, vl.INDENT] + vl.lex_lines(text)[:-1] + [vl.DEDENT]
         else:
             return vl.lex_line(text)
 
