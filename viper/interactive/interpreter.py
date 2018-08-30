@@ -77,14 +77,7 @@ class InteractiveInterpreter(cmd.Cmd):  # pragma: no cover
                 # End multi-line processing.
                 self.multiline = False
                 # Interpret the result.
-                lines = '\n'.join(self.lines)
-                lexemes = [vl.NEWLINE, vl.INDENT] + vl.lex_lines(lines)[:-1] + [vl.DEDENT]
-                parse = GRAMMAR.parse_rule(MULTILINE_INPUT_RULE, lexemes)
-                if isinstance(parse, NoParse):
-                    raise InteractiveInterpreterException(f"Could not parse multiline input: {repr(lines)}")
-                result = start_eval(parse.ast, env=self.env, store=self.store)
-                self.env = result.env
-                self.store = result.store
+                self._handle_lines(self.lines)
             else:
                 raise InteractiveInterpreterException(f"Not currently in multiline mode.")
         else:
@@ -170,6 +163,33 @@ class InteractiveInterpreter(cmd.Cmd):  # pragma: no cover
                 print(result.val)
             if mode <= EvalMode:
                 return
+
+        if mode & ExecMode:
+            self.env = result.env
+            self.store = result.store
+
+    def _handle_lines(self, lines: List[str], mode: InterpreterMode=None):
+        if mode is None:
+            mode = self.mode
+
+        lines = '\n'.join(lines)
+        lexemes = [vl.NEWLINE, vl.INDENT] + vl.lex_lines(lines)[:-1] + [vl.DEDENT]
+        if mode & LexMode:
+            print(lexemes)
+            if mode <= LexMode:
+                return
+
+        parse = GRAMMAR.parse_rule(MULTILINE_INPUT_RULE, lexemes)
+        if isinstance(parse, NoParse):
+            raise InteractiveInterpreterException(f"Could not parse multiline input: {repr(lines)}")
+        if mode & ParseMode:
+            print(ast_to_string(parse.ast))
+            if mode <= ParseMode:
+                return
+
+        result = start_eval(parse.ast, env=self.env, store=self.store)
+        if mode <= EvalMode:
+            return
 
         if mode & ExecMode:
             self.env = result.env
