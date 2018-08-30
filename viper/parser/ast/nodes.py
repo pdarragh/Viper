@@ -326,18 +326,18 @@ class SimpleVariablePattern(SimplePattern):
         self.id = id
 
 
+class SimpleAnonymousPattern(SimplePattern):
+    pass
+
+
 class SimpleFieldPattern(SimplePattern):
     def __init__(self, root: Expr, field: VarId):
         self.root = root
         self.field = field
 
 
-class SimpleAnonymousPattern(SimplePattern):
-    pass
-
-
 class SimpleParenPattern(SimplePattern):
-    def __init__(self, pattern_list: Optional[PatternList]):
+    def __init__(self, pattern_list: PatternList):
         self.pattern_list = pattern_list
 
 

@@ -90,7 +90,7 @@
 <simple_pattern>    ::= SimpleVariablePattern id:<var_id>
                       | SimpleAnonymousPattern '_'
                       | SimpleFieldPattern root:<expr> '.' field:<var_id>
-                      | SimpleParenPattern '(' pattern_list:<pattern_list>? ')'
+                      | SimpleParenPattern '(' pattern_list:<pattern_list> ')'
 <pattern_list>      ::= PatternList patterns:<pattern>&+{,}
 
 # PATHS
