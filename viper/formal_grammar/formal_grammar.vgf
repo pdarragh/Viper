@@ -32,7 +32,20 @@
 <func_def>          ::= FuncDef 'def' name:NAME '(' params:<parameter>&*{,} ')' '->' func_type:CLASS ':' body:<stmt_block>
 <parameter>         ::= Parameter external:NAME? internal:NAME ':' param_type:CLASS
 
-<class_def>         ::= ClassDef 'class' name:CLASS args:<arguments>? ':' body:<stmt_block>
+<class_def>         ::= ClassDef 'class' name:CLASS args:<class_arguments>? ':' body:<class_stmt_block>
+<class_arguments>   ::= ClassArguments '(' parents:CLASS&*{,} ')'
+<class_stmt_block>  ::= CompoundClassStmtBlock NEWLINE INDENT stmts:<class_stmt>+ DEDENT
+                      | SimpleEmptyClassStmt 'pass' NEWLINE
+                      | CompoundEmptyClassStmt NEWLINE INDENT 'pass' NEWLINE DEDENT
+                      | <class_stmt>
+<class_stmt>        ::= ClassVarDef modifier:<modifier> name:NAME ':' var_type:CLASS NEWLINE
+                      | ClassMethodDef modifier:<modifier> func:<func_def>
+<modifier>          ::= StaticModifier 'static' access:<access>?
+                      | NonstaticModifier access:<access>?
+<access>            ::= PublicAccess 'public'
+                      | PrivateAccess 'private'
+                      | ProtectedAccess 'protected'
+                      | ModuleAccess 'module'
 
 <interface_def>     ::= InterfaceDef 'interface' name:CLASS args:<arguments>? ':' body:<stmt_block>
 

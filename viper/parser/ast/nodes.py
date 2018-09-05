@@ -29,6 +29,23 @@ class Parameter(AST):
         self.param_type = param_type
 
 
+class ClassArguments(AST):
+    def __init__(self, parents: List[vl.Class]):
+        self.parents = parents
+
+
+class ClassStmtBlock(AST):
+    pass
+
+
+class Modifier(AST):
+    pass
+
+
+class Access(AST):
+    pass
+
+
 class StmtBlock(AST):
     pass
 
@@ -75,6 +92,10 @@ class ElseStmt(AST):
         self.else_body = else_body
 
 
+class ClassStmt(ClassStmtBlock):
+    pass
+
+
 class Expr(Term):
     pass
 
@@ -119,6 +140,40 @@ class SingleLine(SingleInput):
 
 
 class FileNewline(FileLine):
+    pass
+
+
+class SimpleEmptyClassStmt(ClassStmtBlock):
+    pass
+
+
+class CompoundEmptyClassStmt(ClassStmtBlock):
+    pass
+
+
+class StaticModifier(Modifier):
+    def __init__(self, access: Optional[Access]):
+        self.access = access
+
+
+class NonstaticModifier(Modifier):
+    def __init__(self, access: Optional[Access]):
+        self.access = access
+
+
+class PublicAccess(Access):
+    pass
+
+
+class PrivateAccess(Access):
+    pass
+
+
+class ProtectedAccess(Access):
+    pass
+
+
+class ModuleAccess(Access):
     pass
 
 
@@ -205,6 +260,18 @@ class SimpleStmt(Stmt):
         self.stmt = stmt
 
 
+class CompoundClassStmtBlock(ClassStmtBlock):
+    def __init__(self, stmts: List[ClassStmt]):
+        self.stmts = stmts
+
+
+class ClassVarDef(ClassStmt):
+    def __init__(self, modifier: Modifier, name: vl.Name, var_type: vl.Class):
+        self.modifier = modifier
+        self.name = name
+        self.var_type = var_type
+
+
 class SimpleStmtBlock(StmtBlock):
     def __init__(self, stmt: Stmt):
         self.stmt = stmt
@@ -234,7 +301,7 @@ class FuncDef(Definition):
 
 
 class ClassDef(Definition):
-    def __init__(self, name: vl.Class, args: Optional[Arguments], body: StmtBlock):
+    def __init__(self, name: vl.Class, args: Optional[ClassArguments], body: ClassStmtBlock):
         self.name = name
         self.args = args
         self.body = body
@@ -304,6 +371,12 @@ class ElifExpr(AST):
 class TestExprList(Expr):
     def __init__(self, tests: List[TestExpr]):
         self.tests = tests
+
+
+class ClassMethodDef(ClassStmt):
+    def __init__(self, modifier: Modifier, func: FuncDef):
+        self.modifier = modifier
+        self.func = func
 
 
 class NegatedTestExpr(NotTestExpr):

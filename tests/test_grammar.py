@@ -208,7 +208,7 @@ def test_func_def(line: str, tree: AST):
 
 @pytest.mark.parametrize('line,tree', [
     ('class Foo: pass',
-     ns.ClassDef(vl.Class('Foo'), None, ns.SimpleStmtBlock(ns.SimpleStmt(ns.EmptyStmt())))),
+     ns.ClassDef(vl.Class('Foo'), None, ns.SimpleEmptyClassStmt())),
 ])
 def test_class_def(line: str, tree: AST):
     lexemes = lex_line(line)
