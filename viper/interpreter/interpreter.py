@@ -251,7 +251,7 @@ def eval_expr(expr: AST, env: Environment, store: Store) -> EvalExprResult:
             if isinstance(trailer, ns.Call):
                 args, store = accumulate_values_from_exprs(trailer.args, env, store)
                 return eval_function_call(val, args, store)
-            elif isinstance(trailer, ns.Field):
+            elif isinstance(trailer, ns.FieldAccess):
                 # TODO: Implement this.
                 raise NotImplementedError
             else:
