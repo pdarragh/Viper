@@ -37,6 +37,7 @@ class InteractiveInterpreter(cmd.Cmd):  # pragma: no cover
         self.lines = []
         self.env = None
         self.store = None
+        self.handle_exceptions = True
 
     def cmdloop(self, intro=None):
         cont = True
@@ -51,7 +52,10 @@ class InteractiveInterpreter(cmd.Cmd):  # pragma: no cover
                 print()
                 cont = False
             except Exception as e:
-                self._handle_error(f"{type(e).__name__}: {str(e)}")
+                if self.handle_exceptions:
+                    self._handle_error(f"{type(e).__name__}: {str(e)}")
+                else:
+                    raise e
 
     def _handle_error(self, msg: str):
         print()
@@ -146,6 +150,16 @@ class InteractiveInterpreter(cmd.Cmd):  # pragma: no cover
                         print(f":set mode: {bin(self.mode)[2:].zfill(4)}")
                     else:
                         self.mode = self._parse_mode(remainder)
+                elif subcmd == 'exceptions':
+                    if remainder is None:
+                        print(f":set exceptions: {'on' if self.handle_exceptions else 'off'}")
+                    else:
+                        if remainder == 'on':
+                            self.handle_exceptions = True
+                        elif remainder == 'off':
+                            self.handle_exceptions = False
+                        else:
+                            raise InteractiveInterpreterException(f"Unsupported value for :set exceptions: {remainder}")
                 else:
                     raise InteractiveInterpreterException(f"Unsupported :set subcommand given: {subcmd}")
             else:
