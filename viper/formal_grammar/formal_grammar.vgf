@@ -34,9 +34,9 @@
 
 <class_def>         ::= ClassDef 'class' name:CLASS args:<class_arguments>? ':' body:<class_stmt_block>
 <class_arguments>   ::= ClassArguments '(' parents:CLASS&*{,} ')'
-<class_stmt_block>  ::= CompoundClassStmtBlock NEWLINE INDENT stmts:<class_stmt>+ DEDENT
-                      | SimpleEmptyClassStmt 'pass' NEWLINE
+<class_stmt_block>  ::= SimpleEmptyClassStmt 'pass' NEWLINE
                       | CompoundEmptyClassStmt NEWLINE INDENT 'pass' NEWLINE DEDENT
+                      | CompoundClassStmtBlock NEWLINE INDENT stmts:<class_stmt>+ DEDENT
                       | <class_stmt>
 <class_stmt>        ::= Field modifier:<modifier> name:NAME ':' var_type:CLASS NEWLINE
                       | Method modifier:<modifier> func:<func_def>
