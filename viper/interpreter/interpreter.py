@@ -134,6 +134,7 @@ def eval_stmt(stmt: AST, env: Environment, store: Store) -> EvalStmtResult:
     elif isinstance(stmt, ns.FuncDef):
         closure = CloVal(stmt.params, stmt.body, env)
         env, store = bind_val(stmt.name.text, closure, env, store)
+        closure.env = env  # Update the environment to support recursive definitions.
         return EvalStmtResult(env, store, None)
     elif isinstance(stmt, ns.ClassDef):
         # TODO: Implement this.
