@@ -125,14 +125,14 @@ def val_to_python(val: Value):
 
 
 def python_to_val(py) -> Value:
-    if isinstance(py, int):
-        return IntVal(str(py))
-    elif isinstance(py, float):
-        return FloatVal(str(py))
-    elif isinstance(py, bool):
+    if isinstance(py, bool):
         if py:
             return TrueVal()
         else:
             return FalseVal()
+    elif isinstance(py, int):
+        return IntVal(str(py))
+    elif isinstance(py, float):
+        return FloatVal(str(py))
     else:
         raise RuntimeError(f"Cannot convert native Python value to Value: {py}")  # TODO: Use custom error.
