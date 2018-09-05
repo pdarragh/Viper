@@ -38,8 +38,8 @@
                       | SimpleEmptyClassStmt 'pass' NEWLINE
                       | CompoundEmptyClassStmt NEWLINE INDENT 'pass' NEWLINE DEDENT
                       | <class_stmt>
-<class_stmt>        ::= ClassVarDef modifier:<modifier> name:NAME ':' var_type:CLASS NEWLINE
-                      | ClassMethodDef modifier:<modifier> func:<func_def>
+<class_stmt>        ::= Field modifier:<modifier> name:NAME ':' var_type:CLASS NEWLINE
+                      | Method modifier:<modifier> func:<func_def>
 <modifier>          ::= StaticModifier 'static' access:<access>?
                       | NonstaticModifier access:<access>?
 <access>            ::= PublicAccess 'public'
@@ -89,7 +89,7 @@
                       | TrueAtom 'true'
                       | FalseAtom 'false'
 <trailer>           ::= Call '(' args:<test_expr>&*{,} ')'
-                      | Field '.' field:NAME
+                      | FieldAccess '.' field:NAME
 
 <expr_block>        ::= SimpleExprBlock expr:<expr> NEWLINE
                       | IndentedExprBlock NEWLINE INDENT expr:<expr> NEWLINE DEDENT

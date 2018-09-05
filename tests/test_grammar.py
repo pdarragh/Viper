@@ -53,11 +53,11 @@ def test_atom(line: str, tree: AST):
     ('foo',
      ns.AtomExpr(ns.NameAtom(vl.Name('foo')), [])),
     ('foo.bar',
-     ns.AtomExpr(ns.NameAtom(vl.Name('foo')), [ns.Field(vl.Name('bar'))])),
+     ns.AtomExpr(ns.NameAtom(vl.Name('foo')), [ns.FieldAccess(vl.Name('bar'))])),
     ('foo.bar.baz',
-     ns.AtomExpr(ns.NameAtom(vl.Name('foo')), [ns.Field(vl.Name('bar')), ns.Field(vl.Name('baz'))])),
+     ns.AtomExpr(ns.NameAtom(vl.Name('foo')), [ns.FieldAccess(vl.Name('bar')), ns.FieldAccess(vl.Name('baz'))])),
     ('foo.bar(baz)',
-     ns.AtomExpr(ns.NameAtom(vl.Name('foo')), [ns.Field(vl.Name('bar')),
+     ns.AtomExpr(ns.NameAtom(vl.Name('foo')), [ns.FieldAccess(vl.Name('bar')),
                                                ns.Call([ns.TestExpr(ns.OrTestExpr([ns.AndTestExpr([
                                                    ns.NotNegatedTestExpr(ns.OpExpr(None,
                                                                                    ns.AtomExpr(
@@ -66,7 +66,7 @@ def test_atom(line: str, tree: AST):
                                                                                    None))])]))])])),
     ('foo.bar(baz, qux)',
      ns.AtomExpr(ns.NameAtom(vl.Name('foo')), [
-         ns.Field(vl.Name('bar')),
+         ns.FieldAccess(vl.Name('bar')),
          ns.Call([
              ns.TestExpr(ns.OrTestExpr([ns.AndTestExpr([ns.NotNegatedTestExpr(
                  ns.OpExpr(None,
@@ -80,7 +80,7 @@ def test_atom(line: str, tree: AST):
                            None))])]))])])),
     ('foo.bar(baz, qux.quum())',
      ns.AtomExpr(ns.NameAtom(vl.Name('foo')), [
-         ns.Field(vl.Name('bar')),
+         ns.FieldAccess(vl.Name('bar')),
          ns.Call([
              ns.TestExpr(ns.OrTestExpr([ns.AndTestExpr([ns.NotNegatedTestExpr(
                  ns.OpExpr(None,
@@ -89,11 +89,11 @@ def test_atom(line: str, tree: AST):
                            None))])])),
              ns.TestExpr(ns.OrTestExpr([ns.AndTestExpr([ns.NotNegatedTestExpr(
                  ns.OpExpr(None,
-                           ns.AtomExpr(ns.NameAtom(vl.Name('qux')), [ns.Field(vl.Name('quum')), ns.Call([])]),
+                           ns.AtomExpr(ns.NameAtom(vl.Name('qux')), [ns.FieldAccess(vl.Name('quum')), ns.Call([])]),
                            [],
                            None))])]))])])),
     ('2.foo',
-     ns.AtomExpr(ns.IntAtom(vl.Int('2')), [ns.Field(vl.Name('foo'))])),
+     ns.AtomExpr(ns.IntAtom(vl.Int('2')), [ns.FieldAccess(vl.Name('foo'))])),
 ])
 def test_expr(line: str, tree: AST):
     lexemes = lex_line(line)

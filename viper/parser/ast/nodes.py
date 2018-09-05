@@ -204,7 +204,7 @@ class FalseAtom(Atom):
     pass
 
 
-class Field(Trailer):
+class FieldAccess(Trailer):
     def __init__(self, field: vl.Name):
         self.field = field
 
@@ -265,7 +265,7 @@ class CompoundClassStmtBlock(ClassStmtBlock):
         self.stmts = stmts
 
 
-class ClassVarDef(ClassStmt):
+class Field(ClassStmt):
     def __init__(self, modifier: Modifier, name: vl.Name, var_type: vl.Class):
         self.modifier = modifier
         self.name = name
@@ -373,7 +373,7 @@ class TestExprList(Expr):
         self.tests = tests
 
 
-class ClassMethodDef(ClassStmt):
+class Method(ClassStmt):
     def __init__(self, modifier: Modifier, func: FuncDef):
         self.modifier = modifier
         self.func = func
