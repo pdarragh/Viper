@@ -50,10 +50,10 @@ class CloVal(Value):
         self.env = env
 
     def __repr__(self) -> str:
-        return f"CloVal(({', '.join(map(lambda p: p.internal, self.params))}), {self.env})"
+        return f"CloVal(({', '.join(map(lambda p: str(p.internal), self.params))}), {self.env})"
 
     def __str__(self) -> str:
-        return 'λ(' + ', '.join(map(lambda p: p.internal, self.params)) + ')'
+        return 'λ(' + ', '.join(map(lambda p: str(p.internal), self.params)) + ')'
 
 
 class ForeignCloVal(Value):
