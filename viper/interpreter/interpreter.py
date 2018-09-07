@@ -137,8 +137,78 @@ def eval_stmt(stmt: AST, env: Environment, store: Store) -> EvalStmtResult:
         closure.env = env  # Update the environment to support recursive definitions.
         return EvalStmtResult(env, store, None)
     elif isinstance(stmt, ns.ClassDef):
-        # TODO: Implement this.
-        raise NotImplementedError
+        env, store = bind_val(stmt.name.text, BottomVal(), env, store)
+
+        parents = []
+        static_fields = {}
+        static_methods = {}
+        instance_fields = []
+        instance_methods = []
+
+        def get_access(access: ns.Access) -> Access:
+            if access is None:
+                return Access.PUBLIC
+            if isinstance(access, ns.PublicAccess):
+                return Access.PUBLIC
+            elif isinstance(access, ns.ModuleAccess):
+                return Access.MODULE
+            elif isinstance(access, ns.ProtectedAccess):
+                return Access.PROTECTED
+            elif isinstance(access, ns.PrivateAccess):
+                return Access.PRIVATE
+            else:
+                raise NotImplementedError(f"No implementation for access of type: {type(access).__name__}")
+
+        def handle_field(field: ns.Field):
+            modifier = field.modifier
+            access = get_access(modifier.access)
+            if isinstance(modifier, ns.StaticModifier):
+                nonlocal store
+                addr = store.next_addr
+                store = extend_store(store, BottomVal())
+                static_fields[field.name.text] = StaticField(addr, access)
+            elif isinstance(modifier, ns.NonstaticModifier):
+                instance_fields.append(InstanceField(field.name, access))
+            else:
+                raise NotImplementedError(f"No implementation for field modifier of type: {type(modifier).__name__}")
+
+        def handle_method(method: ns.Method):
+            modifier = method.modifier
+            access = get_access(modifier.access)
+            if isinstance(modifier, ns.StaticModifier):
+                nonlocal store
+                addr = store.next_addr
+                store = extend_store(store, CloVal(method.func.params, method.func.body, env))
+                static_methods[method.func.name.text] = StaticMethod(addr, access)
+            elif isinstance(modifier, ns.NonstaticModifier):
+                instance_methods.append(InstanceMethod(method.func, access))
+            else:
+                raise NotImplementedError(f"No implementation for method modifier of type: {type(modifier).__name__}")
+
+        if stmt.args is not None:
+            parents = stmt.args.parents
+        if isinstance(stmt.body, ns.SimpleEmptyClassStmt):
+            pass
+        elif isinstance(stmt.body, ns.CompoundEmptyClassStmt):
+            pass
+        elif isinstance(stmt.body, ns.CompoundClassStmtBlock):
+            for sub_stmt in stmt.body.stmts:
+                if isinstance(sub_stmt, ns.Field):
+                    handle_field(sub_stmt)
+                elif isinstance(sub_stmt, ns.Method):
+                    handle_method(sub_stmt)
+                else:
+                    raise NotImplementedError(f"No implementation for class body sub-statement of type: {type(sub_stmt).__name__}")
+        elif isinstance(stmt.body, ns.Field):
+            handle_field(stmt.body)
+        elif isinstance(stmt.body, ns.Method):
+            handle_method(stmt.body)
+        else:
+            raise NotImplementedError(f"No implementation for class body of type: {type(stmt.body).__name__}")
+
+        class_decl = ClassDeclVal(parents, static_fields, static_methods, instance_fields, instance_methods, env)
+        env, store = bind_val(stmt.name.text, class_decl, env, store)  # Re-bind with new value.
+        return EvalStmtResult(env, store, None)
     elif isinstance(stmt, ns.InterfaceDef):
         # TODO: Implement this.
         raise NotImplementedError

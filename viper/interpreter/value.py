@@ -1,9 +1,31 @@
-from .environment import Environment
+from .access import *
+from .environment import Address, Environment
 
-from viper.parser.ast.nodes import AST, Parameter
+from viper.lexer import Class
+from viper.parser.ast.nodes import AST, Parameter, FuncDef
 
 from inspect import signature
-from typing import Callable, List
+from typing import Callable, Dict, List, NamedTuple
+
+
+class StaticField(NamedTuple):
+    addr: Address
+    access: Access
+
+
+class StaticMethod(NamedTuple):
+    addr: Address
+    access: Access
+
+
+class InstanceField(NamedTuple):
+    name: str
+    access: Access
+
+
+class InstanceMethod(NamedTuple):
+    func: FuncDef
+    access: Access
 
 
 class Value:
@@ -67,6 +89,25 @@ class ForeignCloVal(Value):
 
     def __str__(self) -> str:
         return 'pyλ(' + ', '.join(self.params) + ')'
+
+
+class ClassDeclVal(Value):
+    def __init__(self, parents: List[Class],
+                 static_fields: Dict[str, StaticField], static_methods: Dict[str, StaticMethod],
+                 instance_fields: List[InstanceField], instance_methods: List[InstanceMethod],
+                 env: Environment):
+        self.parents = list(map(lambda c: c.text, parents))
+        self.static_fields = static_fields
+        self.static_methods = static_methods
+        self.instance_fields = instance_fields
+        self.instance_methods = instance_methods
+        self.env = env
+
+
+class FieldVal(Value):
+    def __init__(self, address: Address, access: Access=Access.PUBLIC):
+        self.address = address
+        self.access = access
 
 
 class BoolVal(Value):
