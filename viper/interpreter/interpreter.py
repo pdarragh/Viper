@@ -338,6 +338,8 @@ def eval_expr(expr: AST, env: Environment, store: Store) -> EvalExprResult:
             return EvalExprResult(store[env[name]], store)
         else:
             raise RuntimeError(f"No such name in environment: {name}")
+    elif isinstance(expr, ns.ClassAtom):
+        raise NotImplementedError
     elif isinstance(expr, ns.IntAtom):
         return EvalExprResult(IntVal(expr.num.text), store)
     elif isinstance(expr, ns.FloatAtom):

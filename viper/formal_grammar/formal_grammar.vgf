@@ -83,6 +83,7 @@
 <atom_expr>         ::= AtomExpr atom:<atom> trailers:<trailer>*
 <atom>              ::= ParenAtom '(' tests:<test_expr_list>? ')'
                       | NameAtom name:NAME
+                      | ClassAtom name:CLASS
                       | IntAtom num:INT
                       | FloatAtom num:FLOAT
                       | EllipsisAtom '...'

@@ -182,6 +182,11 @@ class NameAtom(Atom):
         self.name = name
 
 
+class ClassAtom(Atom):
+    def __init__(self, name: vl.Class):
+        self.name = name
+
+
 class IntAtom(Atom):
     def __init__(self, num: vl.Int):
         self.num = num
