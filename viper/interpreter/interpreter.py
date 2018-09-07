@@ -320,10 +320,20 @@ def eval_expr(expr: AST, env: Environment, store: Store) -> EvalExprResult:
         for trailer in expr.trailers:
             if isinstance(trailer, ns.Call):
                 args, store = accumulate_values_from_exprs(trailer.args, env, store)
-                return eval_function_call(val, args, store)
+                val, store = eval_function_call(val, args, store)
             elif isinstance(trailer, ns.FieldAccess):
-                # TODO: Implement this.
-                raise NotImplementedError
+                if isinstance(val, ClassDeclVal):
+                    name = trailer.field.text
+                    if name in val.static_fields:
+                        field = val.static_fields[name]
+                        val = store[field.addr]
+                    elif name in val.static_methods:
+                        method = val.static_methods[name]
+                        val = store[method.addr]
+                    else:
+                        raise RuntimeError(f"No such field in class: {name}")
+                else:
+                    raise NotImplementedError(f"No implementation for field access in value of type: {type(val).__name__}")
             else:
                 raise NotImplementedError(f"No implementation for trailer of type: {type(trailer).__name__}")
         return EvalExprResult(val, store)
