@@ -322,18 +322,8 @@ def eval_expr(expr: AST, env: Environment, store: Store) -> EvalExprResult:
                 args, store = accumulate_values_from_exprs(trailer.args, env, store)
                 val, store = eval_function_call(val, args, store)
             elif isinstance(trailer, ns.FieldAccess):
-                if isinstance(val, ClassDeclVal):
-                    name = trailer.field.text
-                    if name in val.static_fields:
-                        field = val.static_fields[name]
-                        val = store[field.addr]
-                    elif name in val.static_methods:
-                        method = val.static_methods[name]
-                        val = store[method.addr]
-                    else:
-                        raise RuntimeError(f"No such field in class: {name}")
-                else:
-                    raise NotImplementedError(f"No implementation for field access in value of type: {type(val).__name__}")
+                addr = _eval_field_lookup(val, trailer.field.text)
+                val = store[addr]
             else:
                 raise NotImplementedError(f"No implementation for trailer of type: {type(trailer).__name__}")
         return EvalExprResult(val, store)
@@ -432,6 +422,20 @@ def _eval_foreign_function_call(clo: ForeignCloVal, args: List[Value], store: St
     return EvalExprResult(val, store)
 
 
+def _eval_field_lookup(val: Value, field: str) -> Address:
+    if isinstance(val, ClassDeclVal):
+        if field in val.static_fields:
+            field = val.static_fields[field]
+            return field.addr
+        elif field in val.static_methods:
+            method = val.static_methods[field]
+            return method.addr
+        else:
+            raise RuntimeError(f"No such field in class: {field}")
+    else:
+        raise RuntimeError(f"Cannot perform field lookup in value of type: {type(val).__name__}")
+
+
 def eval_pattern(ptrn: ns.Pattern, env: Environment, store: Store, val: Value) -> EvalLhsResult:
     """
     Binds a value to a pattern, if the value's type and the pattern's shape align.
@@ -464,8 +468,10 @@ def eval_pattern(ptrn: ns.Pattern, env: Environment, store: Store, val: Value) -
         return EvalLhsResult(env, store)
     elif isinstance(ptrn, ns.SimpleFieldPattern):
         # >>> foo.bar = {val}
-        # TODO: Implement this.
-        raise NotImplementedError
+        class_val, store = eval_expr(ptrn.root, env, store)
+        addr = _eval_field_lookup(class_val, ptrn.field.id.text)
+        store = extend_store(store, val, addr)
+        return EvalLhsResult(env, store)
     elif isinstance(ptrn, ns.SimpleParenPattern):
         if len(ptrn.patterns) == 1:
             # >>> (a) = 2
