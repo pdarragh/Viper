@@ -456,8 +456,10 @@ def eval_pattern(ptrn: ns.Pattern, env: Environment, store: Store, val: Value) -
         return EvalLhsResult(env, store)
     elif isinstance(ptrn, ns.TypedFieldPattern):
         # >>> foo.bar: Type = {val}
-        # TODO: Implement this.
-        raise NotImplementedError
+        class_val, store = eval_expr(ptrn.root, env, store)
+        addr = _eval_field_lookup(class_val, ptrn.field.id.text)
+        store = extend_store(store, val, addr)
+        return EvalLhsResult(env, store)
     elif isinstance(ptrn, ns.SimpleVariablePattern):
         # >>> x = {val}
         name = ptrn.id.id.text
