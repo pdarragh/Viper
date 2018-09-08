@@ -104,12 +104,6 @@ class ClassDeclVal(Value):
         self.env = env
 
 
-class FieldVal(Value):
-    def __init__(self, address: Address, access: Access=Access.PUBLIC):
-        self.address = address
-        self.access = access
-
-
 class BoolVal(Value):
     def __repr__(self) -> str:
         return "BoolVal"
