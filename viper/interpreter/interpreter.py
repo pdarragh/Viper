@@ -166,9 +166,9 @@ def eval_stmt(stmt: AST, env: Environment, store: Store) -> EvalStmtResult:
                 nonlocal store
                 addr = store.next_addr
                 store = extend_store(store, BottomVal())
-                static_fields[field.name.text] = StaticField(addr, access)
+                static_fields[field.name.text] = InstantiatedField(addr, access)
             elif isinstance(modifier, ns.NonstaticModifier):
-                instance_fields.append(InstanceField(field.name, access))
+                instance_fields.append(UninstantiatedField(field.name.text, access))
             else:
                 raise NotImplementedError(f"No implementation for field modifier of type: {type(modifier).__name__}")
 
@@ -179,9 +179,9 @@ def eval_stmt(stmt: AST, env: Environment, store: Store) -> EvalStmtResult:
                 nonlocal store
                 addr = store.next_addr
                 store = extend_store(store, CloVal(method.func.params, method.func.body, env))
-                static_methods[method.func.name.text] = StaticMethod(addr, access)
+                static_methods[method.func.name.text] = InstantiatedMethod(addr, access)
             elif isinstance(modifier, ns.NonstaticModifier):
-                instance_methods.append(InstanceMethod(method.func, access))
+                instance_methods.append(UninstantiatedMethod(method.func, access))
             else:
                 raise NotImplementedError(f"No implementation for method modifier of type: {type(modifier).__name__}")
 
@@ -388,6 +388,8 @@ def eval_function_call(val: Value, args: List[Value], store: Store) -> EvalExprR
         return _eval_function_call(val, args, store)
     elif isinstance(val, ForeignCloVal):
         return _eval_foreign_function_call(val, args, store)
+    elif isinstance(val, ClassDeclVal):
+        return _eval_class_instantiation(val, args, store)
     else:
         raise RuntimeError(f"Cannot apply arguments to non-closure value of type: {type(val).__name__}")  # TODO: Use a custom error.
 
@@ -422,6 +424,31 @@ def _eval_foreign_function_call(clo: ForeignCloVal, args: List[Value], store: St
     return EvalExprResult(val, store)
 
 
+def _eval_class_instantiation(cls: ClassDeclVal, args: List[Value], store: Store) -> EvalExprResult:
+    if len(cls.instance_fields) != len(args):
+        raise RuntimeError(f"Class instantiation expected {len(cls.instance_fields)} arguments but received {len(args)}")  # TODO: Use a custom error.
+    # Initialize the fields.
+    instance_fields = {}
+    for i in range(len(cls.instance_fields)):
+        # TODO: It is assumed that the args and fields are in the same order. Validate this assumption.
+        field = cls.instance_fields[i]
+        arg = args[i]
+        addr = store.next_addr
+        store = extend_store(store, arg)
+        instance_fields[field.name] = InstantiatedField(addr, field.access)
+    # Allocate each method.
+    instance_methods = {}
+    for method in cls.instance_methods:
+        func = method.func
+        addr = store.next_addr
+        closure = CloVal(func.params, func.body, cls.env)
+        store = extend_store(store, closure)
+        instance_methods[func.name.text] = InstantiatedMethod(addr, method.access)
+    # Create the instance.
+    instance = ClassInstanceVal(cls, instance_fields, instance_methods)
+    return EvalExprResult(instance, store)
+
+
 def _eval_field_lookup(val: Value, field: str) -> Address:
     if isinstance(val, ClassDeclVal):
         if field in val.static_fields:
@@ -432,6 +459,15 @@ def _eval_field_lookup(val: Value, field: str) -> Address:
             return method.addr
         else:
             raise RuntimeError(f"No such field in class: {field}")
+    elif isinstance(val, ClassInstanceVal):
+        if field in val.instance_fields:
+            field = val.instance_fields[field]
+            return field.addr
+        elif field in val.instance_methods:
+            method = val.instance_methods[field]
+            return method.addr
+        else:
+            return _eval_field_lookup(val.super, field)
     else:
         raise RuntimeError(f"Cannot perform field lookup in value of type: {type(val).__name__}")
 

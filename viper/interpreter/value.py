@@ -8,22 +8,22 @@ from inspect import signature
 from typing import Callable, Dict, List, NamedTuple
 
 
-class StaticField(NamedTuple):
+class InstantiatedField(NamedTuple):
     addr: Address
     access: Access
 
 
-class StaticMethod(NamedTuple):
+class InstantiatedMethod(NamedTuple):
     addr: Address
     access: Access
 
 
-class InstanceField(NamedTuple):
+class UninstantiatedField(NamedTuple):
     name: str
     access: Access
 
 
-class InstanceMethod(NamedTuple):
+class UninstantiatedMethod(NamedTuple):
     func: FuncDef
     access: Access
 
@@ -93,8 +93,8 @@ class ForeignCloVal(Value):
 
 class ClassDeclVal(Value):
     def __init__(self, parents: List[Class],
-                 static_fields: Dict[str, StaticField], static_methods: Dict[str, StaticMethod],
-                 instance_fields: List[InstanceField], instance_methods: List[InstanceMethod],
+                 static_fields: Dict[str, InstantiatedField], static_methods: Dict[str, InstantiatedMethod],
+                 instance_fields: List[UninstantiatedField], instance_methods: List[UninstantiatedMethod],
                  env: Environment):
         self.parents = list(map(lambda c: c.text, parents))
         self.static_fields = static_fields
@@ -102,6 +102,26 @@ class ClassDeclVal(Value):
         self.instance_fields = instance_fields
         self.instance_methods = instance_methods
         self.env = env
+
+    def __repr__(self) -> str:
+        return f"ClassDeclVal"
+
+    def __str__(self) -> str:
+        return f"ClassDeclVal"
+
+
+class ClassInstanceVal(Value):
+    def __init__(self, cls: ClassDeclVal, instance_fields: Dict[str, InstantiatedField],
+                 instance_methods: Dict[str, InstantiatedMethod]):
+        self.super = cls
+        self.instance_fields = instance_fields
+        self.instance_methods = instance_methods
+
+    def __repr__(self) -> str:
+        return f"ClassInstanceVal"
+
+    def __str__(self) -> str:
+        return f"ClassInstanceVal"
 
 
 class BoolVal(Value):
