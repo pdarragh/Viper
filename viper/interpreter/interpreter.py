@@ -132,9 +132,9 @@ def eval_stmt(stmt: AST, env: Environment, store: Store) -> EvalStmtResult:
         else:
             raise RuntimeError(f"Not a boolean value: {val}")  # TODO: Use a custom error.
     elif isinstance(stmt, ns.FuncDef):
+        env, store = bind_val(stmt.name.text, BottomVal(), env, store)
         closure = CloVal(stmt.params, stmt.body, env)
-        env, store = bind_val(stmt.name.text, closure, env, store)
-        closure.env = env  # Update the environment to support recursive definitions.
+        env, store = bind_val(stmt.name.text, closure, env, store)  # Re-bind with new value.
         return EvalStmtResult(env, store, None)
     elif isinstance(stmt, ns.ClassDef):
         env, store = bind_val(stmt.name.text, BottomVal(), env, store)
