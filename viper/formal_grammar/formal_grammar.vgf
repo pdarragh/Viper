@@ -86,6 +86,7 @@
                       | ClassAtom name:CLASS
                       | IntAtom num:INT
                       | FloatAtom num:FLOAT
+                      | StringAtom string:STRING
                       | EllipsisAtom '...'
                       | TrueAtom 'true'
                       | FalseAtom 'false'

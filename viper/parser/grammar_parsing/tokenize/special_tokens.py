@@ -18,6 +18,7 @@ R_ARROW = GrammarToken(vl.RightArrow, vl.R_ARROW.text)
 ELLIPSIS = GrammarToken(vl.Ellipsis, vl.ELLIPSIS.text)
 INT = GrammarToken(vl.Int)
 FLOAT = GrammarToken(vl.Float)
+STRING = GrammarToken(vl.String)
 NAME = GrammarToken(vl.Name)
 UNDERSCORE = GrammarToken(vl.Underscore)
 CLASS = GrammarToken(vl.Class)
@@ -49,6 +50,7 @@ SPECIAL_TOKENS = {
     '...':         ELLIPSIS,
     'INT':         INT,
     'FLOAT':       FLOAT,
+    'STRING':      STRING,
     'NAME':        NAME,
     'UNDERSCORE':  UNDERSCORE,
     '_':           UNDERSCORE,

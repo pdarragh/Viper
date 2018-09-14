@@ -348,6 +348,8 @@ def eval_expr(expr: AST, env: Environment, store: Store) -> EvalExprResult:
         return EvalExprResult(IntVal(expr.num.text), store)
     elif isinstance(expr, ns.FloatAtom):
         return EvalExprResult(FloatVal(expr.num.text), store)
+    elif isinstance(expr, ns.StringAtom):
+        return EvalExprResult(StringVal(expr.string.text), store)
     elif isinstance(expr, ns.EllipsisAtom):
         return EvalExprResult(EllipsisVal(), store)
     elif isinstance(expr, ns.TrueAtom):

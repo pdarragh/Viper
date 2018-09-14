@@ -197,6 +197,11 @@ class FloatAtom(Atom):
         self.num = num
 
 
+class StringAtom(Atom):
+    def __init__(self, string: vl.String):
+        self.string = string
+
+
 class EllipsisAtom(Atom):
     pass
 

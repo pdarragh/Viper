@@ -12,7 +12,6 @@ __all__ = [
 
 # FIXME: Ambiguity between names with symbol endings and operators with those same symbols.
 # FIXME: Ambiguity between function call and postfix Operator `()`
-# TODO: Handle strings.
 # TODO: Determine whether parentheses should be special or should be considered individual operators.
 # TODO: Investigate using built-in regex magic parser:
 #         http://code.activestate.com/recipes/457664-hidden-scanner-functionality-in-re-module/
@@ -28,6 +27,7 @@ RE_FLOAT = re.compile(r'(?:-?\.\d+(?:[eE][+-]?\d+)?)'       # (-).42 | (-).42e-8
                       r'(?:-?\d+[eE][+-]?\d+)'              # (-)42e3
                       r'|'
                       r'(?:-?\d+\.\d*(?:[eE][+-]?\d+)?)')   # (-)42.7e2 | (-)42.e9 | (-)42. | (-)42.3e-8
+RE_STRING = re.compile(r'(?<!\\)\"((?:[^\"]|\\\")*[^\\])\"')
 RE_NAME = re.compile(r'(?:_*[a-z][_a-zA-Z0-9]*(?:-[_a-zA-Z0-9]+)*[!@$%^&*?]?)')
 RE_UNDERSCORE = re.compile(r'_+')
 RE_CLASS = re.compile(r'[A-Z][_a-zA-Z0-9]*(?:-[_a-zA-Z0-9]+)*')
@@ -139,6 +139,8 @@ def lex_token(token: str) -> List[Lexeme]:
         lexemes.append(Int(matcher.group(0)))
     elif matcher.fullmatch(RE_FLOAT):
         lexemes.append(Float(matcher.group(0)))
+    elif matcher.fullmatch(RE_STRING):
+        lexemes.append(String(matcher.group(1)))
     elif matcher.fullmatch(RE_NAME):
         text = matcher.group(0)
         if text in RESERVED_NAMES:

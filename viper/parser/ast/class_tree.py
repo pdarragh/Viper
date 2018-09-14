@@ -19,10 +19,11 @@ ProdDict = Dict[str, str]
 
 
 SPECIAL_TYPES = {
-    'NAME': 'vl.Name',
-    'CLASS': 'vl.Class',
-    'INT': 'vl.Int',
-    'FLOAT': 'vl.Float',
+    'NAME':     'vl.Name',
+    'CLASS':    'vl.Class',
+    'INT':      'vl.Int',
+    'FLOAT':    'vl.Float',
+    'STRING':   'vl.String',
     'OPERATOR': 'vl.Operator',
 }
 

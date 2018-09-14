@@ -114,6 +114,10 @@ class Float(Lexeme):
     pass
 
 
+class String(Lexeme):
+    pass
+
+
 class Name(Lexeme):
     pass
 

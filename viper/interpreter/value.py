@@ -43,26 +43,27 @@ class TupleVal(Value):
         return '(' + ', '.join(map(str, self.vals)) + ')'
 
 
-class IntVal(Value):
+class SimpleValue(Value):
     def __init__(self, val: str):
         self.val = val
 
     def __repr__(self) -> str:
-        return f"IntVal({self.val})"
+        return f"{type(self).__name__}({self.val})"
 
     def __str__(self) -> str:
         return str(self.val)
 
 
-class FloatVal(Value):
-    def __init__(self, val: str):
-        self.val = val
+class IntVal(SimpleValue):
+    pass
 
-    def __repr__(self) -> str:
-        return f"FloatVal({self.val})"
 
-    def __str__(self) -> str:
-        return str(self.val)
+class FloatVal(SimpleValue):
+    pass
+
+
+class StringVal(SimpleValue):
+    pass
 
 
 class CloVal(Value):
