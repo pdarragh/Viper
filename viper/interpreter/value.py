@@ -63,7 +63,8 @@ class FloatVal(SimpleValue):
 
 
 class StringVal(SimpleValue):
-    pass
+    def __str__(self) -> str:
+        return '"' + super().__str__() + '"'
 
 
 class CloVal(Value):
@@ -172,6 +173,8 @@ def val_to_python(val: Value):
         return int(val.val)
     elif isinstance(val, FloatVal):
         return float(val.val)
+    elif isinstance(val, StringVal):
+        return str(val.val)
     elif isinstance(val, TrueVal):
         return True
     elif isinstance(val, FalseVal):
@@ -181,7 +184,9 @@ def val_to_python(val: Value):
 
 
 def python_to_val(py) -> Value:
-    if isinstance(py, bool):
+    if py is None:
+        return UnitVal()
+    elif isinstance(py, bool):
         if py:
             return TrueVal()
         else:
@@ -190,5 +195,14 @@ def python_to_val(py) -> Value:
         return IntVal(str(py))
     elif isinstance(py, float):
         return FloatVal(str(py))
+    elif isinstance(py, str):
+        return StringVal(str(py))
     else:
         raise RuntimeError(f"Cannot convert native Python value to Value: {py}")  # TODO: Use custom error.
+
+
+def stringify_python_val(py) -> str:
+    if isinstance(py, str):
+        return repr(py)
+    else:
+        return str(py)
