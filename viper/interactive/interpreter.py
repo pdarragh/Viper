@@ -192,8 +192,9 @@ class InteractiveInterpreter(cmd.Cmd):  # pragma: no cover
         result = start_eval(parse.ast, env=self.env, store=self.store)
         if mode & EvalMode:
             if result.val is not None:
-                # Show the result.
-                print(result.val)
+                # Show the result if it's not the unit type.
+                if not isinstance(result.val, UnitVal):
+                    print(result.val)
             if mode <= EvalMode:
                 return
 
