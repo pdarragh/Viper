@@ -11,8 +11,6 @@ __all__ = [
 ]
 
 # FIXME: Ambiguity between names with symbol endings and operators with those same symbols.
-# FIXME: Ambiguity between function call and postfix Operator `()`
-# TODO: Determine whether parentheses should be special or should be considered individual operators.
 # TODO: Investigate using built-in regex magic parser:
 #         http://code.activestate.com/recipes/457664-hidden-scanner-functionality-in-re-module/
 
@@ -21,17 +19,18 @@ __all__ = [
 RE_LEADING_INDENT = re.compile(fr'^((?: {{{INDENT_SIZE}}})*)(.*)$')
 
 RE_COMMA = re.compile(r',')
-RE_INT = re.compile(r'(?:-?\d+)')                           # (-)42
 RE_FLOAT = re.compile(r'(?:-?\.\d+(?:[eE][+-]?\d+)?)'       # (-).42 | (-).42e-8
                       r'|'
                       r'(?:-?\d+[eE][+-]?\d+)'              # (-)42e3
                       r'|'
                       r'(?:-?\d+\.\d*(?:[eE][+-]?\d+)?)')   # (-)42.7e2 | (-)42.e9 | (-)42. | (-)42.3e-8
+RE_INT = re.compile(r'(?:-?\d+)')                           # (-)42
 RE_STRING = re.compile(r'(?<!\\)\"((?:[^\"]|\\\")*)(?!\\)\"')
 RE_NAME = re.compile(r'(?:_*[a-z][_a-zA-Z0-9]*(?:-[_a-zA-Z0-9]+)*[!@$%^&*?]?)')
 RE_UNDERSCORE = re.compile(r'_+')
 RE_CLASS = re.compile(r'[A-Z][_a-zA-Z0-9]*(?:-[_a-zA-Z0-9]+)*')
-RE_PARENS = re.compile(r'\(\)')
+RE_OPEN_PAREN = re.compile(r'\(')
+RE_CLOSE_PAREN = re.compile(r'\)')
 RE_OPERATOR = re.compile(r'[!@$%^&*()\-=+|:/?<>\[\]{}~.]+')
 RE_WHITESPACE = re.compile(r'\s+')
 
@@ -138,10 +137,14 @@ def lex_line(line: str) -> List[Lexeme]:
             pass
         elif matcher.match(RE_COMMA):
             lexemes.append(COMMA)
-        elif matcher.match(RE_INT):
-            lexemes.append(Int(matcher.group(0)))
+        elif matcher.match(RE_OPEN_PAREN):
+            lexemes.append(OPEN_PAREN)
+        elif matcher.match(RE_CLOSE_PAREN):
+            lexemes.append(CLOSE_PAREN)
         elif matcher.match(RE_FLOAT):
             lexemes.append(Float(matcher.group(0)))
+        elif matcher.match(RE_INT):
+            lexemes.append(Int(matcher.group(0)))
         elif matcher.match(RE_STRING):
             lexemes.append(String(matcher.group(1)))
         elif matcher.match(RE_NAME):
@@ -159,9 +162,6 @@ def lex_line(line: str) -> List[Lexeme]:
                 lexemes.append(ReservedClass(text))
             else:
                 lexemes.append(Class(text))
-        elif matcher.match(RE_PARENS):
-            lexemes.append(OPEN_PAREN)
-            lexemes.append(CLOSE_PAREN)
         elif matcher.match(RE_OPERATOR):
             symbol = matcher.group(0)
             if symbol == PERIOD.text:
