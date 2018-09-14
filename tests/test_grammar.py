@@ -92,8 +92,6 @@ def test_atom(line: str, tree: AST):
                            ns.AtomExpr(ns.NameAtom(vl.Name('qux')), [ns.FieldAccess(vl.Name('quum')), ns.Call([])]),
                            [],
                            None))])]))])])),
-    ('2.foo',
-     ns.AtomExpr(ns.IntAtom(vl.Int('2')), [ns.FieldAccess(vl.Name('foo'))])),
 ])
 def test_expr(line: str, tree: AST):
     lexemes = lex_line(line)

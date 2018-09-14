@@ -119,7 +119,6 @@ def test_bad_class(token: str):
     '!', '@', '$', '%', '^', '&', '*', '-', '+', '|', '/', '?', '<', '>',
     '[', ']', '{', '}', '~',
     '!@', '<>', '::', '.&',
-    '(()', '()()', '())', '(())',
 ])
 def test_operator(token: str):
     _test_single_token(token, vl.Operator)
@@ -149,7 +148,7 @@ def test_bad_operator(token: str):
     ('foo+bar',
      [vl.Name('foo'), vl.Operator('+'), vl.Name('bar')]),
     ('foo?bar',
-     [vl.Name('foo'), vl.Operator('?'), vl.Name('bar')]),
+     [vl.Name('foo?'), vl.Name('bar')]),
     ('foo?!bar',
      [vl.Name('foo?'), vl.Operator('!'), vl.Name('bar')]),
 ])
