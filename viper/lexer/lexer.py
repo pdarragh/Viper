@@ -4,7 +4,7 @@ from viper.lexer.lexemes import *
 
 import re
 
-from typing import List, Pattern, Union
+from typing import List, Match, Pattern, Union
 
 __all__ = [
     'LexerError', 'lex_file', 'lex_lines', 'lex_line', 'lex_token',
@@ -27,12 +27,13 @@ RE_FLOAT = re.compile(r'(?:-?\.\d+(?:[eE][+-]?\d+)?)'       # (-).42 | (-).42e-8
                       r'(?:-?\d+[eE][+-]?\d+)'              # (-)42e3
                       r'|'
                       r'(?:-?\d+\.\d*(?:[eE][+-]?\d+)?)')   # (-)42.7e2 | (-)42.e9 | (-)42. | (-)42.3e-8
-RE_STRING = re.compile(r'(?<!\\)\"((?:[^\"]|\\\")*[^\\])\"')
+RE_STRING = re.compile(r'(?<!\\)\"((?:[^\"]|\\\")*)(?!\\)\"')
 RE_NAME = re.compile(r'(?:_*[a-z][_a-zA-Z0-9]*(?:-[_a-zA-Z0-9]+)*[!@$%^&*?]?)')
 RE_UNDERSCORE = re.compile(r'_+')
 RE_CLASS = re.compile(r'[A-Z][_a-zA-Z0-9]*(?:-[_a-zA-Z0-9]+)*')
 RE_PARENS = re.compile(r'\(\)')
 RE_OPERATOR = re.compile(r'[!@$%^&*()\-=+|:/?<>\[\]{}~.]+')
+RE_WHITESPACE = re.compile(r'\s+')
 
 
 def make_infix_re(pattern: Pattern, group_name: str) -> Pattern:
@@ -45,17 +46,26 @@ RE_INFIX_OP = make_infix_re(RE_OPERATOR, 'op')
 
 # Regular expression magic class for making if/else matching simpler. Idea from:
 #   http://code.activestate.com/recipes/456151-using-rematch-research-and-regroup-in-if-elif-elif/
-class RegexMatcher:
-    def __init__(self, token):
-        self._token = token
+class LineRegexMatcher:
+    def __init__(self, line: str):
+        self._line = line
         self._match = None
 
-    def fullmatch(self, pattern: Pattern):
-        self._match = pattern.fullmatch(self._token)
+    def match(self, pattern: Pattern) -> Match:
+        self._match = pattern.match(self._line)
         return self._match
 
-    def group(self, grp: Union[int, str]):
+    def end(self) -> int:
+        return self._match.end()
+
+    def group(self, grp: Union[int, str]) -> str:
         return self._match.group(grp)
+
+    def __next__(self):
+        self._line = self._line[self.end():]
+
+    def __bool__(self) -> bool:
+        return bool(self._line)
 
 
 class LexerError(ViperError):
@@ -122,71 +132,70 @@ def lex_line(line: str) -> List[Lexeme]:
     lexemes = []
     if not line:
         return lexemes
-    for token in line.split():
-        for lexeme in lex_token(token):
-            lexemes.append(lexeme)
+    matcher = LineRegexMatcher(line)
+    while matcher:
+        if matcher.match(RE_WHITESPACE):
+            pass
+        elif matcher.match(RE_COMMA):
+            lexemes.append(COMMA)
+        elif matcher.match(RE_INT):
+            lexemes.append(Int(matcher.group(0)))
+        elif matcher.match(RE_FLOAT):
+            lexemes.append(Float(matcher.group(0)))
+        elif matcher.match(RE_STRING):
+            lexemes.append(String(matcher.group(1)))
+        elif matcher.match(RE_NAME):
+            text = matcher.group(0)
+            if text in RESERVED_NAMES:
+                lexemes.append(ReservedName(text))
+            else:
+                lexemes.append(Name(text))
+        elif matcher.match(RE_UNDERSCORE):
+            text = matcher.group(0)
+            lexemes.append(Underscore(text))
+        elif matcher.match(RE_CLASS):
+            text = matcher.group(0)
+            if text in RESERVED_CLASSES:
+                lexemes.append(ReservedClass(text))
+            else:
+                lexemes.append(Class(text))
+        elif matcher.match(RE_PARENS):
+            lexemes.append(OPEN_PAREN)
+            lexemes.append(CLOSE_PAREN)
+        elif matcher.match(RE_OPERATOR):
+            symbol = matcher.group(0)
+            if symbol == PERIOD.text:
+                lexemes.append(PERIOD)
+            elif symbol == EQUALS.text:
+                lexemes.append(EQUALS)
+            elif symbol == OPEN_PAREN.text:
+                lexemes.append(OPEN_PAREN)
+            elif symbol == CLOSE_PAREN.text:
+                lexemes.append(CLOSE_PAREN)
+            elif symbol == COLON.text:
+                lexemes.append(COLON)
+            elif symbol == L_ARROW.text:
+                lexemes.append(L_ARROW)
+            elif symbol == R_ARROW.text:
+                lexemes.append(R_ARROW)
+            elif symbol == ELLIPSIS.text:
+                lexemes.append(ELLIPSIS)
+            else:
+                lexemes.append(Operator(symbol))
+        elif matcher.match(RE_INFIX_COMMA):
+            lexemes.extend(lex_line(matcher.group('left_val')))
+            lexemes.append(COMMA)
+            lexemes.extend(lex_line(matcher.group('right_val')))
+        elif matcher.match(RE_INFIX_OP):
+            lexemes.extend(lex_line(matcher.group('left_val')))
+            lexemes.extend(lex_line(matcher.group('op')))
+            lexemes.extend(lex_line(matcher.group('right_val')))
+        else:
+            raise LexerError(f"invalid line: '{line}'")
+        # Iterate the matcher forward.
+        next(matcher)
     return lexemes
 
 
 def lex_token(token: str) -> List[Lexeme]:
-    matcher = RegexMatcher(token)
-    lexemes = []
-    if not token:
-        return lexemes
-    elif matcher.fullmatch(RE_COMMA):
-        lexemes.append(COMMA)
-    elif matcher.fullmatch(RE_INT):
-        lexemes.append(Int(matcher.group(0)))
-    elif matcher.fullmatch(RE_FLOAT):
-        lexemes.append(Float(matcher.group(0)))
-    elif matcher.fullmatch(RE_STRING):
-        lexemes.append(String(matcher.group(1)))
-    elif matcher.fullmatch(RE_NAME):
-        text = matcher.group(0)
-        if text in RESERVED_NAMES:
-            lexemes.append(ReservedName(text))
-        else:
-            lexemes.append(Name(text))
-    elif matcher.fullmatch(RE_UNDERSCORE):
-        text = matcher.group(0)
-        lexemes.append(Underscore(text))
-    elif matcher.fullmatch(RE_CLASS):
-        text = matcher.group(0)
-        if text in RESERVED_CLASSES:
-            lexemes.append(ReservedClass(text))
-        else:
-            lexemes.append(Class(text))
-    elif matcher.fullmatch(RE_PARENS):
-        lexemes.append(OPEN_PAREN)
-        lexemes.append(CLOSE_PAREN)
-    elif matcher.fullmatch(RE_OPERATOR):
-        symbol = matcher.group(0)
-        if symbol == PERIOD.text:
-            lexemes.append(PERIOD)
-        elif symbol == EQUALS.text:
-            lexemes.append(EQUALS)
-        elif symbol == OPEN_PAREN.text:
-            lexemes.append(OPEN_PAREN)
-        elif symbol == CLOSE_PAREN.text:
-            lexemes.append(CLOSE_PAREN)
-        elif symbol == COLON.text:
-            lexemes.append(COLON)
-        elif symbol == L_ARROW.text:
-            lexemes.append(L_ARROW)
-        elif symbol == R_ARROW.text:
-            lexemes.append(R_ARROW)
-        elif symbol == ELLIPSIS.text:
-            lexemes.append(ELLIPSIS)
-        else:
-            lexemes.append(Operator(symbol))
-    elif matcher.fullmatch(RE_INFIX_COMMA):
-        lexemes.extend(lex_token(matcher.group('left_val')))
-        lexemes.append(COMMA)
-        lexemes.extend(lex_token(matcher.group('right_val')))
-    elif matcher.fullmatch(RE_INFIX_OP):
-        lexemes.extend(lex_token(matcher.group('left_val')))
-        lexemes.extend(lex_token(matcher.group('op')))
-        lexemes.extend(lex_token(matcher.group('right_val')))
-    else:
-        raise LexerError(f"invalid token: '{token}'")
-    return lexemes
+    return lex_line(token)
