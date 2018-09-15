@@ -1,25 +1,20 @@
 #!/usr/bin/env python3
 
 from viper.interactive import *
+from viper.interpreter import start_eval
 from viper.lexer import lex_file, NewLine
 from viper.parser import *
 
 if __name__ == '__main__':
     import argparse
     parser = argparse.ArgumentParser()
-    parser.add_argument('-L', '--interactive-lexer', action='store_true', help='lexes input')
-    parser.add_argument('-l', '--file-lexer', help='produces lexemes for given file input')
-    parser.add_argument('-S', '--interactive-sppf', action='store_true', help='lexes input and produces SPPF')
-    parser.add_argument('-s', '--file-sppf', help='produces SPPF for given input file')
-    parser.add_argument('-G', '--interactive-grammar', action='store_true', help='lexes input and produces AST')
-    parser.add_argument('-g', '--file-grammar', help='produces AST for given input file')
-    parser.add_argument('-r', '--grammar-rule', default='single_input', help='parser rule from which to start parsing')
-    parser.add_argument('-m', '--multiline', action='store_true', help='enable multi-line processing in interactive mode')
+    parser.add_argument('-l', '--lex-file', help='produces lexemes for given file input')
+    parser.add_argument('-s', '--sppf-file', help='produces SPPF for given input file')
+    parser.add_argument('-p', '--parse-file', help='produces AST for given input file')
+    parser.add_argument('file', nargs='?', help='file to interpret')
     args = parser.parse_args()
 
-    if args.interactive_lexer:
-        InteractiveLexer().cmdloop()
-    elif args.file_lexer:
+    if args.lex_file:
         lexemes = lex_file(args.file_lexer)
         outputs = []
         curr_line = []
@@ -30,15 +25,11 @@ if __name__ == '__main__':
             curr_line.append(lexeme)
         outputs.append(' '.join(map(repr, curr_line)))
         print('\n'.join(outputs))
-    elif args.interactive_sppf:
-        InteractiveSPPF(args.grammar_rule).cmdloop()
-    elif args.file_sppf:
+    elif args.sppf_file:
         lexemes = lex_file(args.file_sppf)
         sppf = GRAMMAR.sppf_from_rule(lexemes)
         print(sppf)
-    elif args.interactive_grammar:
-        InteractiveGrammar(args.grammar_rule, args.multiline).cmdloop()
-    elif args.file_grammar:
+    elif args.parse_file:
         lexemes = lex_file(args.file_grammar)
         parse = GRAMMAR.parse_file(lexemes)
         if isinstance(parse, NoParse):
@@ -52,5 +43,14 @@ if __name__ == '__main__':
                 print(ast_to_string(ast))
         else:
             raise RuntimeError(f"Invalid return result: {parse}")
+    elif args.file:
+        lexemes = lex_file(args.file)
+        parse = GRAMMAR.parse_file(lexemes)
+        if isinstance(parse, NoParse):
+            print(f"Could not parse file: {args.file}")
+        elif isinstance(parse, SingleParse):
+            start_eval(parse.ast)
+        else:
+            print(f"Ambiguous parse in file: {args.file}")
     else:
         InteractiveInterpreter().cmdloop()
