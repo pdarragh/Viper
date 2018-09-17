@@ -7,7 +7,7 @@ import viper.parser.ast.nodes as ns
 
 from viper.parser.ast.nodes import AST
 
-from typing import List, NamedTuple, Optional, Tuple
+from typing import Iterable, List, NamedTuple, Optional, Tuple
 
 
 STARTERS = [
@@ -84,6 +84,8 @@ def eval_starter(starter: AST, env: Environment, store: Store) -> EvalResult:
     elif isinstance(starter, ns.SingleLine):
         return start_eval(starter.line, env, store)
     elif isinstance(starter, ns.FileInput):
+        # Pre-allocate names in the environment so forward references work correctly.
+        env, store = _pre_allocate_names(starter.lines, env, store)
         val = None
         for line in starter.lines:
             eval_res = eval_starter(line, env, store)
@@ -132,13 +134,10 @@ def eval_stmt(stmt: AST, env: Environment, store: Store) -> EvalStmtResult:
         else:
             raise RuntimeError(f"Not a boolean value: {val}")  # TODO: Use a custom error.
     elif isinstance(stmt, ns.FuncDef):
-        env, store = bind_val(stmt.name.text, BottomVal(), env, store)
         closure = CloVal(stmt.params, stmt.body, env)
-        env, store = bind_val(stmt.name.text, closure, env, store)  # Re-bind with new value.
+        env, store = bind_val(stmt.name.text, closure, env, store)
         return EvalStmtResult(env, store, None)
     elif isinstance(stmt, ns.ClassDef):
-        env, store = bind_val(stmt.name.text, BottomVal(), env, store)
-
         parents = []
         static_fields = {}
         static_methods = {}
@@ -207,7 +206,7 @@ def eval_stmt(stmt: AST, env: Environment, store: Store) -> EvalStmtResult:
             raise NotImplementedError(f"No implementation for class body of type: {type(stmt.body).__name__}")
 
         class_decl = ClassDeclVal(parents, static_fields, static_methods, instance_fields, instance_methods, env)
-        env, store = bind_val(stmt.name.text, class_decl, env, store)  # Re-bind with new value.
+        env, store = bind_val(stmt.name.text, class_decl, env, store)
         return EvalStmtResult(env, store, None)
     elif isinstance(stmt, ns.InterfaceDef):
         # TODO: Implement this.
@@ -221,6 +220,9 @@ def eval_stmt(stmt: AST, env: Environment, store: Store) -> EvalStmtResult:
     elif isinstance(stmt, ns.SimpleStmtBlock):
         return eval_stmt(stmt.stmt, env, store)
     elif isinstance(stmt, ns.CompoundStmtBlock):
+        # Pre-allocate names in the environment so forward references work correctly.
+        env, store = _pre_allocate_names(stmt.stmts, env, store)
+        # Then execute the statements.
         for sub_stmt in stmt.stmts:
             stmt_res = eval_stmt(sub_stmt, env, store)
             if stmt_res.val is not None:
@@ -337,13 +339,13 @@ def eval_expr(expr: AST, env: Environment, store: Store) -> EvalExprResult:
         if name in env:
             return EvalExprResult(store[env[name]], store)
         else:
-            raise RuntimeError(f"No such name in environment: {name}")
+            raise RuntimeError(f"No such name in environment: {name}")  # TODO: Use a custom error.
     elif isinstance(expr, ns.ClassAtom):
         name = expr.name.text
         if name in env:
             return EvalExprResult(store[env[name]], store)
         else:
-            raise RuntimeError(f"No such name in environment: {name}")
+            raise RuntimeError(f"No such name in environment: {name}")  # TODO: Use a custom error.
     elif isinstance(expr, ns.IntAtom):
         return EvalExprResult(IntVal(expr.num.text), store)
     elif isinstance(expr, ns.FloatAtom):
@@ -558,3 +560,35 @@ def wrap_values(values: List[Value], store: Store) -> EvalExprResult:
         return EvalExprResult(values[0], store)
     else:
         return EvalExprResult(TupleVal(*values), store)
+
+
+def _find_names(stmts: List[AST]) -> Iterable[str]:
+    for stmt in stmts:
+        name = _find_name(stmt)
+        if name is None:
+            continue
+        else:
+            yield name
+
+
+def _find_name(stmt: AST) -> Optional[str]:
+    if isinstance(stmt, ns.FuncDef):
+        return stmt.name.text
+    elif isinstance(stmt, ns.ClassDef):
+        return stmt.name.text
+    elif isinstance(stmt, ns.InterfaceDef):
+        # TODO: Implement this.
+        raise NotImplementedError
+    elif isinstance(stmt, ns.DataDef):
+        # TODO: Implement this.
+        raise NotImplementedError
+    elif isinstance(stmt, ns.FileStmt):
+        return _find_name(stmt.stmt)
+    else:
+        return None
+
+
+def _pre_allocate_names(stmts: List[AST], env: Environment, store: Store) -> Tuple[Environment, Store]:
+    for name in _find_names(stmts):
+        env, store = bind_val(name, BottomVal(), env, store)
+    return env, store
