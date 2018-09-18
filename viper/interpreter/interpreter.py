@@ -116,6 +116,11 @@ def eval_stmt(stmt: AST, env: Environment, store: Store) -> EvalStmtResult:
         # Pass the value to the left-hand side evaluation.
         env, store = eval_lhs_expr(stmt.lhs, env, store, val)
         return EvalStmtResult(env, store, None)
+    elif isinstance(stmt, ns.CallStmt):
+        val, store = eval_expr(stmt.atom, env, store)
+        args, store = accumulate_values_from_exprs(stmt.call.args, env, store)
+        _, store = eval_function_call(val, args, store)
+        return EvalStmtResult(env, store, None)
     elif isinstance(stmt, ns.EmptyStmt):
         return EvalStmtResult(env, store, None)
     elif isinstance(stmt, ns.IfStmt):

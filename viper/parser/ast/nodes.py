@@ -383,6 +383,11 @@ class TestExprList(Expr):
         self.tests = tests
 
 
+class Call(Trailer):
+    def __init__(self, args: List[TestExpr]):
+        self.args = args
+
+
 class Method(ClassStmt):
     def __init__(self, modifier: Modifier, func: FuncDef):
         self.modifier = modifier
@@ -397,11 +402,6 @@ class NegatedTestExpr(NotTestExpr):
 class NotNegatedTestExpr(NotTestExpr):
     def __init__(self, op_expr: OpExpr):
         self.op_expr = op_expr
-
-
-class Call(Trailer):
-    def __init__(self, args: List[TestExpr]):
-        self.args = args
 
 
 class SimpleVariablePattern(SimplePattern):
@@ -427,6 +427,12 @@ class SimpleParenPattern(SimplePattern):
 class ReturnStmt(PlainStmt):
     def __init__(self, tests: Optional[TestExprList]):
         self.tests = tests
+
+
+class CallStmt(PlainStmt):
+    def __init__(self, atom: AtomExpr, call: Call):
+        self.atom = atom
+        self.call = call
 
 
 class IfStmt(Stmt):

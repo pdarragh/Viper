@@ -15,9 +15,11 @@
 
 <plain_stmt>        ::= <return_stmt>
                       | <assign_stmt>
+                      | <call_stmt>
                       | <empty_stmt>
 <return_stmt>       ::= ReturnStmt 'return' tests:<test_expr_list>?
 <assign_stmt>       ::= AssignStmt lhs:<lhs_expr> '=' expr:<expr>
+<call_stmt>         ::= CallStmt atom:<atom_expr> call:<call>
 <empty_stmt>        ::= EmptyStmt 'pass'
 
 <if_stmt>           ::= IfStmt 'if' cond:<test_expr> ':' then_body:<stmt_block> elif_stmts:<elif_stmt>* else_stmt:<else_stmt>?
@@ -90,8 +92,9 @@
                       | EllipsisAtom '...'
                       | TrueAtom 'true'
                       | FalseAtom 'false'
-<trailer>           ::= Call '(' args:<test_expr>&*{,} ')'
+<trailer>           ::= <call>
                       | FieldAccess '.' field:NAME
+<call>              ::= Call '(' args:<test_expr>&*{,} ')'
 
 <expr_block>        ::= SimpleExprBlock expr:<expr> NEWLINE
                       | IndentedExprBlock NEWLINE INDENT expr:<expr> NEWLINE DEDENT
