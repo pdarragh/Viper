@@ -84,6 +84,9 @@ def eval_starter(starter: AST, env: Environment, store: Store) -> EvalResult:
     elif isinstance(starter, ns.SingleLine):
         return start_eval(starter.line, env, store)
     elif isinstance(starter, ns.FileInput):
+        # Add __name__ to the environment.
+        # TODO: Ensure this is correct for imported modules as well.
+        env, store = bind_val('__name__', StringVal("__main__"), env, store)
         # Pre-allocate names in the environment so forward references work correctly.
         env, store = _pre_allocate_names(starter.lines, env, store)
         val = None
