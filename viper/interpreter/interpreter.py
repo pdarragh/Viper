@@ -105,6 +105,17 @@ def eval_starter(starter: AST, env: Environment, store: Store) -> EvalResult:
 
 
 def eval_stmt(stmt: AST, env: Environment, store: Store) -> EvalStmtResult:
+    """
+    Evaluates a statement.
+
+    Statements are used for side-effects. They can manipulate the environment and store, but generally do not produce
+    values (except for Return statements).
+
+    :param stmt: the statement to evaluate
+    :param env: the current environment
+    :param store: the current store
+    :return: an EvalStmtResult representing the updated environment and store (and a value if necessary)
+    """
     if isinstance(stmt, ns.SimpleStmt):
         return eval_stmt(stmt.stmt, env, store)
     elif isinstance(stmt, ns.ReturnStmt):
@@ -246,23 +257,79 @@ def eval_stmt(stmt: AST, env: Environment, store: Store) -> EvalStmtResult:
 
 def eval_lhs_expr(expr: AST, env: Environment, store: Store, val: Value) -> EvalLhsResult:
     """
-    Attempts to perform a binding of a value. If the shape of the value and the shape of the left-hand side
-    are compatible, the binding is performed. An environment and store are returned. If the shapes are not
-    compatible, only the store is returned and the environment will be a None.
+    Evaluates a left-hand side (LHS).
+    
+    An LHS is a pattern which is used for binding values to variables. If the shape of the value and the shape of the
+    LHS pattern are compatible (i.e. same arguments and types), the binding is performed. An error is raised otherwise.
 
-    :param expr: a left-hand side expression
-    :param env: an environment
-    :param store: a store
-    :param val: a value to bind
-    :return: a tuple of a Maybe(env) (as an Environment or a None) and a store
+    :param expr: the left-hand side expression to evaluate
+    :param env: the current environment
+    :param store: the current store
+    :param val: the value to bind
+    :return: an EvalLhsResult representing the updated environment and store
     """
     if isinstance(expr, ns.Pattern):
-        return eval_pattern(expr, env, store, val)
+        if isinstance(expr, ns.TypedVariablePattern):
+            # >>> x: Type = {val}
+            name = expr.id.id.text
+            env, store = bind_val(name, val, env, store)
+            return EvalLhsResult(env, store)
+        elif isinstance(expr, ns.TypedAnonymousPattern):
+            # >>> _: Type = {val}
+            return EvalLhsResult(env, store)
+        elif isinstance(expr, ns.TypedFieldPattern):
+            # >>> foo.bar: Type = {val}
+            class_val, store = eval_expr(expr.root, env, store)
+            addr = _eval_field_lookup(class_val, expr.field.id.text)
+            store = extend_store(store, val, addr)
+            return EvalLhsResult(env, store)
+        elif isinstance(expr, ns.SimpleVariablePattern):
+            # >>> x = {val}
+            name = expr.id.id.text
+            env, store = bind_val(name, val, env, store)
+            return EvalLhsResult(env, store)
+        elif isinstance(expr, ns.SimpleAnonymousPattern):
+            # >>> _ = {val}
+            return EvalLhsResult(env, store)
+        elif isinstance(expr, ns.SimpleFieldPattern):
+            # >>> foo.bar = {val}
+            class_val, store = eval_expr(expr.root, env, store)
+            addr = _eval_field_lookup(class_val, expr.field.id.text)
+            store = extend_store(store, val, addr)
+            return EvalLhsResult(env, store)
+        elif isinstance(expr, ns.SimpleParenPattern):
+            if len(expr.patterns) == 1:
+                # >>> (a) = 2
+                # >>> (a) = 3, 4
+                return eval_lhs_expr(expr.patterns[0], env, store, val)
+            if not isinstance(val, TupleVal):
+                # >>> (a, b) = 3
+                raise RuntimeError(f"Not enough values to unpack into pattern.")
+            if len(expr.patterns) != len(val.vals):
+                # >>> (a, b, c) = 2, 3
+                raise RuntimeError(f"Incompatible number of values to unpack into pattern.")
+            # >>> (a, b, c) = (2, 3, 4)
+            for sub_pattern, sub_val in zip(expr.patterns, val.vals):
+                env, store = eval_lhs_expr(sub_pattern, env, store, sub_val)
+            return EvalLhsResult(env, store)
+        else:
+            raise NotImplementedError(f"No implementation for pattern of type: {type(expr).__name__}")
     else:
         raise NotImplementedError(f"No implementation for left-hand-side expression of type: {type(expr).__name__}")
 
 
 def eval_expr(expr: AST, env: Environment, store: Store) -> EvalExprResult:
+    """
+    Evaluates an expression.
+
+    Expressions are used to compute new values. There is no expression which can modify the environment, but expressions
+    can have an affect on the store and always produce a value.
+
+    :param expr: the expression to evaluate
+    :param env: the current environment
+    :param store: the current store
+    :return: an EvalExprResult representing the updated store and the computed value
+    """
     if isinstance(expr, ns.IfExpr):
         val, store2 = eval_expr(expr.cond, env, store)
         if isinstance(val, TrueVal):
@@ -485,67 +552,16 @@ def _eval_field_lookup(val: Value, field: str) -> Address:
         raise RuntimeError(f"Cannot perform field lookup in value of type: {type(val).__name__}")
 
 
-def eval_pattern(ptrn: ns.Pattern, env: Environment, store: Store, val: Value) -> EvalLhsResult:
-    """
-    Binds a value to a pattern, if the value's type and the pattern's shape align.
-
-    :param ptrn: a pattern to match against
-    :param env: an environment
-    :param store: a store
-    :param val: a value to bind
-    :return: a tuple of a Maybe(env) (as an Environment or a None) and a store
-    """
-    if isinstance(ptrn, ns.TypedVariablePattern):
-        # >>> x: Type = {val}
-        name = ptrn.id.id.text
-        env, store = bind_val(name, val, env, store)
-        return EvalLhsResult(env, store)
-    elif isinstance(ptrn, ns.TypedAnonymousPattern):
-        # >>> _: Type = {val}
-        return EvalLhsResult(env, store)
-    elif isinstance(ptrn, ns.TypedFieldPattern):
-        # >>> foo.bar: Type = {val}
-        class_val, store = eval_expr(ptrn.root, env, store)
-        addr = _eval_field_lookup(class_val, ptrn.field.id.text)
-        store = extend_store(store, val, addr)
-        return EvalLhsResult(env, store)
-    elif isinstance(ptrn, ns.SimpleVariablePattern):
-        # >>> x = {val}
-        name = ptrn.id.id.text
-        env, store = bind_val(name, val, env, store)
-        return EvalLhsResult(env, store)
-    elif isinstance(ptrn, ns.SimpleAnonymousPattern):
-        # >>> _ = {val}
-        return EvalLhsResult(env, store)
-    elif isinstance(ptrn, ns.SimpleFieldPattern):
-        # >>> foo.bar = {val}
-        class_val, store = eval_expr(ptrn.root, env, store)
-        addr = _eval_field_lookup(class_val, ptrn.field.id.text)
-        store = extend_store(store, val, addr)
-        return EvalLhsResult(env, store)
-    elif isinstance(ptrn, ns.SimpleParenPattern):
-        if len(ptrn.patterns) == 1:
-            # >>> (a) = 2
-            # >>> (a) = 3, 4
-            return eval_pattern(ptrn.patterns[0], env, store, val)
-        if not isinstance(val, TupleVal):
-            # >>> (a, b) = 3
-            raise RuntimeError(f"Not enough values to unpack into pattern.")
-        if len(ptrn.patterns) != len(val.vals):
-            # >>> (a, b, c) = 2, 3
-            raise RuntimeError(f"Incompatible number of values to unpack into pattern.")
-        # >>> (a, b, c) = (2, 3, 4)
-        for sub_pattern, sub_val in zip(ptrn.patterns, val.vals):
-            env, store = eval_pattern(sub_pattern, env, store, sub_val)
-        return EvalLhsResult(env, store)
-    else:
-        raise NotImplementedError(f"No implementation for pattern of type: {type(ptrn).__name__}")
-
-
 def bind_val(name: str, val: Value, env: Environment, store: Store) -> Tuple[Environment, Store]:
     """
     Binds a value to a name. If the name exists in the environment, the previous binding is overwritten.
     Otherwise, a new binding is created.
+
+    :param name: the name to bind to
+    :param val: the value to be bound
+    :param env: the current environment
+    :param store: the current store
+    :return: a pair constituting the updated environment and store
     """
     if name in env:
         store = extend_store(store, val, env[name])
@@ -556,6 +572,14 @@ def bind_val(name: str, val: Value, env: Environment, store: Store) -> Tuple[Env
 
 
 def accumulate_values_from_exprs(exprs: List[AST], env: Environment, store: Store) -> Tuple[List[Value], Store]:
+    """
+    Evaluates a list of expressions. The values resulting from these evaluations are accumulated into a single list.
+
+    :param exprs: the list of expressions to evaluate
+    :param env: the current environment
+    :param store: the current store
+    :return: a pair consisting of the list of values and the updated store
+    """
     values: List[Value] = []
     for expr in exprs:
         val, store = eval_expr(expr, env, store)
@@ -564,6 +588,14 @@ def accumulate_values_from_exprs(exprs: List[AST], env: Environment, store: Stor
 
 
 def wrap_values(values: List[Value], store: Store) -> EvalExprResult:
+    """
+    Wraps a list of values. If the list has only one element, then it is extracted and produces separately. If the list
+    has multiple elements, they are wrapped into a TupleVal.
+
+    :param values: the list of values to wrap
+    :param store: the current store
+    :return: an EvalExprResult representing the wrapped value and the updated store
+    """
     if len(values) == 1:
         return EvalExprResult(values[0], store)
     else:
@@ -571,6 +603,12 @@ def wrap_values(values: List[Value], store: Store) -> EvalExprResult:
 
 
 def _find_names(stmts: List[AST]) -> Iterable[str]:
+    """
+    Finds all names htat will be bound in a list of statements and yields them one at a time.
+
+    :param stmts: the list of statements to search
+    :return: a generator of strings representing the names that will be bound to
+    """
     for stmt in stmts:
         name = _find_name(stmt)
         if name is None:
@@ -580,6 +618,13 @@ def _find_names(stmts: List[AST]) -> Iterable[str]:
 
 
 def _find_name(stmt: AST) -> Optional[str]:
+    """
+    Determines whether a statement is of the kind that will bind a name, and returns that name. If the statement would
+    not bind a name, a None is returned instead.
+
+    :param stmt: the statement to try to axtract a name from
+    :return: either an extracted name or None
+    """
     if isinstance(stmt, ns.FuncDef):
         return stmt.name.text
     elif isinstance(stmt, ns.ClassDef):
@@ -597,6 +642,15 @@ def _find_name(stmt: AST) -> Optional[str]:
 
 
 def _pre_allocate_names(stmts: List[AST], env: Environment, store: Store) -> Tuple[Environment, Store]:
+    """
+    Allocates names in the environment and space in the store for names which will be bound to by the list of statements
+    passed in. This is useful for allowing forward declarations among functions, classes, etc. within a single scope.
+
+    :param stmts: the list of statements to search
+    :param env: the current environment
+    :param store: the current store
+    :return: a pair constituting the updated environment and store after pre-allocating space for the names
+    """
     for name in _find_names(stmts):
         env, store = bind_val(name, BottomVal(), env, store)
     return env, store
