@@ -71,6 +71,14 @@ def start_eval(code: AST, env: Environment = None, store: Store = None,
 
 
 def bootstrap_env_and_store(initial_env: Dict[str, Value]) -> Tuple[Environment, Store]:
+    """
+    Produces an initial environment and store to be used during evaluation. The `initial_env` which is passed in is a
+    simple mapping from names to values, so here we allocate space in the store for each name and assign the values
+    appropriately.
+
+    :param initial_env: the "environment" to start from (usually defined in the `prelude` module)
+    :return: a pair consisting of the new environment and store
+    """
     env = empty_env()
     store = empty_store()
     for name, val in initial_env.items():
@@ -79,7 +87,17 @@ def bootstrap_env_and_store(initial_env: Dict[str, Value]) -> Tuple[Environment,
 
 
 def eval_starter(starter: AST, env: Environment, store: Store) -> EvalResult:
+    """
+    Evaluates a starting statement. These are usually just wrappers that can be used to indicate where the code came
+    from.
+
+    :param starter: the statement to evaluate
+    :param env: the current environment
+    :param store: the current store
+    :return: an EvalResult representing the updated environment and store (and a value if necessary)
+    """
     if isinstance(starter, ns.SingleNewline):
+        # A blank line does not produce a value.
         return EvalResult(env, store, None)
     elif isinstance(starter, ns.SingleLine):
         return start_eval(starter.line, env, store)
@@ -97,6 +115,7 @@ def eval_starter(starter: AST, env: Environment, store: Store) -> EvalResult:
             store = eval_res.store
         return EvalResult(env, store, val)
     elif isinstance(starter, ns.FileNewline):
+        # A blank line does not produce a value.
         return EvalResult(env, store, None)
     elif isinstance(starter, ns.FileStmt):
         return start_eval(starter.stmt, env, store)
@@ -133,11 +152,14 @@ def eval_stmt(stmt: AST, env: Environment, store: Store) -> EvalStmtResult:
     elif isinstance(stmt, ns.CallStmt):
         val, store = eval_expr(stmt.atom, env, store)
         args, store = accumulate_values_from_exprs(stmt.call.args, env, store)
+        # Evaluate the call and dispose of the return value.
         _, store = eval_function_call(val, args, store)
         return EvalStmtResult(env, store, None)
     elif isinstance(stmt, ns.EmptyStmt):
         return EvalStmtResult(env, store, None)
     elif isinstance(stmt, ns.IfStmt):
+        # Evaluate the condition and store the result in a new store. A new store must be used in case the condition is
+        # false, in which case the original store should be used for evaluation of any alternative (elif) conditions.
         val, store2 = eval_expr(stmt.cond, env, store)
         if isinstance(val, TrueVal):
             return eval_stmt(stmt.then_body, env, store2)
@@ -157,6 +179,8 @@ def eval_stmt(stmt: AST, env: Environment, store: Store) -> EvalStmtResult:
         env, store = bind_val(stmt.name.text, closure, env, store)
         return EvalStmtResult(env, store, None)
     elif isinstance(stmt, ns.ClassDef):
+        # To define a class, the static members must first be found and evaluated and then the instance members must be
+        # saved for later use during each instantiation.
         parents = []
         static_fields = {}
         static_methods = {}
@@ -203,8 +227,11 @@ def eval_stmt(stmt: AST, env: Environment, store: Store) -> EvalStmtResult:
             else:
                 raise NotImplementedError(f"No implementation for method modifier of type: {type(modifier).__name__}")
 
+        # If there are parents (superclasses), find them.
         if stmt.args is not None:
             parents = stmt.args.parents
+
+        # Find all fields and methods and categorize them for later use based on whether they are static.
         if isinstance(stmt.body, ns.SimpleEmptyClassStmt):
             pass
         elif isinstance(stmt.body, ns.CompoundEmptyClassStmt):
@@ -216,7 +243,8 @@ def eval_stmt(stmt: AST, env: Environment, store: Store) -> EvalStmtResult:
                 elif isinstance(sub_stmt, ns.Method):
                     handle_method(sub_stmt)
                 else:
-                    raise NotImplementedError(f"No implementation for class body sub-statement of type: {type(sub_stmt).__name__}")
+                    raise NotImplementedError(f"No implementation for class body sub-statement of type: "
+                                              f"{type(sub_stmt).__name__}")
         elif isinstance(stmt.body, ns.Field):
             handle_field(stmt.body)
         elif isinstance(stmt.body, ns.Method):
@@ -241,11 +269,11 @@ def eval_stmt(stmt: AST, env: Environment, store: Store) -> EvalStmtResult:
     elif isinstance(stmt, ns.CompoundStmtBlock):
         # Pre-allocate names in the environment so forward references work correctly.
         env, store = _pre_allocate_names(stmt.stmts, env, store)
-        # Then execute the statements.
+        # Then evaluate the statements.
         for sub_stmt in stmt.stmts:
             stmt_res = eval_stmt(sub_stmt, env, store)
             if stmt_res.val is not None:
-                # A value is only present if we should return immediately, so return.
+                # A value is only present if this is a `return` statement, so return immediately.
                 return stmt_res
             # Since we did not return, record the (potentially) modified environment and store and continue.
             env = stmt_res.env
@@ -331,6 +359,8 @@ def eval_expr(expr: AST, env: Environment, store: Store) -> EvalExprResult:
     :return: an EvalExprResult representing the updated store and the computed value
     """
     if isinstance(expr, ns.IfExpr):
+        # Evaluate the condition and store the result in a new store. A new store must be used in case the condition is
+        # false, in which case the original store should be used for evaluation of any alternative (elif) conditions.
         val, store2 = eval_expr(expr.cond, env, store)
         if isinstance(val, TrueVal):
             return eval_expr(expr.then_body, env, store2)
