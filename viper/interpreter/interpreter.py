@@ -379,29 +379,35 @@ def eval_expr(expr: AST, env: Environment, store: Store) -> EvalExprResult:
     elif isinstance(expr, ns.TestExpr):
         return eval_expr(expr.test, env, store)
     elif isinstance(expr, ns.OrTestExpr):
-        vals, store = accumulate_values_from_exprs(expr.tests, env, store)
-        val, store = wrap_values(vals, store)
-        if isinstance(val, TupleVal):
-            for subval in val.vals:
-                if not isinstance(subval, BoolVal):
-                    raise RuntimeError(f"Not a boolean value: {val}")  # TODO: Use a custom error.
-                if isinstance(subval, TrueVal):
+        if len(expr.tests) == 1:
+            # There is only one test, so evaluate it and don't care if it's a boolean.
+            return eval_expr(expr.tests[0], env, store)
+        else:
+            # There are multiple tests, so they should all be boolean values.
+            vals, store = accumulate_values_from_exprs(expr.tests, env, store)
+            if not len(vals) == len(expr.tests):
+                raise RuntimeError(f"Expected {len(expr.tests)} or-test values, but received {len(vals)}")
+            for val in vals:
+                if not isinstance(val, BoolVal):
+                    raise RuntimeError(f"Expected boolean value in or-test but received: {val}")  # TODO: Use a custom error.
+                if isinstance(val, TrueVal):
                     return EvalExprResult(TrueVal(), store)
             return EvalExprResult(FalseVal(), store)
-        else:
-            return EvalExprResult(val, store)
     elif isinstance(expr, ns.AndTestExpr):
-        vals, store = accumulate_values_from_exprs(expr.tests, env, store)
-        val, store = wrap_values(vals, store)
-        if isinstance(val, TupleVal):
-            for subval in val.vals:
-                if not isinstance(subval, BoolVal):
-                    raise RuntimeError(f"Not a boolean value: {val}")  # TODO: Use a custom error.
-                if isinstance(subval, FalseVal):
+        if len(expr.tests) == 1:
+            # There is only one test, so evaluate it and don't care if it's a boolean.
+            return eval_expr(expr.tests[0], env, store)
+        else:
+            # There are multiple tests, so they should all be boolean values.
+            vals, store = accumulate_values_from_exprs(expr.tests, env, store)
+            if not len(vals) == len(expr.tests):
+                raise RuntimeError(f"Expected {len(expr.tests)} and-test values, but received {len(vals)}")
+            for val in vals:
+                if not isinstance(val, BoolVal):
+                    raise RuntimeError(f"Expected boolean value in and-test but received: {val}")  # TODO: Use a custom error.
+                if isinstance(val, FalseVal):
                     return EvalExprResult(FalseVal(), store)
             return EvalExprResult(TrueVal(), store)
-        else:
-            return EvalExprResult(val, store)
     elif isinstance(expr, ns.NegatedTestExpr):
         val, store = eval_expr(expr.op_expr, env, store)
         if not isinstance(val, BoolVal):
