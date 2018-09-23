@@ -187,43 +187,27 @@ def eval_stmt(stmt: AST, env: Environment, store: Store) -> EvalStmtResult:
         instance_fields = []
         instance_methods = []
 
-        def get_access(access: ns.Access) -> Access:
-            if access is None:
-                return Access.PUBLIC
-            if isinstance(access, ns.PublicAccess):
-                return Access.PUBLIC
-            elif isinstance(access, ns.ModuleAccess):
-                return Access.MODULE
-            elif isinstance(access, ns.ProtectedAccess):
-                return Access.PROTECTED
-            elif isinstance(access, ns.PrivateAccess):
-                return Access.PRIVATE
-            else:
-                raise NotImplementedError(f"No implementation for access of type: {type(access).__name__}")
-
         def handle_field(field: ns.Field):
             modifier = field.modifier
-            access = get_access(modifier.access)
             if isinstance(modifier, ns.StaticModifier):
                 nonlocal store
                 addr = store.next_addr
                 store = extend_store(store, BottomVal())
-                static_fields[field.name.text] = InstantiatedField(addr, access)
+                static_fields[field.name.text] = InstantiatedField(addr)
             elif isinstance(modifier, ns.NonstaticModifier):
-                instance_fields.append(UninstantiatedField(field.name.text, access))
+                instance_fields.append(UninstantiatedField(field.name.text))
             else:
                 raise NotImplementedError(f"No implementation for field modifier of type: {type(modifier).__name__}")
 
         def handle_method(method: ns.Method):
             modifier = method.modifier
-            access = get_access(modifier.access)
             if isinstance(modifier, ns.StaticModifier):
                 nonlocal store
                 addr = store.next_addr
                 store = extend_store(store, CloVal(method.func.params, method.func.body, env))
-                static_methods[method.func.name.text] = InstantiatedMethod(addr, access)
+                static_methods[method.func.name.text] = InstantiatedMethod(addr)
             elif isinstance(modifier, ns.NonstaticModifier):
-                instance_methods.append(UninstantiatedMethod(method.func, access))
+                instance_methods.append(UninstantiatedMethod(method.func))
             else:
                 raise NotImplementedError(f"No implementation for method modifier of type: {type(modifier).__name__}")
 
@@ -551,7 +535,7 @@ def _eval_class_instantiation(cls: ClassDeclVal, args: List[Value], store: Store
         arg = args[i]
         addr = store.next_addr
         store = extend_store(store, arg)
-        instance_fields[field.name] = InstantiatedField(addr, field.access)
+        instance_fields[field.name] = InstantiatedField(addr)
     # Allocate each method.
     instance_methods = {}
     for method in cls.instance_methods:
@@ -559,7 +543,7 @@ def _eval_class_instantiation(cls: ClassDeclVal, args: List[Value], store: Store
         addr = store.next_addr
         closure = CloVal(func.params, func.body, cls.env)
         store = extend_store(store, closure)
-        instance_methods[func.name.text] = InstantiatedMethod(addr, method.access)
+        instance_methods[func.name.text] = InstantiatedMethod(addr)
     # Create the instance.
     instance = ClassInstanceVal(cls, instance_fields, instance_methods)
     return EvalExprResult(instance, store)

@@ -10,22 +10,18 @@ from typing import Callable, Dict, List, NamedTuple
 
 class InstantiatedField(NamedTuple):
     addr: Address
-    access: Access
 
 
 class InstantiatedMethod(NamedTuple):
     addr: Address
-    access: Access
 
 
 class UninstantiatedField(NamedTuple):
     name: str
-    access: Access
 
 
 class UninstantiatedMethod(NamedTuple):
     func: FuncDef
-    access: Access
 
 
 class Value:
