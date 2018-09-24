@@ -94,7 +94,7 @@ class ClassDeclVal(Value):
                  static_fields: Dict[str, InstantiatedField], static_methods: Dict[str, InstantiatedMethod],
                  instance_fields: List[UninstantiatedField], instance_methods: List[UninstantiatedMethod],
                  env: Environment):
-        self.parents = list(map(lambda c: c.text, parents))
+        self.parents: List[Class] = list(map(lambda c: c.text, parents))
         self.static_fields = static_fields
         self.static_methods = static_methods
         self.instance_fields = instance_fields
