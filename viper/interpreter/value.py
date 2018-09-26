@@ -91,7 +91,7 @@ class ForeignCloVal(Value):
 class ClassDeclVal(Value):
     def __init__(self, name: str, parents: List[str],
                  static_fields: Dict[str, InstantiatedField], static_methods: Dict[str, InstantiatedMethod],
-                 instance_fields: List[UninstantiatedField], instance_methods: List[UninstantiatedMethod],
+                 instance_fields: Dict[str, UninstantiatedField], instance_methods: Dict[str, UninstantiatedMethod],
                  envs: EnvironmentStack):
         self.name = name
         self.parents = parents

@@ -245,23 +245,7 @@ def eval_stmt(stmt: AST, envs: EnvironmentStack, store: Store) -> EvalStmtResult
             body = stmt.body
             raise NotImplementedError(f"No implementation for class body of type: {type(body).__name__}")
 
-        # Add instance properties from parent classes.
-        for parent in reversed(parents):
-            parent_val = store[envs[parent]]
-            if isinstance(parent_val, ClassDeclVal):
-                for field in parent_val.instance_fields:
-                    name = field.name
-                    if name not in instance_fields:
-                        instance_fields[name] = field
-                for method in parent_val.instance_methods:
-                    name = method.func.name.text
-                    if name not in instance_methods:
-                        instance_methods[name] = method
-            else:
-                raise NotImplementedError(f"Cannot find properties of parent value of type: {type(parent_val).__name__}")
-
-        class_decl = ClassDeclVal(stmt.name, parents, static_fields, static_methods,
-                                  list(instance_fields.values()), list(instance_methods.values()),
+        class_decl = ClassDeclVal(stmt.name, parents, static_fields, static_methods, instance_fields, instance_methods,
                                   cloned_envs)
         envs, store = assign_val(stmt.name.text, class_decl, envs, store)
         return EvalStmtResult(envs, store, None)
@@ -546,20 +530,33 @@ def _eval_foreign_function_call(clo: ForeignCloVal, args: List[Value], store: St
 
 
 def _eval_class_instantiation(cls: ClassDeclVal, args: List[Value], store: Store) -> EvalExprResult:
-    if len(cls.instance_fields) != len(args):
-        raise RuntimeError(f"Class instantiation expected {len(cls.instance_fields)} arguments but received {len(args)}")  # TODO: Use a custom error.
+    uninstantiated_fields = cls.instance_fields.copy()
+    uninstantiated_methods = cls.instance_methods.copy()
+    # Look up unimplemented parent class properties.
+    for parent in reversed(cls.parents):
+        parent_val = store[cls.envs[parent]]
+        if isinstance(parent_val, ClassDeclVal):
+            for name, field in parent_val.instance_fields.items():
+                if name not in uninstantiated_fields:
+                    uninstantiated_fields[name] = field
+            for name, method in parent_val.instance_methods.items():
+                if name not in uninstantiated_methods:
+                    uninstantiated_methods[name] = method
+        else:
+            raise NotImplementedError(f"Cannot find properties of parent value of type: {type(parent_val).__name__}")
+    if len(uninstantiated_fields) != len(args):
+        raise RuntimeError(f"Class instantiation expected {len(uninstantiated_fields)} arguments but received {len(args)}")  # TODO: Use a custom error.
     # Initialize the fields.
     instance_fields = {}
-    for i in range(len(cls.instance_fields)):
+    for i, field in enumerate(uninstantiated_fields.values()):
         # TODO: It is assumed that the args and fields are in the same order. Validate this assumption.
-        field = cls.instance_fields[i]
         arg = args[i]
         addr = store.next_addr
         store = extend_store(store, arg)
         instance_fields[field.name] = InstantiatedField(addr)
     # Allocate each method.
     instance_methods = {}
-    for method in cls.instance_methods:
+    for method in uninstantiated_methods.values():
         func = method.func
         addr = store.next_addr
         closure = CloVal(func.params, func.body, cls.envs)
