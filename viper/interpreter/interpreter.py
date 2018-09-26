@@ -188,8 +188,8 @@ def eval_stmt(stmt: AST, envs: EnvironmentStack, store: Store) -> EvalStmtResult
         parents = []
         static_fields = {}
         static_methods = {}
-        instance_fields = []
-        instance_methods = []
+        instance_fields = {}
+        instance_methods = {}
 
         # Closures created for methods will require a copy of the current environment stack.
         # TODO: Is this correct? Should the closure instead somehow point to the ClassDeclVal?
@@ -203,7 +203,7 @@ def eval_stmt(stmt: AST, envs: EnvironmentStack, store: Store) -> EvalStmtResult
                 store = extend_store(store, BottomVal())
                 static_fields[field.name.text] = InstantiatedField(addr)
             elif isinstance(modifier, ns.NonstaticModifier):
-                instance_fields.append(UninstantiatedField(field.name.text))
+                instance_fields[field.name.text] = UninstantiatedField(field.name.text)
             else:
                 raise NotImplementedError(f"No implementation for field modifier of type: {type(modifier).__name__}")
 
@@ -215,13 +215,13 @@ def eval_stmt(stmt: AST, envs: EnvironmentStack, store: Store) -> EvalStmtResult
                 store = extend_store(store, CloVal(method.func.params, method.func.body, cloned_envs))
                 static_methods[method.func.name.text] = InstantiatedMethod(addr)
             elif isinstance(modifier, ns.NonstaticModifier):
-                instance_methods.append(UninstantiatedMethod(method.func))
+                instance_methods[method.func.name.text] = UninstantiatedMethod(method.func)
             else:
                 raise NotImplementedError(f"No implementation for method modifier of type: {type(modifier).__name__}")
 
         # If there are parents (superclasses), find them.
         if stmt.args is not None:
-            parents = stmt.args.parents
+            parents = list(map(lambda c: c.text, stmt.args.parents))
 
         # Find all fields and methods and categorize them for later use based on whether they are static.
         if isinstance(stmt.body, ns.SimpleEmptyClassStmt):
@@ -245,7 +245,23 @@ def eval_stmt(stmt: AST, envs: EnvironmentStack, store: Store) -> EvalStmtResult
             body = stmt.body
             raise NotImplementedError(f"No implementation for class body of type: {type(body).__name__}")
 
-        class_decl = ClassDeclVal(parents, static_fields, static_methods, instance_fields, instance_methods,
+        # Add instance properties from parent classes.
+        for parent in reversed(parents):
+            parent_val = store[envs[parent]]
+            if isinstance(parent_val, ClassDeclVal):
+                for field in parent_val.instance_fields:
+                    name = field.name
+                    if name not in instance_fields:
+                        instance_fields[name] = field
+                for method in parent_val.instance_methods:
+                    name = method.func.name.text
+                    if name not in instance_methods:
+                        instance_methods[name] = method
+            else:
+                raise NotImplementedError(f"Cannot find properties of parent value of type: {type(parent_val).__name__}")
+
+        class_decl = ClassDeclVal(stmt.name, parents, static_fields, static_methods,
+                                  list(instance_fields.values()), list(instance_methods.values()),
                                   cloned_envs)
         envs, store = assign_val(stmt.name.text, class_decl, envs, store)
         return EvalStmtResult(envs, store, None)
@@ -303,7 +319,7 @@ def eval_lhs_expr(expr: AST, envs: EnvironmentStack, store: Store, val: Value) -
         elif isinstance(expr, ns.TypedFieldPattern):
             # >>> foo.bar: Type = {val}
             class_val, store = eval_expr(expr.root, envs, store)
-            addr = _eval_field_lookup(class_val, expr.field.id.text)
+            addr = _eval_field_lookup(class_val, expr.field.id.text, store)
             store = extend_store(store, val, addr)
             return EvalLhsResult(envs, store)
         elif isinstance(expr, ns.SimpleVariablePattern):
@@ -317,7 +333,7 @@ def eval_lhs_expr(expr: AST, envs: EnvironmentStack, store: Store, val: Value) -
         elif isinstance(expr, ns.SimpleFieldPattern):
             # >>> foo.bar = {val}
             class_val, store = eval_expr(expr.root, envs, store)
-            addr = _eval_field_lookup(class_val, expr.field.id.text)
+            addr = _eval_field_lookup(class_val, expr.field.id.text, store)
             store = extend_store(store, val, addr)
             return EvalLhsResult(envs, store)
         elif isinstance(expr, ns.SimpleParenPattern):
@@ -430,7 +446,7 @@ def eval_expr(expr: AST, envs: EnvironmentStack, store: Store) -> EvalExprResult
                 args, store = accumulate_values_from_exprs(trailer.args, envs, store)
                 val, store = eval_function_call(val, args, store)
             elif isinstance(trailer, ns.FieldAccess):
-                addr = _eval_field_lookup(val, trailer.field.text)
+                addr = _eval_field_lookup(val, trailer.field.text, store)
                 val = store[addr]
             else:
                 raise NotImplementedError(f"No implementation for trailer of type: {type(trailer).__name__}")
@@ -554,7 +570,14 @@ def _eval_class_instantiation(cls: ClassDeclVal, args: List[Value], store: Store
     return EvalExprResult(instance, store)
 
 
-def _eval_field_lookup(val: Value, field: str) -> Address:
+def _eval_field_lookup(val: Value, field: str, store: Store) -> Address:
+    result = _eval_field_lookup_helper(val, field, store)
+    if result is None:
+        raise RuntimeError(f"No such field in class: {field}")  # TODO: Use custom error.
+    return result
+
+
+def _eval_field_lookup_helper(val: Value, field: str, store: Store) -> Optional[Address]:
     if isinstance(val, ClassDeclVal):
         if field in val.static_fields:
             field = val.static_fields[field]
@@ -563,7 +586,12 @@ def _eval_field_lookup(val: Value, field: str) -> Address:
             method = val.static_methods[field]
             return method.addr
         else:
-            raise RuntimeError(f"No such field in class: {field}")
+            for parent in reversed(val.parents):
+                parent_val = store[val.envs[parent]]
+                parent_result = _eval_field_lookup_helper(parent_val, field, store)
+                if parent_result:
+                    return parent_result
+            return None
     elif isinstance(val, ClassInstanceVal):
         if field in val.instance_fields:
             field = val.instance_fields[field]
@@ -572,7 +600,7 @@ def _eval_field_lookup(val: Value, field: str) -> Address:
             method = val.instance_methods[field]
             return method.addr
         else:
-            return _eval_field_lookup(val.super, field)
+            return _eval_field_lookup_helper(val.cls, field, store)
     else:
         raise RuntimeError(f"Cannot perform field lookup in value of type: {type(val).__name__}")
 

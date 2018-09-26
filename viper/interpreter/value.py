@@ -89,11 +89,12 @@ class ForeignCloVal(Value):
 
 
 class ClassDeclVal(Value):
-    def __init__(self, parents: List[Class],
+    def __init__(self, name: str, parents: List[str],
                  static_fields: Dict[str, InstantiatedField], static_methods: Dict[str, InstantiatedMethod],
                  instance_fields: List[UninstantiatedField], instance_methods: List[UninstantiatedMethod],
                  envs: EnvironmentStack):
-        self.parents: List[Class] = list(map(lambda c: c.text, parents))
+        self.name = name
+        self.parents = parents
         self.static_fields = static_fields
         self.static_methods = static_methods
         self.instance_fields = instance_fields
@@ -110,7 +111,7 @@ class ClassDeclVal(Value):
 class ClassInstanceVal(Value):
     def __init__(self, cls: ClassDeclVal, instance_fields: Dict[str, InstantiatedField],
                  instance_methods: Dict[str, InstantiatedMethod]):
-        self.super = cls
+        self.cls = cls
         self.instance_fields = instance_fields
         self.instance_methods = instance_methods
 
