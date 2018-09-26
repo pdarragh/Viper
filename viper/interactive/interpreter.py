@@ -35,7 +35,7 @@ class InteractiveInterpreter(cmd.Cmd):  # pragma: no cover
         self.mode: InterpreterMode = EvalMode | ExecMode
         self.multiline = False
         self.lines = []
-        self.env = None
+        self.envs = None
         self.store = None
         self.handle_exceptions = True
 
@@ -102,13 +102,13 @@ class InteractiveInterpreter(cmd.Cmd):  # pragma: no cover
             elif starter in {':e', ':env'}:
                 # Get information from the current environment.
                 if remainder:
-                    val = self.env.get(remainder)
+                    val = self.envs.get(remainder)
                     if val is None:
                         raise InteractiveInterpreterException(f"No such element in environment: {remainder}")
                     else:
                         print(f"env[{remainder}]: {val}")
                 else:
-                    print(self.env)
+                    print(self.envs)
             elif starter in {':s', ':store'}:
                 # Get information from the current store.
                 if remainder:
@@ -117,7 +117,7 @@ class InteractiveInterpreter(cmd.Cmd):  # pragma: no cover
                         try:
                             addr = int(remainder)
                         except ValueError:
-                            addr = self.env.get(remainder)
+                            addr = self.envs.get(remainder)
                             remainder = f'env[{remainder}]'
                         if addr is None or addr not in self.store:
                             raise InteractiveInterpreterException(f"No such element in store: {remainder}")
@@ -184,12 +184,13 @@ class InteractiveInterpreter(cmd.Cmd):  # pragma: no cover
         if isinstance(parse, NoParse):
             raise InteractiveInterpreterException(f"Could not parse input: {repr(text)}")
         assert isinstance(parse, SingleParse)
+        ast = parse.ast
         if mode & ParseMode:
-            print(ast_to_string(parse.ast))
+            print(ast_to_string(ast))
             if mode <= ParseMode:
                 return
 
-        result = start_eval(parse.ast, env=self.env, store=self.store)
+        result = start_eval(ast, envs=self.envs, store=self.store)
         if mode & EvalMode:
             if result.val is not None:
                 # Show the result if it's not the unit type.
@@ -199,7 +200,7 @@ class InteractiveInterpreter(cmd.Cmd):  # pragma: no cover
                 return
 
         if mode & ExecMode:
-            self.env = result.env
+            self.envs = result.envs
             self.store = result.store
 
     def _lex_text(self, text: str) -> List[vl.Lexeme]:
