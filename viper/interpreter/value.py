@@ -1,11 +1,10 @@
-from .access import *
-from .environment import Address, Environment
+from .environment_stack import Address, EnvironmentStack
 
 from viper.lexer import Class
 from viper.parser.ast.nodes import AST, Parameter, FuncDef
 
 from inspect import signature
-from typing import Callable, Dict, List, NamedTuple
+from typing import Any, Callable, Dict, List, NamedTuple
 
 
 class InstantiatedField(NamedTuple):
@@ -64,20 +63,20 @@ class StringVal(SimpleValue):
 
 
 class CloVal(Value):
-    def __init__(self, params: List[Parameter], code: AST, env: Environment):
+    def __init__(self, params: List[Parameter], code: AST, envs: EnvironmentStack):
         self.params = params
         self.code = code
-        self.env = env
+        self.envs = envs
 
     def __repr__(self) -> str:
-        return f"CloVal(({', '.join(map(lambda p: str(p.internal), self.params))}), {self.env})"
+        return f"CloVal(({', '.join(map(lambda p: str(p.internal), self.params))}), {self.envs})"
 
     def __str__(self) -> str:
         return 'λ(' + ', '.join(map(lambda p: str(p.internal), self.params)) + ')'
 
 
 class ForeignCloVal(Value):
-    def __init__(self, func: Callable, env: Environment):
+    def __init__(self, func: Callable, env: Dict[str, Any]):
         self.params: List[str] = list(signature(func).parameters)
         self.func = func
         self.env = env
@@ -93,13 +92,13 @@ class ClassDeclVal(Value):
     def __init__(self, parents: List[Class],
                  static_fields: Dict[str, InstantiatedField], static_methods: Dict[str, InstantiatedMethod],
                  instance_fields: List[UninstantiatedField], instance_methods: List[UninstantiatedMethod],
-                 env: Environment):
+                 envs: EnvironmentStack):
         self.parents: List[Class] = list(map(lambda c: c.text, parents))
         self.static_fields = static_fields
         self.static_methods = static_methods
         self.instance_fields = instance_fields
         self.instance_methods = instance_methods
-        self.env = env
+        self.envs = envs
 
     def __repr__(self) -> str:
         return f"ClassDeclVal"

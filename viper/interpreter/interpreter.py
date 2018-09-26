@@ -1,4 +1,4 @@
-from .environment import *
+from .environment_stack import *
 from .prelude import env as prelude_env
 from .store import *
 from .value import *
@@ -26,13 +26,13 @@ EXPRS = [
 
 
 class EvalResult(NamedTuple):
-    env: Environment
+    envs: EnvironmentStack
     store: Store
     val: Optional[Value]
 
 
 class EvalStmtResult(NamedTuple):
-    env: Environment
+    envs: EnvironmentStack
     store: Store
     val: Optional[Value]
 
@@ -43,87 +43,90 @@ class EvalExprResult(NamedTuple):
 
 
 class EvalLhsResult(NamedTuple):
-    env: Environment
+    envs: EnvironmentStack
     store: Store
 
 
-def start_eval(code: AST, env: Environment = None, store: Store = None,
+def start_eval(code: AST, envs: EnvironmentStack = None, store: Store = None,
                previous_result: EvalResult = None) -> EvalResult:
     if previous_result is not None:
-        env = previous_result.env
+        envs = previous_result.envs
         store = previous_result.store
-    if env is None and store is None:
-        env, store = bootstrap_env_and_store(prelude_env)
-    if env is None:
-        env = empty_env()
+    if envs is None and store is None:
+        envs, store = bootstrap_envs_and_store(prelude_env)
+    if envs is None:
+        envs = EnvironmentStack()
     if store is None:
         store = empty_store()
     if any(map(lambda s: isinstance(code, s), STARTERS)):
-        return eval_starter(code, env, store)
+        return eval_starter(code, envs, store)
     elif any(map(lambda s: isinstance(code, s), STMTS)):
-        stmt_res = eval_stmt(code, env, store)
-        return EvalResult(stmt_res.env, stmt_res.store, stmt_res.val)
+        stmt_res = eval_stmt(code, envs, store)
+        return EvalResult(stmt_res.envs, stmt_res.store, stmt_res.val)
     elif any(map(lambda e: isinstance(code, e), EXPRS)):
-        expr_res = eval_expr(code, env, store)
-        return EvalResult(env, expr_res.store, expr_res.val)
+        expr_res = eval_expr(code, envs, store)
+        return EvalResult(envs, expr_res.store, expr_res.val)
     else:
         raise NotImplementedError(f"No evaluation rules for ASTs of type: {type(code).__name__}")
 
 
-def bootstrap_env_and_store(initial_env: Dict[str, Value]) -> Tuple[Environment, Store]:
+def bootstrap_envs_and_store(initial_env: Dict[str, Value]) -> Tuple[EnvironmentStack, Store]:
     """
     Produces an initial environment and store to be used during evaluation. The `initial_env` which is passed in is a
     simple mapping from names to values, so here we allocate space in the store for each name and assign the values
     appropriately.
 
     :param initial_env: the "environment" to start from (usually defined in the `prelude` module)
-    :return: a pair consisting of the new environment and store
+    :return: a pair consisting of the new environment stack and store
     """
-    env = empty_env()
+    envs = EnvironmentStack()
     store = empty_store()
     for name, val in initial_env.items():
-        env, store = bind_val(name, val, env, store)
-    return env, store
+        envs, store = bind_new_val(name, val, envs, store)
+    return envs, store
 
 
-def eval_starter(starter: AST, env: Environment, store: Store) -> EvalResult:
+def eval_starter(starter: AST, envs: EnvironmentStack, store: Store) -> EvalResult:
     """
     Evaluates a starting statement. These are usually just wrappers that can be used to indicate where the code came
     from.
 
     :param starter: the statement to evaluate
-    :param env: the current environment
+    :param envs: the current stack of environments
     :param store: the current store
     :return: an EvalResult representing the updated environment and store (and a value if necessary)
     """
     if isinstance(starter, ns.SingleNewline):
         # A blank line does not produce a value.
-        return EvalResult(env, store, None)
+        return EvalResult(envs, store, None)
     elif isinstance(starter, ns.SingleLine):
-        return start_eval(starter.line, env, store)
+        envs, store = _pre_allocate_names_in_top_scope([starter.line], envs, store)
+        return start_eval(starter.line, envs, store)
     elif isinstance(starter, ns.FileInput):
         # Add __name__ to the environment.
         # TODO: Ensure this is correct for imported modules as well.
-        env, store = bind_val('__name__', StringVal("__main__"), env, store)
-        # Pre-allocate names in the environment so forward references work correctly.
-        env, store = _pre_allocate_names(starter.lines, env, store)
+        envs, store = bind_new_val('__name__', StringVal("__main__"), envs, store)
+        # Pre-allocate names in a new top environment so forward references work correctly.
+        envs.push()
+        envs, store = _pre_allocate_names_in_top_scope(starter.lines, envs, store)
         val = None
         for line in starter.lines:
-            eval_res = eval_starter(line, env, store)
+            eval_res = eval_starter(line, envs, store)
             val = eval_res.val
-            env = eval_res.env
+            envs = eval_res.envs
             store = eval_res.store
-        return EvalResult(env, store, val)
+        return EvalResult(envs, store, val)
     elif isinstance(starter, ns.FileNewline):
         # A blank line does not produce a value.
-        return EvalResult(env, store, None)
+        return EvalResult(envs, store, None)
     elif isinstance(starter, ns.FileStmt):
-        return start_eval(starter.stmt, env, store)
+        envs, store = _pre_allocate_names_in_top_scope([starter.stmt], envs, store)
+        return start_eval(starter.stmt, envs, store)
     else:
         raise NotImplementedError(f"No evaluation rules for starters of type: {type(starter).__name__}")
 
 
-def eval_stmt(stmt: AST, env: Environment, store: Store) -> EvalStmtResult:
+def eval_stmt(stmt: AST, envs: EnvironmentStack, store: Store) -> EvalStmtResult:
     """
     Evaluates a statement.
 
@@ -131,53 +134,54 @@ def eval_stmt(stmt: AST, env: Environment, store: Store) -> EvalStmtResult:
     values (except for Return statements).
 
     :param stmt: the statement to evaluate
-    :param env: the current environment
+    :param envs: the current stack of environments
     :param store: the current store
     :return: an EvalStmtResult representing the updated environment and store (and a value if necessary)
     """
     if isinstance(stmt, ns.SimpleStmt):
-        return eval_stmt(stmt.stmt, env, store)
+        return eval_stmt(stmt.stmt, envs, store)
     elif isinstance(stmt, ns.ReturnStmt):
         if stmt.tests is None:
-            return EvalStmtResult(env, store, UnitVal())
+            return EvalStmtResult(envs, store, UnitVal())
         else:
-            val, store = eval_expr(stmt.tests, env, store)
-            return EvalStmtResult(env, store, val)
+            val, store = eval_expr(stmt.tests, envs, store)
+            return EvalStmtResult(envs, store, val)
     elif isinstance(stmt, ns.AssignStmt):
         # Evaluate right-hand side first.
-        val, store = eval_expr(stmt.expr, env, store)
+        val, store = eval_expr(stmt.expr, envs, store)
         # Pass the value to the left-hand side evaluation.
-        env, store = eval_lhs_expr(stmt.lhs, env, store, val)
-        return EvalStmtResult(env, store, None)
+        envs, store = eval_lhs_expr(stmt.lhs, envs, store, val)
+        return EvalStmtResult(envs, store, None)
     elif isinstance(stmt, ns.CallStmt):
-        val, store = eval_expr(stmt.atom, env, store)
-        args, store = accumulate_values_from_exprs(stmt.call.args, env, store)
+        val, store = eval_expr(stmt.atom, envs, store)
+        args, store = accumulate_values_from_exprs(stmt.call.args, envs, store)
         # Evaluate the call and dispose of the return value.
         _, store = eval_function_call(val, args, store)
-        return EvalStmtResult(env, store, None)
+        return EvalStmtResult(envs, store, None)
     elif isinstance(stmt, ns.EmptyStmt):
-        return EvalStmtResult(env, store, None)
+        return EvalStmtResult(envs, store, None)
     elif isinstance(stmt, ns.IfStmt):
         # Evaluate the condition and store the result in a new store. A new store must be used in case the condition is
         # false, in which case the original store should be used for evaluation of any alternative (elif) conditions.
-        val, store2 = eval_expr(stmt.cond, env, store)
+        val, store2 = eval_expr(stmt.cond, envs, store)
         if isinstance(val, TrueVal):
-            return eval_stmt(stmt.then_body, env, store2)
+            return eval_stmt(stmt.then_body, envs, store2)
         elif isinstance(val, FalseVal):
             for elif_stmt in stmt.elif_stmts:
-                val, store3 = eval_expr(elif_stmt.cond, env, store)
+                val, store3 = eval_expr(elif_stmt.cond, envs, store)
                 if isinstance(val, TrueVal):
-                    return eval_stmt(elif_stmt.elif_body, env, store3)
+                    return eval_stmt(elif_stmt.elif_body, envs, store3)
             if stmt.else_stmt is not None:
-                return eval_stmt(stmt.else_stmt.else_body, env, store)
+                return eval_stmt(stmt.else_stmt.else_body, envs, store)
             else:
-                return EvalStmtResult(env, store, None)
+                return EvalStmtResult(envs, store, None)
         else:
             raise RuntimeError(f"Not a boolean value: {val}")  # TODO: Use a custom error.
     elif isinstance(stmt, ns.FuncDef):
-        closure = CloVal(stmt.params, stmt.body, env)
-        env, store = bind_val(stmt.name.text, closure, env, store)
-        return EvalStmtResult(env, store, None)
+        # Create a closure with a frozen copy of the environment stack at this point.
+        closure = CloVal(stmt.params, stmt.body, envs.clone())
+        envs, store = assign_val(stmt.name.text, closure, envs, store)
+        return EvalStmtResult(envs, store, None)
     elif isinstance(stmt, ns.ClassDef):
         # To define a class, the static members must first be found and evaluated and then the instance members must be
         # saved for later use during each instantiation.
@@ -186,6 +190,10 @@ def eval_stmt(stmt: AST, env: Environment, store: Store) -> EvalStmtResult:
         static_methods = {}
         instance_fields = []
         instance_methods = []
+
+        # Closures created for methods will require a copy of the current environment stack.
+        # TODO: Is this correct? Should the closure instead somehow point to the ClassDeclVal?
+        cloned_envs = envs.clone()
 
         def handle_field(field: ns.Field):
             modifier = field.modifier
@@ -204,7 +212,7 @@ def eval_stmt(stmt: AST, env: Environment, store: Store) -> EvalStmtResult:
             if isinstance(modifier, ns.StaticModifier):
                 nonlocal store
                 addr = store.next_addr
-                store = extend_store(store, CloVal(method.func.params, method.func.body, env))
+                store = extend_store(store, CloVal(method.func.params, method.func.body, cloned_envs))
                 static_methods[method.func.name.text] = InstantiatedMethod(addr)
             elif isinstance(modifier, ns.NonstaticModifier):
                 instance_methods.append(UninstantiatedMethod(method.func))
@@ -234,11 +242,13 @@ def eval_stmt(stmt: AST, env: Environment, store: Store) -> EvalStmtResult:
         elif isinstance(stmt.body, ns.Method):
             handle_method(stmt.body)
         else:
-            raise NotImplementedError(f"No implementation for class body of type: {type(stmt.body).__name__}")
+            body = stmt.body
+            raise NotImplementedError(f"No implementation for class body of type: {type(body).__name__}")
 
-        class_decl = ClassDeclVal(parents, static_fields, static_methods, instance_fields, instance_methods, env)
-        env, store = bind_val(stmt.name.text, class_decl, env, store)
-        return EvalStmtResult(env, store, None)
+        class_decl = ClassDeclVal(parents, static_fields, static_methods, instance_fields, instance_methods,
+                                  cloned_envs)
+        envs, store = assign_val(stmt.name.text, class_decl, envs, store)
+        return EvalStmtResult(envs, store, None)
     elif isinstance(stmt, ns.InterfaceDef):
         # TODO: Implement this.
         raise NotImplementedError
@@ -249,25 +259,26 @@ def eval_stmt(stmt: AST, env: Environment, store: Store) -> EvalStmtResult:
         # TODO: Implement this.
         raise NotImplementedError
     elif isinstance(stmt, ns.SimpleStmtBlock):
-        return eval_stmt(stmt.stmt, env, store)
+        return eval_stmt(stmt.stmt, envs, store)
     elif isinstance(stmt, ns.CompoundStmtBlock):
-        # Pre-allocate names in the environment so forward references work correctly.
-        env, store = _pre_allocate_names(stmt.stmts, env, store)
+        # Pre-allocate names in a new top environment so forward references work correctly.
+        envs.push()
+        envs, store = _pre_allocate_names_in_top_scope(stmt.stmts, envs, store)
         # Then evaluate the statements.
         for sub_stmt in stmt.stmts:
-            stmt_res = eval_stmt(sub_stmt, env, store)
+            stmt_res = eval_stmt(sub_stmt, envs, store)
             if stmt_res.val is not None:
                 # A value is only present if this is a `return` statement, so return immediately.
                 return stmt_res
-            # Since we did not return, record the (potentially) modified environment and store and continue.
-            env = stmt_res.env
+            # Since we did not return, record the (potentially) modified environments and store and continue.
+            envs = stmt_res.envs
             store = stmt_res.store
-        return EvalStmtResult(env, store, None)
+        return EvalStmtResult(envs, store, None)
     else:
         raise NotImplementedError(f"No implementation for statement of type: {type(stmt).__name__}")
 
 
-def eval_lhs_expr(expr: AST, env: Environment, store: Store, val: Value) -> EvalLhsResult:
+def eval_lhs_expr(expr: AST, envs: EnvironmentStack, store: Store, val: Value) -> EvalLhsResult:
     """
     Evaluates a left-hand side (LHS).
     
@@ -275,7 +286,7 @@ def eval_lhs_expr(expr: AST, env: Environment, store: Store, val: Value) -> Eval
     LHS pattern are compatible (i.e. same arguments and types), the binding is performed. An error is raised otherwise.
 
     :param expr: the left-hand side expression to evaluate
-    :param env: the current environment
+    :param envs: the current stack of environments
     :param store: the current store
     :param val: the value to bind
     :return: an EvalLhsResult representing the updated environment and store
@@ -284,36 +295,36 @@ def eval_lhs_expr(expr: AST, env: Environment, store: Store, val: Value) -> Eval
         if isinstance(expr, ns.TypedVariablePattern):
             # >>> x: Type = {val}
             name = expr.id.id.text
-            env, store = bind_val(name, val, env, store)
-            return EvalLhsResult(env, store)
+            envs, store = assign_val(name, val, envs, store)
+            return EvalLhsResult(envs, store)
         elif isinstance(expr, ns.TypedAnonymousPattern):
             # >>> _: Type = {val}
-            return EvalLhsResult(env, store)
+            return EvalLhsResult(envs, store)
         elif isinstance(expr, ns.TypedFieldPattern):
             # >>> foo.bar: Type = {val}
-            class_val, store = eval_expr(expr.root, env, store)
+            class_val, store = eval_expr(expr.root, envs, store)
             addr = _eval_field_lookup(class_val, expr.field.id.text)
             store = extend_store(store, val, addr)
-            return EvalLhsResult(env, store)
+            return EvalLhsResult(envs, store)
         elif isinstance(expr, ns.SimpleVariablePattern):
             # >>> x = {val}
             name = expr.id.id.text
-            env, store = bind_val(name, val, env, store)
-            return EvalLhsResult(env, store)
+            envs, store = assign_val(name, val, envs, store)
+            return EvalLhsResult(envs, store)
         elif isinstance(expr, ns.SimpleAnonymousPattern):
             # >>> _ = {val}
-            return EvalLhsResult(env, store)
+            return EvalLhsResult(envs, store)
         elif isinstance(expr, ns.SimpleFieldPattern):
             # >>> foo.bar = {val}
-            class_val, store = eval_expr(expr.root, env, store)
+            class_val, store = eval_expr(expr.root, envs, store)
             addr = _eval_field_lookup(class_val, expr.field.id.text)
             store = extend_store(store, val, addr)
-            return EvalLhsResult(env, store)
+            return EvalLhsResult(envs, store)
         elif isinstance(expr, ns.SimpleParenPattern):
             if len(expr.patterns) == 1:
                 # >>> (a) = 2
                 # >>> (a) = 3, 4
-                return eval_lhs_expr(expr.patterns[0], env, store, val)
+                return eval_lhs_expr(expr.patterns[0], envs, store, val)
             if not isinstance(val, TupleVal):
                 # >>> (a, b) = 3
                 raise RuntimeError(f"Not enough values to unpack into pattern.")
@@ -322,15 +333,15 @@ def eval_lhs_expr(expr: AST, env: Environment, store: Store, val: Value) -> Eval
                 raise RuntimeError(f"Incompatible number of values to unpack into pattern.")
             # >>> (a, b, c) = (2, 3, 4)
             for sub_pattern, sub_val in zip(expr.patterns, val.vals):
-                env, store = eval_lhs_expr(sub_pattern, env, store, sub_val)
-            return EvalLhsResult(env, store)
+                envs, store = eval_lhs_expr(sub_pattern, envs, store, sub_val)
+            return EvalLhsResult(envs, store)
         else:
             raise NotImplementedError(f"No implementation for pattern of type: {type(expr).__name__}")
     else:
         raise NotImplementedError(f"No implementation for left-hand-side expression of type: {type(expr).__name__}")
 
 
-def eval_expr(expr: AST, env: Environment, store: Store) -> EvalExprResult:
+def eval_expr(expr: AST, envs: EnvironmentStack, store: Store) -> EvalExprResult:
     """
     Evaluates an expression.
 
@@ -338,37 +349,37 @@ def eval_expr(expr: AST, env: Environment, store: Store) -> EvalExprResult:
     can have an affect on the store and always produce a value.
 
     :param expr: the expression to evaluate
-    :param env: the current environment
+    :param envs: the current stack of environments
     :param store: the current store
     :return: an EvalExprResult representing the updated store and the computed value
     """
     if isinstance(expr, ns.IfExpr):
         # Evaluate the condition and store the result in a new store. A new store must be used in case the condition is
         # false, in which case the original store should be used for evaluation of any alternative (elif) conditions.
-        val, store2 = eval_expr(expr.cond, env, store)
+        val, store2 = eval_expr(expr.cond, envs, store)
         if isinstance(val, TrueVal):
-            return eval_expr(expr.then_body, env, store2)
+            return eval_expr(expr.then_body, envs, store2)
         elif isinstance(val, FalseVal):
             for elif_expr in expr.elif_exprs:
-                val, store3 = eval_expr(elif_expr.cond, env, store)
+                val, store3 = eval_expr(elif_expr.cond, envs, store)
                 if isinstance(val, TrueVal):
-                    return eval_expr(elif_expr.elif_body, env, store3)
+                    return eval_expr(elif_expr.elif_body, envs, store3)
             if expr.else_expr is not None:
-                return eval_expr(expr.else_expr.else_body, env, store)
+                return eval_expr(expr.else_expr.else_body, envs, store)
             else:
                 return EvalExprResult(UnitVal(), store)
     elif isinstance(expr, ns.TestExprList):
-        vals, store = accumulate_values_from_exprs(expr.tests, env, store)
+        vals, store = accumulate_values_from_exprs(expr.tests, envs, store)
         return wrap_values(vals, store)
     elif isinstance(expr, ns.TestExpr):
-        return eval_expr(expr.test, env, store)
+        return eval_expr(expr.test, envs, store)
     elif isinstance(expr, ns.OrTestExpr):
         if len(expr.tests) == 1:
             # There is only one test, so evaluate it and don't care if it's a boolean.
-            return eval_expr(expr.tests[0], env, store)
+            return eval_expr(expr.tests[0], envs, store)
         else:
             # There are multiple tests, so they should all be boolean values.
-            vals, store = accumulate_values_from_exprs(expr.tests, env, store)
+            vals, store = accumulate_values_from_exprs(expr.tests, envs, store)
             if not len(vals) == len(expr.tests):
                 raise RuntimeError(f"Expected {len(expr.tests)} or-test values, but received {len(vals)}")
             for val in vals:
@@ -380,10 +391,10 @@ def eval_expr(expr: AST, env: Environment, store: Store) -> EvalExprResult:
     elif isinstance(expr, ns.AndTestExpr):
         if len(expr.tests) == 1:
             # There is only one test, so evaluate it and don't care if it's a boolean.
-            return eval_expr(expr.tests[0], env, store)
+            return eval_expr(expr.tests[0], envs, store)
         else:
             # There are multiple tests, so they should all be boolean values.
-            vals, store = accumulate_values_from_exprs(expr.tests, env, store)
+            vals, store = accumulate_values_from_exprs(expr.tests, envs, store)
             if not len(vals) == len(expr.tests):
                 raise RuntimeError(f"Expected {len(expr.tests)} and-test values, but received {len(vals)}")
             for val in vals:
@@ -393,7 +404,7 @@ def eval_expr(expr: AST, env: Environment, store: Store) -> EvalExprResult:
                     return EvalExprResult(FalseVal(), store)
             return EvalExprResult(TrueVal(), store)
     elif isinstance(expr, ns.NegatedTestExpr):
-        val, store = eval_expr(expr.op_expr, env, store)
+        val, store = eval_expr(expr.op_expr, envs, store)
         if not isinstance(val, BoolVal):
             raise RuntimeError(f"Not a boolean value: {val}")  # TODO: Use a custom error.
         if isinstance(val, TrueVal):
@@ -401,22 +412,22 @@ def eval_expr(expr: AST, env: Environment, store: Store) -> EvalExprResult:
         else:
             return EvalExprResult(TrueVal(), store)
     elif isinstance(expr, ns.NotNegatedTestExpr):
-        return eval_expr(expr.op_expr, env, store)
+        return eval_expr(expr.op_expr, envs, store)
     elif isinstance(expr, ns.OpExpr):
-        val, store = eval_expr(expr.atom, env, store)
+        val, store = eval_expr(expr.atom, envs, store)
         if expr.left_op is not None:
-            val, store = eval_prefix_operator(expr.left_op.text, val, env, store)
+            val, store = eval_prefix_operator(expr.left_op.text, val, envs, store)
         for sub_op_expr in expr.sub_op_exprs:
-            r_val, store = eval_expr(sub_op_expr.atom, env, store)
-            val, store = eval_infix_operator(sub_op_expr.op.text, val, r_val, env, store)
+            r_val, store = eval_expr(sub_op_expr.atom, envs, store)
+            val, store = eval_infix_operator(sub_op_expr.op.text, val, r_val, envs, store)
         if expr.right_op is not None:
-            val, store = eval_postfix_operator(expr.right_op.text, val, env, store)
+            val, store = eval_postfix_operator(expr.right_op.text, val, envs, store)
         return EvalExprResult(val, store)
     elif isinstance(expr, ns.AtomExpr):
-        val, store = eval_expr(expr.atom, env, store)
+        val, store = eval_expr(expr.atom, envs, store)
         for trailer in expr.trailers:
             if isinstance(trailer, ns.Call):
-                args, store = accumulate_values_from_exprs(trailer.args, env, store)
+                args, store = accumulate_values_from_exprs(trailer.args, envs, store)
                 val, store = eval_function_call(val, args, store)
             elif isinstance(trailer, ns.FieldAccess):
                 addr = _eval_field_lookup(val, trailer.field.text)
@@ -428,19 +439,13 @@ def eval_expr(expr: AST, env: Environment, store: Store) -> EvalExprResult:
         if expr.tests is None:
             return EvalExprResult(UnitVal(), store)
         else:
-            return eval_expr(expr.tests, env, store)
+            return eval_expr(expr.tests, envs, store)
     elif isinstance(expr, ns.NameAtom):
         name = expr.name.text
-        if name in env:
-            return EvalExprResult(store[env[name]], store)
-        else:
-            raise RuntimeError(f"No such name in environment: {name}")  # TODO: Use a custom error.
+        return EvalExprResult(store[envs[name]], store)
     elif isinstance(expr, ns.ClassAtom):
         name = expr.name.text
-        if name in env:
-            return EvalExprResult(store[env[name]], store)
-        else:
-            raise RuntimeError(f"No such name in environment: {name}")  # TODO: Use a custom error.
+        return EvalExprResult(store[envs[name]], store)
     elif isinstance(expr, ns.IntAtom):
         return EvalExprResult(IntVal(expr.num.text), store)
     elif isinstance(expr, ns.FloatAtom):
@@ -454,29 +459,29 @@ def eval_expr(expr: AST, env: Environment, store: Store) -> EvalExprResult:
     elif isinstance(expr, ns.FalseAtom):
         return EvalExprResult(FalseVal(), store)
     elif isinstance(expr, ns.SimpleExprBlock):
-        return eval_expr(expr.expr, env, store)
+        return eval_expr(expr.expr, envs, store)
     elif isinstance(expr, ns.IndentedExprBlock):
-        return eval_expr(expr.expr, env, store)
+        return eval_expr(expr.expr, envs, store)
     else:
         raise NotImplementedError(f"No implementation for expression of type: {type(expr).__name__}")
 
 
-def eval_prefix_operator(op: str, operand: Value, env: Environment, store: Store) -> EvalExprResult:
-    return _eval_operator(op, [operand], env, store)
+def eval_prefix_operator(op: str, operand: Value, envs: EnvironmentStack, store: Store) -> EvalExprResult:
+    return _eval_operator(op, [operand], envs, store)
 
 
 def eval_infix_operator(op: str, left_operand: Value, right_operand: Value,
-                        env: Environment, store: Store) -> EvalExprResult:
-    return _eval_operator(op, [left_operand, right_operand], env, store)
+                        envs: EnvironmentStack, store: Store) -> EvalExprResult:
+    return _eval_operator(op, [left_operand, right_operand], envs, store)
 
 
-def eval_postfix_operator(op: str, operand: Value, env: Environment, store: Store) -> EvalExprResult:
-    return _eval_operator(op, [operand], env, store)
+def eval_postfix_operator(op: str, operand: Value, envs: EnvironmentStack, store: Store) -> EvalExprResult:
+    return _eval_operator(op, [operand], envs, store)
 
 
-def _eval_operator(op: str, operands: List[Value], env: Environment, store: Store) -> EvalExprResult:
-    if op in env:
-        val = store[env[op]]
+def _eval_operator(op: str, operands: List[Value], envs: EnvironmentStack, store: Store) -> EvalExprResult:
+    if op in envs:
+        val = store[envs[op]]
         return eval_function_call(val, operands, store)
     else:
         raise RuntimeError(f"No implementation for operator: {op}")  # TODO: Use a custom error.
@@ -500,12 +505,12 @@ def _eval_function_call(clo: CloVal, args: List[Value], store: Store) -> EvalExp
         else:
             # TODO: Automatic currying could be implemented here.
             raise RuntimeError(f"Not enough arguments specified for call to function: {clo}")  # TODO: Use a custom error.
-    inner_env = clo.env
+    inner_envs = clo.envs
     for i in range(len(clo.params)):
         param = clo.params[i]
         arg = args[i]
-        inner_env, store = bind_val(param.internal.text, arg, inner_env, store)
-    stmt_res = eval_stmt(clo.code, inner_env, store)
+        inner_envs, store = bind_new_val(param.internal.text, arg, inner_envs, store)
+    stmt_res = eval_stmt(clo.code, inner_envs, store)
     return EvalExprResult(stmt_res.val, stmt_res.store)
 
 
@@ -541,7 +546,7 @@ def _eval_class_instantiation(cls: ClassDeclVal, args: List[Value], store: Store
     for method in cls.instance_methods:
         func = method.func
         addr = store.next_addr
-        closure = CloVal(func.params, func.body, cls.env)
+        closure = CloVal(func.params, func.body, cls.envs)
         store = extend_store(store, closure)
         instance_methods[func.name.text] = InstantiatedMethod(addr)
     # Create the instance.
@@ -572,37 +577,52 @@ def _eval_field_lookup(val: Value, field: str) -> Address:
         raise RuntimeError(f"Cannot perform field lookup in value of type: {type(val).__name__}")
 
 
-def bind_val(name: str, val: Value, env: Environment, store: Store) -> Tuple[Environment, Store]:
+def bind_new_val(name: str, val: Value, envs: EnvironmentStack, store: Store) -> Tuple[EnvironmentStack, Store]:
     """
-    Binds a value to a name. If the name exists in the environment, the previous binding is overwritten.
-    Otherwise, a new binding is created.
+    Binds a value to a new name. If the name already exists, nothing is done.
 
     :param name: the name to bind to
     :param val: the value to be bound
-    :param env: the current environment
+    :param envs: the current stack of environments
     :param store: the current store
     :return: a pair constituting the updated environment and store
     """
-    if name in env:
-        store = extend_store(store, val, env[name])
-    else:
-        env = extend_env(env, name, store.next_addr)
-        store = extend_store(store, val)
-    return env, store
+    if name in envs:
+        return envs, store
+    envs.bind(name, store.next_addr)
+    store = extend_store(store, val)
+    return envs, store
 
 
-def accumulate_values_from_exprs(exprs: List[AST], env: Environment, store: Store) -> Tuple[List[Value], Store]:
+def assign_val(name: str, val: Value, envs: EnvironmentStack, store: Store) -> Tuple[EnvironmentStack, Store]:
+    """
+    Assigns a value to an existing name. If the name does not exist, an error will be raised.
+
+    :param name: the name to assign to
+    :param val: the value to be assigned
+    :param envs: the current stack of environments
+    :param store: the current store
+    :return: a pair consisting of the updated environment stack and store
+    """
+    addr = envs.get(name)
+    if addr is None:
+        raise RuntimeError(f"Attempt to assign to name which was never bound: {name}")  # TODO: Use custom error.
+    store = extend_store(store, val, addr)
+    return envs, store
+
+
+def accumulate_values_from_exprs(exprs: List[AST], envs: EnvironmentStack, store: Store) -> Tuple[List[Value], Store]:
     """
     Evaluates a list of expressions. The values resulting from these evaluations are accumulated into a single list.
 
     :param exprs: the list of expressions to evaluate
-    :param env: the current environment
+    :param envs: the current stack of environments
     :param store: the current store
     :return: a pair consisting of the list of values and the updated store
     """
     values: List[Value] = []
     for expr in exprs:
-        val, store = eval_expr(expr, env, store)
+        val, store = eval_expr(expr, envs, store)
         values.append(val)
     return values, store
 
@@ -630,25 +650,27 @@ def _find_names(stmts: List[AST]) -> Iterable[str]:
     :return: a generator of strings representing the names that will be bound to
     """
     for stmt in stmts:
-        name = _find_name(stmt)
-        if name is None:
+        names = _find_names_in_stmt(stmt)
+        if not names:
             continue
-        else:
+        for name in names:
             yield name
 
 
-def _find_name(stmt: AST) -> Optional[str]:
+def _find_names_in_stmt(stmt: AST) -> List[str]:
     """
-    Determines whether a statement is of the kind that will bind a name, and returns that name. If the statement would
-    not bind a name, a None is returned instead.
+    Determines whether a statement is of the kind that will bind a name (or names) and binds all returns all such names
+    declared by the statement. Returns an empty list if the statement would not bind any names.
 
-    :param stmt: the statement to try to axtract a name from
-    :return: either an extracted name or None
+    :param stmt: the statement to try to extract names from
+    :return: a list of extracted names
     """
-    if isinstance(stmt, ns.FuncDef):
-        return stmt.name.text
+    if isinstance(stmt, ns.SimpleStmt):
+        return _find_names_in_stmt(stmt.stmt)
+    elif isinstance(stmt, ns.FuncDef):
+        return [stmt.name.text]
     elif isinstance(stmt, ns.ClassDef):
-        return stmt.name.text
+        return [stmt.name.text]
     elif isinstance(stmt, ns.InterfaceDef):
         # TODO: Implement this.
         raise NotImplementedError
@@ -656,21 +678,31 @@ def _find_name(stmt: AST) -> Optional[str]:
         # TODO: Implement this.
         raise NotImplementedError
     elif isinstance(stmt, ns.FileStmt):
-        return _find_name(stmt.stmt)
+        return _find_names_in_stmt(stmt.stmt)
+    elif isinstance(stmt, ns.AssignStmt):
+        return _find_names_in_stmt(stmt.lhs)
+    elif isinstance(stmt, ns.Pattern):
+        if isinstance(stmt, ns.TypedVariablePattern):
+            return [stmt.id.id.text]
+        elif isinstance(stmt, ns.SimpleVariablePattern):
+            return [stmt.id.id.text]
+        elif isinstance(stmt, ns.SimpleParenPattern):
+            return [name for pattern in stmt.patterns for name in _find_names_in_stmt(pattern)]
     else:
-        return None
+        return []
 
 
-def _pre_allocate_names(stmts: List[AST], env: Environment, store: Store) -> Tuple[Environment, Store]:
+def _pre_allocate_names_in_top_scope(stmts: List[AST], envs: EnvironmentStack, store: Store) -> Tuple[EnvironmentStack, Store]:
     """
-    Allocates names in the environment and space in the store for names which will be bound to by the list of statements
-    passed in. This is useful for allowing forward declarations among functions, classes, etc. within a single scope.
+    Allocates names in a new environment and space in the store for names which will be bound to by the list of
+    statements passed in. This is useful for allowing forward declarations among functions, classes, etc. within a
+    single scope.
 
     :param stmts: the list of statements to search
-    :param env: the current environment
+    :param envs: the current stack of environments
     :param store: the current store
-    :return: a pair constituting the updated environment and store after pre-allocating space for the names
+    :return: a pair constituting the updated environment stack and store after pre-allocating space for the names
     """
     for name in _find_names(stmts):
-        env, store = bind_val(name, BottomVal(), env, store)
-    return env, store
+        envs, store = bind_new_val(name, BottomVal(), envs, store)
+    return envs, store
